@@ -7,7 +7,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # UI Design & Components
 
 - Always prioritize using components from **shadcn/ui** first before building custom components for any new pages, views, or interface elements.
+- Always prioritize using icons from **lucide-react** first if available, and never use emojis as icons.
 - Check all UI work against the design principles and tokens specified in [DESIGN.md] to ensure correct typography, colors, shadows, and spacing.
+
 
 
 # Git Commit Guidelines
