@@ -47,10 +47,10 @@ export function ProductList() {
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="font-heading text-3xl font-semibold text-primary mb-2">
+            <h2 className="text-headline-lg-mobile md:text-headline-lg text-primary mb-2">
               {t("title")}
             </h2>
-            <p className="text-muted-foreground font-sans text-sm">
+            <p className="text-body-md text-muted-foreground">
               {t("desc")}
             </p>
           </div>
@@ -85,10 +85,10 @@ export function ProductList() {
                 )}
               </div>
               <div className="p-6">
-                <h4 className="font-heading text-lg text-primary mb-2 font-semibold">
+                <h4 className="text-body-lg text-primary mb-2 font-semibold">
                   {prod.title}
                 </h4>
-                <p className="text-sm text-muted-foreground font-sans line-clamp-2 mb-4 min-h-[40px]">
+                <p className="text-body-md text-muted-foreground line-clamp-2 mb-4 min-h-[40px]">
                   {prod.desc}
                 </p>
                 <div className="flex justify-between items-center">

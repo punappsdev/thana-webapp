@@ -51,18 +51,18 @@ colors:
 typography:
   display-lg:
     fontFamily: Prompt
-    fontSize: 48px
+    fontSize: 52px
     fontWeight: '600'
     lineHeight: '1.2'
     letterSpacing: -0.02em
   headline-lg:
     fontFamily: Prompt
-    fontSize: 32px
+    fontSize: 36px
     fontWeight: '600'
     lineHeight: '1.3'
   headline-lg-mobile:
     fontFamily: Prompt
-    fontSize: 28px
+    fontSize: 30px
     fontWeight: '600'
     lineHeight: '1.3'
   headline-md:
@@ -72,17 +72,17 @@ typography:
     lineHeight: '1.4'
   body-lg:
     fontFamily: Noto Sans Thai
-    fontSize: 18px
+    fontSize: 20px
     fontWeight: '400'
     lineHeight: '1.6'
   body-md:
     fontFamily: Noto Sans Thai
-    fontSize: 16px
+    fontSize: 18px
     fontWeight: '400'
     lineHeight: '1.6'
   label-sm:
     fontFamily: Noto Sans Thai
-    fontSize: 14px
+    fontSize: 16px
     fontWeight: '500'
     lineHeight: '1.2'
 rounded:

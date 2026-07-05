@@ -57,7 +57,7 @@ export default function ContactPage() {
             <h1 className="font-heading text-3xl md:text-5xl font-bold mb-4 tracking-tight">
               {t("title")}
             </h1>
-            <p className="font-sans text-sm md:text-base max-w-2xl mx-auto opacity-90 font-light leading-relaxed">
+            <p className="font-sans text-sm md:text-lg max-w-2xl mx-auto opacity-90 font-light leading-relaxed">
               {t("subtitle")}
             </p>
           </div>
@@ -183,10 +183,10 @@ export default function ContactPage() {
                         <Map className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <h4 className="font-heading text-sm font-semibold text-foreground truncate leading-tight">
+                        <h4 className="font-heading text-label-sm font-semibold text-foreground truncate leading-tight">
                           {activeBranch.name}
                         </h4>
-                        <p className="font-sans text-[11px] text-muted-foreground uppercase tracking-wider truncate">
+                        <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider truncate">
                           {t("locationLabel")}
                         </p>
                       </div>

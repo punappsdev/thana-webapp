@@ -21,7 +21,7 @@ export function Footer() {
             height={48}
             className="h-12 w-fit object-contain"
           />
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-base">
             {t("desc")}
           </p>
           <div className="flex gap-4">
@@ -48,7 +48,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 flex-1">
           <div>
             <h4 className="font-heading font-semibold text-primary mb-6">{t("headingCategories")}</h4>
-            <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
+            <ul className="flex flex-col gap-4 text-muted-foreground text-base">
               <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.aluminum.title")}</Link></li>
               <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.glass.title")}</Link></li>
               <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.ceiling.title")}</Link></li>
@@ -58,7 +58,7 @@ export function Footer() {
 
           <div>
             <h4 className="font-heading font-semibold text-primary mb-6">{t("headingCompanies")}</h4>
-            <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
+            <ul className="flex flex-col gap-4 text-muted-foreground text-base">
               <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.0")}</Link></li>
               <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.1")}</Link></li>
             </ul>
@@ -66,7 +66,7 @@ export function Footer() {
 
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
             <h4 className="font-heading font-semibold text-primary mb-6">{t("headingContact")}</h4>
-            <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
+            <ul className="flex flex-col gap-4 text-muted-foreground text-base">
               <li className="flex gap-2">
                 <MapPin className="h-5 w-5 shrink-0 text-primary" />
                 <span>{t("address")}</span>
@@ -90,8 +90,8 @@ export function Footer() {
 
       {/* Copyright Bar */}
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-xs text-muted-foreground">{t("copyright")}</p>
-        <div className="flex gap-6 text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">{t("copyright")}</p>
+        <div className="flex gap-6 text-sm text-muted-foreground">
           <Link href="#" className="hover:text-primary transition-all">{t("privacy")}</Link>
           <Link href="#" className="hover:text-primary transition-all">{t("terms")}</Link>
         </div>

@@ -58,12 +58,12 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-3 xl:gap-5">
             {navLinks.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
-                className={`text-sm transition-colors ${
+                className={`text-label-sm whitespace-nowrap transition-colors ${
                   link.active
                     ? "text-primary border-b-2 border-primary-container pb-1 font-bold"
                     : "text-muted-foreground hover:text-primary"
@@ -77,12 +77,12 @@ export function Header() {
           {/* Right Actions */}
           <div className="flex items-center gap-4">
             {/* Search Input (desktop) */}
-            <div className="relative hidden sm:block">
+            <div className="relative hidden xl:block">
               <input
                 id="header-search-input"
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                className="bg-muted border border-border rounded-full px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-48 transition-all"
+                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
             </div>
