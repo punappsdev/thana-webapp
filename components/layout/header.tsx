@@ -27,13 +27,13 @@ export function Header() {
   };
 
   const navLinks = [
-    { label: t("nav.home"), href: "/", active: true },
+    { label: t("nav.home"), href: "/", active: pathname === "/" },
     { label: t("nav.products"), href: "#" },
     { label: t("nav.news"), href: "#" },
     { label: t("nav.projects"), href: "#" },
     { label: t("nav.articles"), href: "#" },
     { label: t("nav.aboutUs"), href: "#" },
-    { label: t("nav.contactUs"), href: "#" },
+    { label: t("nav.contactUs"), href: "/contact", active: pathname === "/contact" },
   ];
 
   return (

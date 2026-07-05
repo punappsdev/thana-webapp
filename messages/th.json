@@ -118,5 +118,39 @@
     "line": "คุยกับเราทาง LINE",
     "messenger": "Facebook Page",
     "tel": "โทรหาเรา"
+  },
+  "ContactPage": {
+    "title": "ติดต่อเรา",
+    "subtitle": "ศูนย์บริการและจัดจำหน่ายกระจก-อลูมิเนียมครบวงจรในภูเก็ต",
+    "viewMap": "ดูแผนที่",
+    "branches": [
+      {
+        "name": "บริษัท ธนา กลาส อลูมิเนียม จำกัด (สำนักงานใหญ่)",
+        "address": "ที่อยู่ 46/9 ม.6 ต.ฉลอง อ.เมือง จ.ภูเก็ต 83130",
+        "phone": "076-381444, 076-381356-7",
+        "mobile": "088-7652642",
+        "email": "info@thana-glass.com",
+        "line": "@thanaglass",
+        "mapUrl": "https://maps.google.com/maps?q=46/9%20%E0%B8%A1.6%20%E0%B8%95.%E0%B8%82%E0%B8%A5%E0%B8%AD%E0%B8%87%20%E0%B8%AD.%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%20%E0%B8%87.%E0%B8%A0%E0%B8%B9%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%95%2083130&t=&z=16&ie=UTF8&iwloc=&output=embed"
+      },
+      {
+        "name": "บริษัท ธนา กลาส อลูมินั่ม จำกัด สาขา000001",
+        "address": "ที่อยู่ 36 ม.4 ต.ฉลอง อ.เมือง จ.ภูเก็ต 83130",
+        "phone": "076-381444",
+        "mobile": "088-7652642",
+        "email": "info@thana-glass.com",
+        "line": "@thanaglass",
+        "mapUrl": "https://maps.google.com/maps?q=36%20%E0%B8%A1.4%20%E0%B8%95.%E0%B8%82%E0%B8%A5%E0%B8%AD%E0%B8%87%20%E0%B8%AD.%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%20%E0%B8%87.%E0%B8%A0%E0%B8%B9%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%95%2083130&t=&z=16&ie=UTF8&iwloc=&output=embed"
+      },
+      {
+        "name": "บริษัท ธนา กลาส ถลาง จำกัด",
+        "address": "ที่อยู่ 168 ม.7 ต.เทพกระษัตรี อ.ถลาง จ.ภูเก็ต 83110",
+        "phone": "076-311222",
+        "mobile": "088-7652642",
+        "email": "info@thanathalang.com",
+        "line": "@thanathalang",
+        "mapUrl": "https://maps.google.com/maps?q=168%20%E0%B8%A1.7%20%E0%B8%95.%E0%B9%80%E0%B8%97%E0%B8%9E%E0%B8%85%E0%B8%A3%E0%B8%B0%E0%B8%A9%E0%B8%B1%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%AD.%E0%B8%96%E0%B8%A5%E0%B8%B2%E0%B8%87%20%E0%B8%87.%E0%B8%A0%E0%B8%B9%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%95%2083110&t=&z=16&ie=UTF8&iwloc=&output=embed"
+      }
+    ]
   }
 }
