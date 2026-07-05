@@ -55,6 +55,12 @@ typography:
     fontWeight: '600'
     lineHeight: '1.2'
     letterSpacing: -0.02em
+  display-md:
+    fontFamily: Prompt
+    fontSize: 42px
+    fontWeight: '600'
+    lineHeight: '1.2'
+    letterSpacing: -0.02em
   headline-lg:
     fontFamily: Prompt
     fontSize: 36px
@@ -70,6 +76,11 @@ typography:
     fontSize: 24px
     fontWeight: '500'
     lineHeight: '1.4'
+  headline-sm:
+    fontFamily: Prompt
+    fontSize: 20px
+    fontWeight: '500'
+    lineHeight: '1.4'
   body-lg:
     fontFamily: Noto Sans Thai
     fontSize: 20px
@@ -80,9 +91,24 @@ typography:
     fontSize: 18px
     fontWeight: '400'
     lineHeight: '1.6'
-  label-sm:
+  body-sm:
     fontFamily: Noto Sans Thai
     fontSize: 16px
+    fontWeight: '400'
+    lineHeight: '1.6'
+  label-lg:
+    fontFamily: Noto Sans Thai
+    fontSize: 18px
+    fontWeight: '500'
+    lineHeight: '1.2'
+  label-md:
+    fontFamily: Noto Sans Thai
+    fontSize: 16px
+    fontWeight: '500'
+    lineHeight: '1.2'
+  label-sm:
+    fontFamily: Noto Sans Thai
+    fontSize: 14px
     fontWeight: '500'
     lineHeight: '1.2'
 rounded:
