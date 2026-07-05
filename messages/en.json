@@ -117,7 +117,8 @@
   "ContactFab": {
     "line": "Chat on LINE",
     "messenger": "Facebook Page",
-    "tel": "Call Us"
+    "tel": "Call Us",
+    "scrollTop": "Scroll to top"
   },
   "ContactPage": {
     "eyebrow": "Get In Touch",

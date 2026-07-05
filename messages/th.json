@@ -117,7 +117,8 @@
   "ContactFab": {
     "line": "คุยกับเราทาง LINE",
     "messenger": "Facebook Page",
-    "tel": "โทรหาเรา"
+    "tel": "โทรหาเรา",
+    "scrollTop": "เลื่อนขึ้นบนสุด"
   },
   "ContactPage": {
     "eyebrow": "ข้อมูลการติดต่อ",
