@@ -3,23 +3,25 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const t = useTranslations("Hero");
 
   const slides = [
     {
-      tag: "Expert in Glass & Aluminum",
-      title: "ยกระดับอาคารของคุณด้วยงานกระจกและอลูมิเนียมระดับพรีเมียม",
-      desc: "เรานำเสนอโซลูชันที่ครบวงจรด้วยวัสดุคุณภาพสูงและการติดตั้งที่ได้มาตรฐานสากล เพื่อความงามและความทนทานที่เหนือกว่า",
+      tag: t("slides.0.tag"),
+      title: t("slides.0.title"),
+      desc: t("slides.0.desc"),
       bgUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDpuv1wzKW-b1lE96I_nXunsKVh55WMx0wT_slAgGY-UY2YeTqIsPZKevnnS4fj36AuyxKLUSGk2IB0fnRTbTgbcWcOEbCoQ-eTPi-HVDPv3g83cJrVX_3t2SRiTRLG0-kWZfR-anDy7DTtJLa0sAMcFzmcfVP14qla3e-ImUkA64oPIzcny_qsoM0G-DAF5npEabst8vjU3gi00mY7I4_1N2riYp7WagqGD6_Zocs0UL9sOSXLFWNIls559PjqxhIjWvTlT8mKVVA",
     },
     {
-      tag: "Premium Quality Construction",
-      title: "ดีไซน์กระจกเพื่อความโปร่งสบายสไตล์โมเดิร์น",
-      desc: "เพิ่มแสงสว่างจากธรรมชาติและความโล่งกว้างให้ตัวบ้าน พร้อมการกรองความร้อนที่มีประสิทธิภาพสูงสุด",
+      tag: t("slides.1.tag"),
+      title: t("slides.1.title"),
+      desc: t("slides.1.desc"),
       bgUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuCmaZZFgNzKKOBNOMRyzrsXhi54yijFRIJJmWF6kB93t2RlBEYZOLUm6L0w8nmZnZ1vKCtid8PYZExr_zdp7XDyJRPN9hj3VXk6PC8pgSsUZ3ymfPKCRMr3buYzIBSHt2QtKdnkVPlM5-NtvB2iMadSJlzXeUihLZSI4jS3ETElC84vMVaXqZmubR47bpKfuK42mScj4oDIeeMDgZdGjL1bddnNDKNzW_VYGT0XB3AewfvbVFAQNC_ADNsmGHV4mV7LILCjoVpBRX0",
     }
   ];
@@ -101,10 +103,10 @@ export function Hero() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button className="h-11 px-8 text-sm font-semibold rounded-md shadow-lg bg-gradient-to-b from-[#078ee4] to-[#0040ad] hover:from-[#0040ad] hover:to-[#002c7d] text-white border-0 transition-all duration-300 cursor-pointer">
-                  ดูตัวอย่างผลงาน
+                  {t("btnProjects")}
                 </Button>
                 <Button variant="outline" className="h-11 px-8 text-sm font-semibold rounded-md border-white/40 text-white bg-transparent hover:bg-white/10 hover:text-white transition-all cursor-pointer">
-                  ติดต่อปรึกษาฟรี
+                  {t("btnConsult")}
                 </Button>
               </div>
             </div>

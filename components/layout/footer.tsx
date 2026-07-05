@@ -1,8 +1,14 @@
-import Link from "next/link";
+"use client";
+
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Globe, Mail, Phone, Clock, MapPin } from "lucide-react";
+import { Link } from "../../i18n/routing";
 
 export function Footer() {
+  const t = useTranslations("Footer");
+  const tCat = useTranslations("CategoryGrid");
+
   return (
     <footer className="bg-white border-t border-border/80 py-12">
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 flex flex-col md:flex-row justify-between gap-10">
@@ -16,7 +22,7 @@ export function Footer() {
             className="h-12 w-fit object-contain"
           />
           <p className="text-muted-foreground text-sm">
-            บริษัท ธนา กลาส แอนด์ อลูมิเนียม จำกัด มุ่งเน้นการผลิตและจำหน่ายสินค้าที่มีคุณภาพ เพื่อความพึงพอใจสูงสุดของลูกค้า
+            {t("desc")}
           </p>
           <div className="flex gap-4">
             <Link href="#" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
@@ -34,29 +40,29 @@ export function Footer() {
         {/* Footer Links & Contact Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 flex-1">
           <div>
-            <h4 className="font-heading font-semibold text-primary mb-6">หมวดหมู่สินค้า</h4>
+            <h4 className="font-heading font-semibold text-primary mb-6">{t("headingCategories")}</h4>
             <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">อลูมิเนียมเส้น</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">กระจกแผ่น</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">งานฝ้าเพดาน</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">อุปกรณ์ฮาร์ดแวร์</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.aluminum.title")}</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.glass.title")}</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.ceiling.title")}</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.hardware.title")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-heading font-semibold text-primary mb-6">บริษัทในเครือ</h4>
+            <h4 className="font-heading font-semibold text-primary mb-6">{t("headingCompanies")}</h4>
             <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">บริษัทธนา กลาส อลูมินั่ม จำกัด</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">บริษัทธนา กลาส ถลาง จำกัด</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.0")}</Link></li>
+              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.1")}</Link></li>
             </ul>
           </div>
 
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <h4 className="font-heading font-semibold text-primary mb-6">ติดต่อเรา</h4>
+            <h4 className="font-heading font-semibold text-primary mb-6">{t("headingContact")}</h4>
             <ul className="flex flex-col gap-4 text-muted-foreground text-sm">
               <li className="flex gap-2">
                 <MapPin className="h-5 w-5 shrink-0 text-primary" />
-                <span>46/9 ม.6 ต.ฉลอง อ.เมืองภูเก็ต จ.ภูเก็ต 83130</span>
+                <span>{t("address")}</span>
               </li>
               <li className="flex gap-2">
                 <Mail className="h-5 w-5 shrink-0 text-primary" />
@@ -68,7 +74,7 @@ export function Footer() {
               </li>
               <li className="flex gap-2">
                 <Clock className="h-5 w-5 shrink-0 text-primary" />
-                <span>เปิดทุกวัน: 8:00 - 17:00</span>
+                <span>{t("hours")}</span>
               </li>
             </ul>
           </div>
@@ -77,10 +83,10 @@ export function Footer() {
 
       {/* Copyright Bar */}
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-xs text-muted-foreground">© 2024 Thana Glass Aluminum. All Rights Reserved.</p>
+        <p className="text-xs text-muted-foreground">{t("copyright")}</p>
         <div className="flex gap-6 text-xs text-muted-foreground">
-          <Link href="#" className="hover:text-primary transition-all">Privacy Policy</Link>
-          <Link href="#" className="hover:text-primary transition-all">Terms of Service</Link>
+          <Link href="#" className="hover:text-primary transition-all">{t("privacy")}</Link>
+          <Link href="#" className="hover:text-primary transition-all">{t("terms")}</Link>
         </div>
       </div>
     </footer>

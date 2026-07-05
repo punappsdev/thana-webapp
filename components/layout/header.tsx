@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { usePathname, useRouter, Link } from "../../i18n/routing";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lang, setLang] = useState<"TH" | "EN">("TH");
+  const t = useTranslations("Header");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,14 +22,18 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLocaleChange = (nextLocale: "th" | "en") => {
+    router.replace(pathname, { locale: nextLocale });
+  };
+
   const navLinks = [
-    { label: "หน้าแรก", href: "#", active: true },
-    { label: "สินค้า", href: "#" },
-    { label: "ข่าวสารและโปรโมชั่น", href: "#" },
-    { label: "ตัวอย่างผลงาน", href: "#" },
-    { label: "บทความ", href: "#" },
-    { label: "เกี่ยวกับเรา", href: "#" },
-    { label: "ติดต่อเรา", href: "#" },
+    { label: t("nav.home"), href: "/", active: true },
+    { label: t("nav.products"), href: "#" },
+    { label: t("nav.news"), href: "#" },
+    { label: t("nav.projects"), href: "#" },
+    { label: t("nav.articles"), href: "#" },
+    { label: t("nav.aboutUs"), href: "#" },
+    { label: t("nav.contactUs"), href: "#" },
   ];
 
   return (
@@ -73,7 +81,7 @@ export function Header() {
               <input
                 id="header-search-input"
                 type="text"
-                placeholder="ค้นหาสินค้า..."
+                placeholder={t("searchPlaceholder")}
                 className="bg-muted border border-border rounded-full px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-48 transition-all"
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
@@ -83,7 +91,7 @@ export function Header() {
             <button
               id="header-cart-btn"
               className="flex items-center justify-center p-2 rounded-full hover:bg-muted transition-all text-primary"
-              aria-label="Shopping Cart"
+              aria-label="ShoppingCart"
             >
               <ShoppingCart className="h-5 w-5" />
             </button>
@@ -91,15 +99,15 @@ export function Header() {
             {/* Language Switcher */}
             <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
               <button
-                onClick={() => setLang("TH")}
-                className={`transition-colors cursor-pointer ${lang === "TH" ? "font-bold text-primary" : "hover:text-primary"}`}
+                onClick={() => handleLocaleChange("th")}
+                className={`transition-colors cursor-pointer uppercase ${locale === "th" ? "font-bold text-primary" : "hover:text-primary"}`}
               >
                 TH
               </button>
               <span className="text-border">|</span>
               <button
-                onClick={() => setLang("EN")}
-                className={`transition-colors cursor-pointer ${lang === "EN" ? "font-bold text-primary" : "hover:text-primary"}`}
+                onClick={() => handleLocaleChange("en")}
+                className={`transition-colors cursor-pointer uppercase ${locale === "en" ? "font-bold text-primary" : "hover:text-primary"}`}
               >
                 EN
               </button>
@@ -130,7 +138,7 @@ export function Header() {
           <input
             id="header-search-mobile"
             type="text"
-            placeholder="ค้นหาสินค้า..."
+            placeholder={t("searchPlaceholder")}
             className="w-full bg-muted border border-border rounded-full px-4 py-2 text-sm text-foreground"
           />
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />

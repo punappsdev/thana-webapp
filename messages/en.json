@@ -1,0 +1,122 @@
+{
+  "Header": {
+    "searchPlaceholder": "Search products...",
+    "nav": {
+      "home": "Home",
+      "products": "Products",
+      "news": "News & Promotions",
+      "projects": "Projects",
+      "articles": "Articles",
+      "aboutUs": "About Us",
+      "contactUs": "Contact Us"
+    }
+  },
+  "Hero": {
+    "slides": [
+      {
+        "tag": "Expert in Glass & Aluminum",
+        "title": "Elevate your building with premium glass and aluminum work",
+        "desc": "We offer comprehensive solutions with high-quality materials and international standard installations for superior beauty and durability."
+      },
+      {
+        "tag": "Premium Quality Construction",
+        "title": "Modern glass design for bright and airy spaces",
+        "desc": "Increase natural light and spaciousness in your home with maximum heat filtration efficiency."
+      }
+    ],
+    "btnProjects": "View Projects",
+    "btnConsult": "Free Consultation"
+  },
+  "CategoryGrid": {
+    "title": "Our Product Categories",
+    "items": {
+      "aluminum": {
+        "title": "Aluminum Profiles",
+        "desc": "Various colors and standard sizes"
+      },
+      "glass": {
+        "title": "Safety Glass",
+        "desc": "Tempered and laminated TIS standards"
+      },
+      "ceiling": {
+        "title": "Ceilings",
+        "desc": "Comprehensive T-bar and smooth ceilings"
+      },
+      "hardware": {
+        "title": "Installation Hardware",
+        "desc": "Grade-A hardware and fittings"
+      }
+    }
+  },
+  "ProductList": {
+    "title": "Recommended Products",
+    "desc": "Top quality products highly popular in various projects",
+    "viewAll": "All",
+    "products": [
+      {
+        "title": "Aluminum Profile 1.5 Series",
+        "desc": "Extra thick aluminum for high-rise buildings, excellent wind resistance.",
+        "price": "฿ 1,250 / sq.m.",
+        "tag": "New Arrival"
+      },
+      {
+        "title": "Tempered Glass 10mm",
+        "desc": "Safety glass processed under high heat, 5x stronger than regular glass.",
+        "price": "฿ 850 / sq.m.",
+        "tag": "Hot Seller"
+      },
+      {
+        "title": "T-Bar Ceiling Grid System",
+        "desc": "Quality ceiling framework, easy to install, rust-free, suitable for commercial spaces.",
+        "price": "฿ 45 / pc",
+        "tag": ""
+      },
+      {
+        "title": "Stainless Steel Handle Grade 304",
+        "desc": "Genuine stainless steel hardware, modern design, durable under heavy use.",
+        "price": "฿ 1,190 / set",
+        "tag": ""
+      }
+    ]
+  },
+  "AboutUs": {
+    "tag": "ABOUT THANA GLASS GROUP",
+    "title": "Trustworthy Leader in Glass & Aluminum Innovation",
+    "desc": "With over 20 years of experience in the industry, Thana Glass Group continuously strives to develop production standards and services. We are a trusted partner for architects, contractors, and homeowners nationwide.",
+    "tis": {
+      "title": "TIS Standard",
+      "desc": "Every product passes international quality standards testing."
+    },
+    "expert": {
+      "title": "Professional Team",
+      "desc": "Expert technicians ready for on-site services across Thailand."
+    },
+    "btnMore": "Read More About Us"
+  },
+  "CtaSection": {
+    "title": "Start Your Project With Us Today",
+    "desc": "Consult about product specs, designs, and get a free quote from our glass and aluminum specialists.",
+    "call": "Call Us Now",
+    "line": "Contact via LINE"
+  },
+  "Footer": {
+    "desc": "Thana Glass & Aluminum Co., Ltd. focuses on manufacturing and distributing quality products for maximum client satisfaction.",
+    "headingCategories": "Product Categories",
+    "headingCompanies": "Affiliated Companies",
+    "headingContact": "Contact Us",
+    "address": "46/9 Moo 6, Chalong, Mueang Phuket, Phuket 83130",
+    "hours": "Open Daily: 8:00 AM - 5:00 PM",
+    "copyright": "© 2024 Thana Glass Aluminum. All Rights Reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "companies": [
+      "Thana Glass Aluminum Co., Ltd.",
+      "Thana Glass Thlang Co., Ltd."
+    ]
+  },
+  "ContactFab": {
+    "line": "Chat on LINE",
+    "messenger": "Facebook Page",
+    "tel": "Call Us"
+  }
+}

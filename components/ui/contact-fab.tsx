@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { MessageSquare, Phone } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function ContactFab() {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations("ContactFab");
 
   return (
     <div 
@@ -31,7 +33,7 @@ export function ContactFab() {
         {/* LINE Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
           <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-            คุยกับเราทาง LINE
+            {t("line")}
           </span>
           <a
             id="fab-link-line"
@@ -50,7 +52,7 @@ export function ContactFab() {
         {/* Facebook Messenger Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
           <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-            Facebook Page
+            {t("messenger")}
           </span>
           <a
             id="fab-link-facebook"
@@ -69,7 +71,7 @@ export function ContactFab() {
         {/* Telephone Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
           <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
-            โทรหาเรา
+            {t("tel")}
           </span>
           <a
             id="fab-link-tel"
