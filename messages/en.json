@@ -195,5 +195,30 @@
         "desc": "A complete construction materials warehouse in the Thalang District of Phuket, providing distribution of aluminum, glass, ceiling, and various installation hardware."
       }
     ]
+  },
+  "QuotationSteps": {
+    "title": "Steps to Request a Quotation",
+    "steps": [
+      {
+        "title": "Select Products",
+        "desc": "Choose the products you want and add to quote cart"
+      },
+      {
+        "title": "Check Quotation Cart",
+        "desc": "Review the items in your quotation cart"
+      },
+      {
+        "title": "Fill Contact Info",
+        "desc": "Enter contact details and delivery details"
+      },
+      {
+        "title": "Review & Confirm",
+        "desc": "Review all information and confirm your request"
+      },
+      {
+        "title": "Receive Quote",
+        "desc": "Wait for the quotation via LINE and Gmail"
+      }
+    ]
   }
 }

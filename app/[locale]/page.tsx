@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/header";
 import { Hero } from "@/components/homepage/hero";
 import { CategoryGrid } from "@/components/homepage/category-grid";
 import { ProductList } from "@/components/homepage/product-list";
+import { QuotationSteps } from "@/components/homepage/quotation-steps";
 import { AboutUs } from "@/components/homepage/about-us";
 import { CtaSection } from "@/components/homepage/cta-section";
 import { Footer } from "@/components/layout/footer";
@@ -17,6 +18,7 @@ export default function Home() {
         <Hero />
         <CategoryGrid />
         <ProductList />
+        <QuotationSteps />
         <AboutUs />
         <CtaSection />
       </main>

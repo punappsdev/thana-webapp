@@ -90,7 +90,7 @@ export function Footer() {
 
       {/* Copyright Bar */}
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="font-body-sm text-muted-foreground">{t("copyright")}</p>
+        <p className="font-body-sm text-muted-foreground text-center md:text-left">{t("copyright")}</p>
         <div className="flex gap-6 font-body-sm text-muted-foreground">
           <Link href="#" className="hover:text-primary transition-all">{t("privacy")}</Link>
           <Link href="#" className="hover:text-primary transition-all">{t("terms")}</Link>
