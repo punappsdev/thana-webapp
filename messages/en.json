@@ -120,6 +120,7 @@
     "tel": "Call Us"
   },
   "ContactPage": {
+    "eyebrow": "Get In Touch",
     "title": "Contact Us",
     "subtitle": "Get in touch with our branches and view locations",
     "viewMap": "View Map",
@@ -152,6 +153,46 @@
         "email": "info@thanathalang.com",
         "line": "@thanathalang",
         "mapUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.5235885178736!2d98.33461147568606!3d8.04795090357208!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3050376121809eb1%3A0x864e9c2653753a94!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4mOC4meC4siDguIHguKXguLLguKog4LiW4Lil4Liy4LiHIOC4iOC4s-C4geC4seC4lA!5e0!3m2!1sth!2sth!4v1783251903164!5m2!1sth!2sth"
+      }
+    ]
+  },
+  "AboutPage": {
+    "title": "About Us",
+    "subtitle": "Precision, transparency, and structural integrity — crafted in every panel of glass and aluminum we install.",
+    "eyebrow": "Our Story",
+    "groupEyebrow": "The Group",
+    "missionEyebrow": "Our Goals",
+    "missionTitle": "Mission",
+    "sloganTitle": "Slogan",
+    "sloganDesc": "\"Quality is remembered long - producing safety glass with quality to be remembered forever.\"",
+    "visionTitle": "Vision",
+    "visionDesc": "\"Striving to be the leader in the integrated glass processing business with comprehensive services.\"",
+    "partnersEyebrow": "Leading Manufacturers",
+    "partnersTitle": "Our Partners",
+    "valueQualityTitle": "Standards & Quality",
+    "valueQualityDesc": "We curate high-quality, standard products and deliver them with honesty and integrity.",
+    "valueCraftTitle": "Craftsmanship",
+    "valueCraftDesc": "Our experienced team advises and supports every client for smooth, precise installations.",
+    "valueModernTitle": "Modern Aesthetics",
+    "valueModernDesc": "A comprehensive glass processing factory built to meet high manufacturing standards.",
+    "branchesEyebrow": "Our Companies",
+    "branchesTitle": "Our Subsidiaries",
+    "branchesIntro": "Three dedicated branches across Phuket, each specialising in materials, processing, and installation.",
+    "groupTitle": "Thana Glass Group",
+    "groupDesc1": "One of the leading construction material providers in Phuket, operating in the distribution of aluminum, glass, ceiling works, and installation equipment, as well as a comprehensive glass processing factory that meets high manufacturing standards.",
+    "groupDesc2": "We select standard, high-quality products and provide services with honesty and integrity. Our team is pleased to advise and take care of all clients in a friendly manner, ensuring smooth installations that truly satisfy customer needs.",
+    "branches": [
+      {
+        "name": "Thana Glass Aluminum Co., Ltd. (Headquarters)",
+        "desc": "A large construction materials warehouse in Phuket, providing distribution of aluminum, glass, ceiling works, and comprehensive installation accessories, focusing on standard high-quality products."
+      },
+      {
+        "name": "Thana Glass Aluminum Co., Ltd. (Branch 00001)",
+        "desc": "A fully integrated glass processing factory, operating under the slogan \"Quality is remembered long - producing safety glass with quality to be remembered forever.\""
+      },
+      {
+        "name": "Thana Glass Thalang Co., Ltd.",
+        "desc": "A complete construction materials warehouse in the Thalang District of Phuket, providing distribution of aluminum, glass, ceiling, and various installation hardware."
       }
     ]
   }

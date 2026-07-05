@@ -32,7 +32,7 @@ export function Header() {
     { label: t("nav.news"), href: "#" },
     { label: t("nav.projects"), href: "#" },
     { label: t("nav.articles"), href: "#" },
-    { label: t("nav.aboutUs"), href: "#" },
+    { label: t("nav.aboutUs"), href: "/about", active: pathname === "/about" },
     { label: t("nav.contactUs"), href: "/contact", active: pathname === "/contact" },
   ];
 

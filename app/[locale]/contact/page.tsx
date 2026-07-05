@@ -45,19 +45,27 @@ export default function ContactPage() {
 
       <main className="flex-1 pt-[72px] md:pt-[80px]">
         {/* Page Hero Header */}
-        <section className="bg-gradient-to-r from-primary to-[#0040ad] py-12 md:py-16 text-center text-white relative overflow-hidden">
-          <div 
-            className="absolute inset-0 opacity-10 pointer-events-none" 
+        <section className="relative overflow-hidden bg-linear-to-br from-primary to-primary-container text-white">
+          {/* Decorative dot grid */}
+          <div
+            className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
               backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-              backgroundSize: "32px 32px"
+              backgroundSize: "32px 32px",
             }}
           />
-          <div className="max-w-[1280px] mx-auto px-4 md:px-10 relative z-10 animate-fade-in">
-            <h1 className="font-headline-lg-mobile md:font-display-md mb-4">
+          {/* Soft light wash */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+
+          <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-12 md:py-20 relative z-10 animate-fade-in">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 font-label-sm font-medium tracking-wide backdrop-blur-md">
+              <Phone className="h-3.5 w-3.5" />
+              {t("eyebrow")}
+            </span>
+            <h1 className="font-headline-lg-mobile md:font-display-md mt-5 mb-4 max-w-3xl">
               {t("title")}
             </h1>
-            <p className="font-body-md md:font-body-lg max-w-2xl mx-auto opacity-90">
+            <p className="font-body-md md:font-body-lg max-w-4xl text-white/85 leading-relaxed">
               {t("subtitle")}
             </p>
           </div>
