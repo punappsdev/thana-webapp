@@ -27,8 +27,17 @@ export default function ContactPage() {
 
   const activeBranch = branches[activeIdx];
 
-  // Uniform color matching the user mockup and brand design system
-  const cardBgStyle = "from-secondary-fixed/20 to-secondary-fixed-dim/10 bg-[#e0f7fc]/30";
+  const branchLogos = [
+    "/main-logo.png",
+    "/sub-logo-1.png",
+    "/sub-logo-2.png",
+  ];
+
+  const branchMapLinks = [
+    "https://www.google.com/maps?cid=4933196602655605409&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+    "https://www.google.com/maps?cid=18211558462240548800&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+    "https://www.google.com/maps?cid=9677844337688656532&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+  ];
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -60,109 +69,104 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-stretch items-start">
               
               {/* Left Column: Branch selector cards */}
-              <div className="lg:col-span-5 flex flex-col gap-6">
+              <div className="lg:col-span-5 flex flex-col gap-4">
                 {branches.map((branch, idx) => {
                   const isActive = activeIdx === idx;
                   return (
                     <div
                       key={idx}
                       onClick={() => setActiveIdx(idx)}
-                      className={`cursor-pointer rounded-2xl p-6 bg-gradient-to-br ${cardBgStyle} border transition-all duration-300 relative shadow-sm hover:shadow-md ${
-                        isActive 
-                          ? "border-primary scale-[1.01] ring-2 ring-primary/20 shadow-blue-md" 
-                          : "border-outline-variant hover:scale-[1.005]"
+                      aria-pressed={isActive}
+                      className={`group cursor-pointer rounded-2xl bg-card border transition-all duration-300 relative overflow-hidden ${
+                        isActive
+                          ? "border-primary shadow-blue-md"
+                          : "border-[#c4e2f5] shadow-blue-sm hover:shadow-blue-md hover:border-primary/40"
                       }`}
                     >
-                      <div className="flex gap-4">
-                        {/* Logo White Box Container */}
-                        <div className="w-24 h-24 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-border/40 transition-transform duration-300 hover:scale-105">
-                          {/* Fallback clean text layout / Brand logo placeholder */}
+                      {/* Active accent bar */}
+                      <span
+                        className={`absolute left-0 top-0 h-full w-1.5 bg-linear-to-b from-[#078ee4] to-primary transition-opacity duration-300 ${
+                          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-40"
+                        }`}
+                      />
+
+                      <div className="flex gap-4 p-5">
+                        {/* Logo container */}
+                        <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center shrink-0 border border-[#c4e2f5]/60 transition-transform duration-300 group-hover:scale-105 p-2.5 shadow-sm">
                           <Image
-                            src="/main-logo-icon-tp.png"
+                            src={branchLogos[idx]}
                             alt="Thana Logo"
-                            width={56}
-                            height={56}
-                            className="h-14 w-14 object-contain opacity-80"
+                            width={96}
+                            height={96}
+                            className="w-full h-full object-contain"
+                            priority
                           />
                         </div>
 
-                        {/* Branch detail text */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-heading text-base md:text-lg font-semibold text-primary mb-2 leading-tight">
+                        {/* Branch detail */}
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <h3 className={`font-heading text-base md:text-lg font-semibold leading-tight mb-2 ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
                             {branch.name}
                           </h3>
-                          <p className="font-sans text-xs md:text-sm text-on-surface-variant/90 mb-4 leading-relaxed flex items-start gap-1.5">
+                          <p className="font-sans text-xs md:text-sm text-muted-foreground mb-3 leading-relaxed flex items-start gap-1.5">
                             <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                             <span>{branch.address}</span>
                           </p>
 
-                          {/* Branch Contact Quick Buttons Row */}
-                          <div className="flex flex-wrap gap-2.5 mb-2">
+                          {/* Quick contact buttons */}
+                          <div className="flex flex-wrap gap-2 mb-3">
                             {/* LINE */}
                             <a
                               href={`https://line.me/R/ti/p/~${branch.line}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="h-8 w-8 rounded-full bg-white text-[#06C755] flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all"
+                              className="h-8 w-8 rounded-full bg-white text-[#06C755] flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
                               title="LINE"
                             >
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4.5 w-4.5">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                                 <path d="M22 10.364c0-4.577-4.486-8.364-10-8.364s-10 3.787-10 8.364c0 4.1 3.568 7.525 8.389 8.217l-1.602 3.19c-.09.18.016.398.21.332l4.802-1.644c5.093-.244 8.201-3.647 8.201-8.455" />
                               </svg>
                             </a>
 
-                            {/* Telephone link */}
+                            {/* Telephone */}
                             <a
                               href={`tel:${branch.phone.split(",")[0].trim()}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all"
+                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
                               title="Phone"
                             >
                               <Phone className="h-4 w-4" />
                             </a>
 
-                            {/* Email link */}
+                            {/* Email */}
                             <a
                               href={`mailto:${branch.email}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all"
+                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
                               title="Email"
                             >
                               <Mail className="h-4 w-4" />
                             </a>
 
-                            {/* Location Pin */}
+
+                            {/* View map inline button */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveIdx(idx);
+                                const mapElement = document.getElementById("map-container");
+                                if (mapElement) {
+                                  mapElement.scrollIntoView({ behavior: "smooth" });
+                                }
                               }}
-                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all"
-                              title="Pin Location"
+                              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-full bg-primary hover:bg-primary-container text-white text-xs font-semibold font-heading shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
                             >
-                              <MapPin className="h-4 w-4" />
+                              <Map className="h-3.5 w-3.5" />
+                              {t("viewMap")}
                             </button>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Card Action View Map Button - Adjusted to Darker Brand Color */}
-                      <div className="mt-4 flex justify-end">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveIdx(idx);
-                            const mapElement = document.getElementById("map-container");
-                            if (mapElement) {
-                              mapElement.scrollIntoView({ behavior: "smooth" });
-                            }
-                          }}
-                          className="bg-primary hover:bg-[#0040ad] active:scale-95 text-white px-5 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 font-heading cursor-pointer"
-                        >
-                          <MapPin className="h-3 w-3" />
-                          {t("viewMap")}
-                        </button>
                       </div>
                     </div>
                   );
@@ -171,15 +175,35 @@ export default function ContactPage() {
 
               {/* Right Column: Google Maps Interactive Box (Set to match Left Column height on Desktop) */}
               <div id="map-container" className="lg:col-span-7 lg:sticky lg:top-24 lg:h-full scroll-mt-24">
-                <div className="bg-white rounded-3xl p-4 border border-[#c4e2f5]/80 shadow-blue-lg backdrop-blur-md lg:h-full flex flex-col">
-                  <div className="flex items-center gap-2 mb-3 px-2">
-                    <Map className="h-4 w-4 text-primary shrink-0" />
-                    <h4 className="font-heading text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">
-                      {activeBranch.name}
-                    </h4>
+                <div className="bg-white rounded-2xl border border-[#c4e2f5] shadow-blue-lg lg:h-full flex flex-col overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#c4e2f5]/60">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Map className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <h4 className="font-heading text-sm font-semibold text-foreground truncate leading-tight">
+                          {activeBranch.name}
+                        </h4>
+                        <p className="font-sans text-[11px] text-muted-foreground uppercase tracking-wider truncate">
+                          {t("locationLabel")}
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href={branchMapLinks[activeIdx]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-container text-white text-xs font-semibold font-heading shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      {t("openInMaps")}
+                    </a>
                   </div>
 
-                  <div className="relative flex-1 w-full rounded-2xl overflow-hidden border border-border bg-slate-100 shadow-inner min-h-[350px] lg:min-h-0">
+                  {/* Map */}
+                  <div className="relative flex-1 w-full min-h-[350px] lg:min-h-0">
                     <iframe
                       src={activeBranch.mapUrl}
                       width="100%"
@@ -191,6 +215,14 @@ export default function ContactPage() {
                       title={activeBranch.name}
                       className="absolute inset-0"
                     />
+                  </div>
+
+                  {/* Address footer */}
+                  <div className="px-5 py-3 border-t border-[#c4e2f5]/60 bg-background/40">
+                    <p className="font-sans text-xs md:text-sm text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                      <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                      <span>{activeBranch.address}</span>
+                    </p>
                   </div>
                 </div>
               </div>

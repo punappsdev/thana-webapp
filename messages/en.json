@@ -123,6 +123,8 @@
     "title": "Contact Us",
     "subtitle": "Get in touch with our branches and view locations",
     "viewMap": "View Map",
+    "locationLabel": "Branch Location",
+    "openInMaps": "Open in Google Maps",
     "branches": [
       {
         "name": "Thana Glass Aluminum Co., Ltd. (Headquarters)",
@@ -131,7 +133,7 @@
         "mobile": "088-7652642",
         "email": "info@thana-glass.com",
         "line": "@thanaglass",
-        "mapUrl": "https://maps.google.com/maps?q=46/9%20Moo%206%20Chalong%20Mueang%20Phuket%20Phuket%2083130&t=&z=16&ie=UTF8&iwloc=&output=embed"
+        "mapUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3952.433913615438!2d98.33373259999999!3d7.849572600000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30502e23e5b44b9d%3A0x44763c2c447382a1!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4mOC4meC4siDguIHguKXguLLguKog4Lit4Lil4Li54Lih4Li04LiZ4Lix4LmI4LihIOC4iOC4s-C4geC4seC4lCAo4Liq4Liz4LiZ4Lix4LiB4LiH4Liy4LiZ4LmD4Lir4LiN4LmIKQ!5e0!3m2!1sth!2sth!4v1783251398160!5m2!1sth!2sth"
       },
       {
         "name": "Thana Glass Aluminum Co., Ltd. (Branch 000001)",
@@ -140,7 +142,7 @@
         "mobile": "088-7652642",
         "email": "info@thana-glass.com",
         "line": "@thanaglass",
-        "mapUrl": "https://maps.google.com/maps?q=36%20Moo%204%20Chalong%20Mueang%20Phuket%20Phuket%2083130&t=&z=16&ie=UTF8&iwloc=&output=embed"
+        "mapUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3952.439982786682!2d98.33837757568509!3d7.848934406342009!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30502fba1cbbedd1%3A0xfcbc73eeb41b67c0!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4mOC4meC4siDguIHguKXguLLguKog4Lit4Lil4Li54Lih4Li04LiZ4Lix4LmI4LihIOC4iOC5jeC4suC4geC4seC4lCAo4Liq4Liy4LiC4Liy4LmC4Lij4LiH4LiH4Liy4LiZKQ!5e0!3m2!1sth!2sth!4v1783251773061!5m2!1sth!2sth"
       },
       {
         "name": "Thana Glass Thalang Co., Ltd.",
@@ -149,7 +151,7 @@
         "mobile": "088-7652642",
         "email": "info@thanathalang.com",
         "line": "@thanathalang",
-        "mapUrl": "https://maps.google.com/maps?q=168%20Moo%207%20Thep%20Krasattri%20Thalang%20Phuket%20Phuket%2083110&t=&z=16&ie=UTF8&iwloc=&output=embed"
+        "mapUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.5235885178736!2d98.33461147568606!3d8.04795090357208!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3050376121809eb1%3A0x864e9c2653753a94!2z4Lia4Lij4Li04Lip4Lix4LiXIOC4mOC4meC4siDguIHguKXguLLguKog4LiW4Lil4Liy4LiHIOC4iOC4s-C4geC4seC4lA!5e0!3m2!1sth!2sth!4v1783251903164!5m2!1sth!2sth"
       }
     ]
   }
