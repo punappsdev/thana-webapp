@@ -47,16 +47,16 @@ export function ProductList() {
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-headline-lg-mobile md:text-headline-lg text-primary mb-2">
+            <h2 className="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">
               {t("title")}
             </h2>
-            <p className="text-body-md text-muted-foreground">
+            <p className="font-body-md text-muted-foreground">
               {t("desc")}
             </p>
           </div>
           <Link
             href="#"
-            className="text-primary font-bold hover:underline flex items-center gap-1 font-sans text-sm"
+            className="text-primary font-bold hover:underline flex items-center gap-1 font-label-sm"
           >
             {t("viewAll")} <ChevronRight className="h-4 w-4" />
           </Link>
@@ -78,21 +78,21 @@ export function ProductList() {
                 />
                 {prod.tag && (
                   <span
-                    className={`absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full ${prod.tagBg}`}
+                    className={`absolute top-4 left-4 text-white font-label-sm font-bold px-3 py-1 rounded-full ${prod.tagBg}`}
                   >
                     {prod.tag}
                   </span>
                 )}
               </div>
               <div className="p-6">
-                <h4 className="text-body-lg text-primary mb-2 font-semibold">
+                <h4 className="font-headline-sm text-primary mb-2 font-semibold">
                   {prod.title}
                 </h4>
-                <p className="text-body-md text-muted-foreground line-clamp-2 mb-4 min-h-[40px]">
+                <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4 min-h-[40px]">
                   {prod.desc}
                 </p>
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-lg text-secondary font-sans">
+                  <span className="font-body-lg text-secondary font-bold">
                     {prod.price}
                   </span>
                   <button

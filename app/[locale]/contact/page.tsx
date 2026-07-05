@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
-import { Phone, Mail, MessageSquare, MapPin, Map } from "lucide-react";
+import { Phone, Mail, MapPin, Map } from "lucide-react";
 import Image from "next/image";
 
 interface Branch {
@@ -54,10 +54,10 @@ export default function ContactPage() {
             }}
           />
           <div className="max-w-[1280px] mx-auto px-4 md:px-10 relative z-10 animate-fade-in">
-            <h1 className="font-heading text-3xl md:text-5xl font-bold mb-4 tracking-tight">
+            <h1 className="font-headline-lg-mobile md:font-display-md mb-4">
               {t("title")}
             </h1>
-            <p className="font-sans text-sm md:text-lg max-w-2xl mx-auto opacity-90 font-light leading-relaxed">
+            <p className="font-body-md md:font-body-lg max-w-2xl mx-auto opacity-90">
               {t("subtitle")}
             </p>
           </div>
@@ -105,10 +105,10 @@ export default function ContactPage() {
 
                         {/* Branch detail */}
                         <div className="flex-1 min-w-0 flex flex-col">
-                          <h3 className={`font-heading text-base md:text-lg font-semibold leading-tight mb-2 ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
+                          <h3 className={`font-headline-sm mb-2 ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
                             {branch.name}
                           </h3>
-                          <p className="font-sans text-xs md:text-sm text-muted-foreground mb-3 leading-relaxed flex items-start gap-1.5">
+                          <p className="font-body-sm text-muted-foreground mb-3 flex items-start gap-1.5">
                             <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                             <span>{branch.address}</span>
                           </p>
@@ -160,7 +160,7 @@ export default function ContactPage() {
                                   mapElement.scrollIntoView({ behavior: "smooth" });
                                 }
                               }}
-                              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-full bg-primary hover:bg-primary-container text-white text-xs font-semibold font-heading shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
+                              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-full bg-primary hover:bg-primary-container text-white font-label-sm font-semibold shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
                             >
                               <Map className="h-3.5 w-3.5" />
                               {t("viewMap")}
@@ -183,10 +183,10 @@ export default function ContactPage() {
                         <Map className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <h4 className="font-heading text-label-sm font-semibold text-foreground truncate leading-tight">
+                        <h4 className="font-label-md font-semibold text-foreground truncate">
                           {activeBranch.name}
                         </h4>
-                        <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider truncate">
+                        <p className="font-label-sm text-muted-foreground uppercase tracking-wider truncate">
                           {t("locationLabel")}
                         </p>
                       </div>
@@ -195,7 +195,7 @@ export default function ContactPage() {
                       href={branchMapLinks[activeIdx]}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-container text-white text-xs font-semibold font-heading shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary-container text-white font-label-sm font-semibold shadow-blue-sm hover:shadow-blue-md active:scale-95 transition-all"
                     >
                       <MapPin className="h-3.5 w-3.5" />
                       {t("openInMaps")}
@@ -219,7 +219,7 @@ export default function ContactPage() {
 
                   {/* Address footer */}
                   <div className="px-5 py-3 border-t border-[#c4e2f5]/60 bg-background/40">
-                    <p className="font-sans text-xs md:text-sm text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                    <p className="font-body-sm text-muted-foreground flex items-start gap-1.5">
                       <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                       <span>{activeBranch.address}</span>
                     </p>

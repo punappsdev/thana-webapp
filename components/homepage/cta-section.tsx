@@ -19,10 +19,10 @@ export function CtaSection() {
             }}
           />
           
-          <h2 className="text-headline-lg-mobile md:text-headline-lg mb-4 relative z-10">
+          <h2 className="font-headline-lg-mobile md:font-headline-lg mb-4 relative z-10">
             {t("title")}
           </h2>
-          <p className="text-body-md md:text-body-lg max-w-2xl mx-auto mb-10 opacity-90 relative z-10">
+          <p className="font-body-md md:font-body-lg max-w-2xl mx-auto mb-10 opacity-90 relative z-10">
             {t("desc")}
           </p>
 
@@ -30,7 +30,7 @@ export function CtaSection() {
             <a
               id="cta-tel-link"
               href="tel:076381444"
-              className="bg-white text-primary px-8 py-4 rounded-lg font-bold hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 text-label-sm shadow-md"
+              className="bg-white text-primary px-8 py-4 rounded-lg font-bold hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 font-label-sm shadow-md"
             >
               <Phone className="h-4 w-4" /> {t("call")}
             </a>
@@ -39,7 +39,7 @@ export function CtaSection() {
               href="https://line.me"
               target="_blank"
               rel="noopener noreferrer"
-              className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-label-sm"
+              className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 font-label-sm"
             >
               <MessageCircle className="h-4 w-4" /> {t("line")}
             </a>

@@ -92,20 +92,20 @@ export function Hero() {
             <div className="absolute inset-0 bg-gradient-to-b from-[#002c7d]/40 to-[#002c7d]/85" />
 
             <div className="relative z-10 h-full flex flex-col justify-center px-4 md:px-10 max-w-[1280px] mx-auto text-white">
-              <span className="text-label-sm bg-[#3ca6fe]/20 backdrop-blur-md px-4 py-2 rounded-full w-fit mb-6 tracking-wide">
+              <span className="font-label-sm bg-[#3ca6fe]/20 backdrop-blur-md px-4 py-2 rounded-full w-fit mb-6 tracking-wide">
                 {slide.tag}
               </span>
-              <h1 className="text-headline-lg-mobile md:text-display-lg max-w-2xl mb-6">
+              <h1 className="font-headline-lg-mobile md:font-display-lg max-w-2xl mb-6">
                 {slide.title}
               </h1>
-              <p className="text-body-md md:text-body-lg max-w-xl mb-8 opacity-90">
+              <p className="font-body-md md:font-body-lg max-w-xl mb-8 opacity-90">
                 {slide.desc}
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button className="h-11 px-8 text-label-sm font-semibold rounded-md shadow-lg bg-gradient-to-b from-[#078ee4] to-[#0040ad] hover:from-[#0040ad] hover:to-[#002c7d] text-white border-0 transition-all duration-300 cursor-pointer">
+                <Button className="h-11 px-8 font-label-sm font-semibold rounded-md shadow-lg bg-gradient-to-b from-[#078ee4] to-[#0040ad] hover:from-[#0040ad] hover:to-[#002c7d] text-white border-0 transition-all duration-300 cursor-pointer">
                   {t("btnProjects")}
                 </Button>
-                <Button variant="outline" className="h-11 px-8 text-label-sm font-semibold rounded-md border-white/40 text-white bg-transparent hover:bg-white/10 hover:text-white transition-all cursor-pointer">
+                <Button variant="outline" className="h-11 px-8 font-label-sm font-semibold rounded-md border-white/40 text-white bg-transparent hover:bg-white/10 hover:text-white transition-all cursor-pointer">
                   {t("btnConsult")}
                 </Button>
               </div>

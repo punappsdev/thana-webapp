@@ -11,13 +11,13 @@ export function AboutUs() {
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         {/* Text Description Block */}
         <div className="order-2 lg:order-1">
-          <span className="text-label-sm text-secondary font-bold tracking-wider mb-3 block">
+          <span className="font-label-sm text-secondary font-bold tracking-wider mb-3 block">
             {t("tag")}
           </span>
-          <h2 className="text-headline-lg-mobile lg:text-headline-lg text-primary mb-6">
+          <h2 className="font-headline-lg-mobile lg:font-headline-lg text-primary mb-6">
             {t("title")}
           </h2>
-          <p className="text-body-md text-muted-foreground mb-8">
+          <p className="font-body-md text-muted-foreground mb-8">
             {t("desc")}
           </p>
 
@@ -27,8 +27,8 @@ export function AboutUs() {
                 <Award className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="text-headline-md text-primary font-bold">{t("tis.title")}</h4>
-                <p className="text-label-sm text-muted-foreground mt-1">
+                <h4 className="font-headline-md text-primary font-bold">{t("tis.title")}</h4>
+                <p className="font-label-sm text-muted-foreground mt-1">
                   {t("tis.desc")}
                 </p>
               </div>
@@ -39,15 +39,15 @@ export function AboutUs() {
                 <Wrench className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="text-headline-md text-primary font-bold">{t("expert.title")}</h4>
-                <p className="text-label-sm text-muted-foreground mt-1">
+                <h4 className="font-headline-md text-primary font-bold">{t("expert.title")}</h4>
+                <p className="font-label-sm text-muted-foreground mt-1">
                   {t("expert.desc")}
                 </p>
               </div>
             </div>
           </div>
 
-          <button className="bg-primary hover:bg-[#00174b] text-white px-10 py-4 rounded-lg font-bold transition-all shadow-md text-label-sm cursor-pointer">
+          <button className="bg-primary hover:bg-[#00174b] text-white px-10 py-4 rounded-lg font-bold transition-all shadow-md font-label-sm cursor-pointer">
             {t("btnMore")}
           </button>
         </div>

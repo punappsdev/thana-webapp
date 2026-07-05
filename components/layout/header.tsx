@@ -63,7 +63,7 @@ export function Header() {
               <Link
                 key={idx}
                 href={link.href}
-                className={`text-label-sm whitespace-nowrap transition-colors ${
+                className={`font-label-lg whitespace-nowrap transition-colors ${
                   link.active
                     ? "text-primary border-b-2 border-primary-container pb-1 font-bold"
                     : "text-muted-foreground hover:text-primary"
@@ -77,14 +77,14 @@ export function Header() {
           {/* Right Actions */}
           <div className="flex items-center gap-4">
             {/* Search Input (desktop) */}
-            <div className="relative hidden xl:block">
+            <div className="relative hidden lg:block">
               <input
                 id="header-search-input"
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
+                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-label-lg text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
               />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
             </div>
 
             {/* Shopping Cart */}
@@ -93,11 +93,11 @@ export function Header() {
               className="flex items-center justify-center p-2 rounded-full hover:bg-muted transition-all text-primary"
               aria-label="ShoppingCart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-6 w-6" />
             </button>
 
             {/* Language Switcher */}
-            <div className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+            <div className="flex items-center gap-1 font-label-lg font-medium text-muted-foreground">
               <button
                 onClick={() => handleLocaleChange("th")}
                 className={`transition-colors cursor-pointer uppercase ${locale === "th" ? "font-bold text-primary" : "hover:text-primary"}`}
@@ -134,14 +134,14 @@ export function Header() {
         }`}
       >
         {/* Search (mobile) */}
-        <div className="relative w-full sm:hidden">
+        <div className="relative w-full">
           <input
             id="header-search-mobile"
             type="text"
             placeholder={t("searchPlaceholder")}
-            className="w-full bg-muted border border-border rounded-full px-4 py-2 text-sm text-foreground"
+            className="w-full bg-muted border border-border rounded-full px-4 py-2 font-label-md text-foreground"
           />
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
         </div>
         <nav className="flex flex-col gap-3">
           {navLinks.map((link, idx) => (
@@ -149,7 +149,7 @@ export function Header() {
               key={idx}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm py-1.5 transition-colors ${
+              className={`font-label-md py-1.5 transition-colors ${
                 link.active ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-muted-foreground pl-2"
               }`}
             >

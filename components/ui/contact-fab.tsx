@@ -32,7 +32,7 @@ export function ContactFab() {
       >
         {/* LINE Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
-          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
             {t("line")}
           </span>
           <a
@@ -51,7 +51,7 @@ export function ContactFab() {
 
         {/* Facebook Messenger Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
-          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
             {t("messenger")}
           </span>
           <a
@@ -70,7 +70,7 @@ export function ContactFab() {
 
         {/* Telephone Button */}
         <div className="flex items-center justify-end relative group h-12 w-12">
-          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+          <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
             {t("tel")}
           </span>
           <a

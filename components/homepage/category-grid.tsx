@@ -32,7 +32,7 @@ export function CategoryGrid() {
   return (
     <section className="py-12 px-4 md:px-10 max-w-[1280px] mx-auto bg-white">
       <div className="text-center mb-12">
-        <h2 className="text-headline-lg-mobile md:text-headline-lg text-primary mb-2">
+        <h2 className="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">
           {t("title")}
         </h2>
         <div className="w-24 h-1 bg-[#3ca6fe] mx-auto rounded-full" />
@@ -55,10 +55,10 @@ export function CategoryGrid() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#002c7d]/80 via-transparent to-transparent" />
             
             <div className="absolute bottom-0 left-0 p-6 text-white z-10">
-              <h3 className="text-headline-md font-bold">
+              <h3 className="font-headline-md font-bold">
                 {cat.title}
               </h3>
-              <p className="text-label-sm opacity-85 mt-1">
+              <p className="font-label-sm opacity-85 mt-1">
                 {cat.desc}
               </p>
             </div>
