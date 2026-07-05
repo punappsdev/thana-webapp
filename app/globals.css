@@ -73,7 +73,7 @@
 }
 
 :root {
-  --background: #faf8ff;       /* surface from DESIGN.md */
+  --background: #ffffff;       /* surface from DESIGN.md */
   --foreground: #1a1b22;       /* on-surface from DESIGN.md */
   
   --card: #ffffff;             /* surface-container-lowest */

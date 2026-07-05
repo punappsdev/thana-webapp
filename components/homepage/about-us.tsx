@@ -1,0 +1,65 @@
+import { Award, Wrench } from "lucide-react";
+
+export function AboutUs() {
+  return (
+    <section className="py-16 px-4 md:px-10 max-w-[1280px] mx-auto bg-white overflow-hidden">
+      <div className="grid lg:grid-cols-2 gap-12 items-center">
+        {/* Text Description Block */}
+        <div className="order-2 lg:order-1">
+          <span className="font-heading text-xs text-secondary font-bold tracking-wider mb-3 block">
+            ABOUT THANA GLASS GROUP
+          </span>
+          <h2 className="font-heading text-3xl font-semibold text-primary mb-6 leading-tight">
+            ผู้นำด้านนวัตกรรมกระจกและอลูมิเนียมที่คุณไว้วางใจ
+          </h2>
+          <p className="text-muted-foreground text-sm font-sans mb-8 leading-relaxed">
+            ด้วยประสบการณ์กว่า 20 ปีในอุตสาหกรรม **Thana Glass Group** มุ่งมั่นพัฒนามาตรฐานการผลิตและงานบริการอย่างต่อเนื่อง เราเป็นพันธมิตรที่ไว้วางใจได้สำหรับสถาปนิก ผู้รับเหมา และเจ้าของบ้านทั่วประเทศ
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <div className="flex gap-4">
+              <div className="bg-primary/5 p-3 rounded-lg h-fit text-primary">
+                <Award className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-primary font-heading text-base">มาตรฐาน มอก.</h4>
+                <p className="text-xs text-muted-foreground font-sans mt-1">
+                  ผลิตภัณฑ์ทุกชิ้นผ่านการทดสอบคุณภาพระดับสากล
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="bg-primary/5 p-3 rounded-lg h-fit text-primary">
+                <Wrench className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-primary font-heading text-base">ทีมติดตั้งมืออาชีพ</h4>
+                <p className="text-xs text-muted-foreground font-sans mt-1">
+                  ช่างผู้ชำนาญการพร้อมหน้างานจริงทั่วไทย
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button className="bg-primary hover:bg-[#00174b] text-white px-10 py-4 rounded-lg font-bold transition-all shadow-md font-sans text-xs cursor-pointer">
+            อ่านเพิ่มเติมเกี่ยวกับเรา
+          </button>
+        </div>
+
+        {/* Picture Block */}
+        <div className="order-1 lg:order-2 relative w-full">
+          <div className="absolute -top-6 -right-6 w-32 h-32 bg-[#3ca6fe]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#0040ad]/10 rounded-full blur-3xl pointer-events-none" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoOSXll4ceaL7B3u_T-YeLfaQGcVHGpJrpnazlPTofotMFZUyxVKy5P8TA4c9LEa3S_ccuxAmbl_VPyY0n-9i3Ur_q-Zmn_xAUCraU0Gng3jvPvuAmVCXAJ5gHtlIZ4YVrIXnrGp93_gDBrzaRpBrI0DYDGIRJfYpWOHkNovQYgCVusy34czuM5y2MArKZ5WE-JW4_3g468cnmVkwriHXWuUDn4Ij8Spj-Ax1Ftzd5P0CGpMIqwsFa15XVfTSmjdp_IuetFTPaj0g"
+            alt="Thana Glass fabrication factory warehouse"
+            className="rounded-2xl relative z-10 w-full object-cover h-[450px]"
+            style={{ boxShadow: "0 10px 30px -10px rgba(0, 64, 173, 0.08)" }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
