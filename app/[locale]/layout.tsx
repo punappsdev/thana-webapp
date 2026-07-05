@@ -17,8 +17,8 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "Thana Glass Group",
-  description: "High-end glass and aluminum installation services",
+  title: "Thana Glass | กระจกนิรภัย กระจกอลูมิเนียม ภูเก็ต",
+  description: "High-end glass and aluminum installation services in Phuket",
 };
 
 export default async function RootLayout({

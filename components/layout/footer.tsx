@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { Globe, Mail, Phone, Clock, MapPin } from "lucide-react";
+import { Mail, Phone, Clock, MapPin } from "lucide-react";
 import { Link } from "../../i18n/routing";
 
 export function Footer() {
@@ -25,9 +25,16 @@ export function Footer() {
             {t("desc")}
           </p>
           <div className="flex gap-4">
-            <Link href="#" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
-              <Globe className="h-5 w-5" />
-            </Link>
+            <a
+              href="https://line.me/R/ti/p/~@thanaglass"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-accent rounded-full hover:bg-[#06C755] hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95 flex items-center justify-center"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                <path d="M22 10.364c0-4.577-4.486-8.364-10-8.364s-10 3.787-10 8.364c0 4.1 3.568 7.525 8.389 8.217l-1.602 3.19c-.09.18.016.398.21.332l4.802-1.644c5.093-.244 8.201-3.647 8.201-8.455" />
+              </svg>
+            </a>
             <a href="mailto:info@thana-glass.com" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
               <Mail className="h-5 w-5" />
             </a>

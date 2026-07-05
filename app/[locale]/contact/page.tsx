@@ -121,7 +121,7 @@ export default function ContactPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="h-8 w-8 rounded-full bg-white text-[#06C755] flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
+                              className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
                               title="LINE"
                             >
                               <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
