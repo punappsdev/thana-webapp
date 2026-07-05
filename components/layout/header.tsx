@@ -63,7 +63,7 @@ export function Header() {
               <Link
                 key={idx}
                 href={link.href}
-                className={`font-label-lg whitespace-nowrap transition-colors ${
+                className={`font-body-md whitespace-nowrap transition-colors ${
                   link.active
                     ? "text-primary border-b-2 border-primary-container pb-1 font-bold"
                     : "text-muted-foreground hover:text-primary"
@@ -82,7 +82,7 @@ export function Header() {
                 id="header-search-input"
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-label-lg text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
+                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-body-md text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
             </div>
@@ -97,7 +97,7 @@ export function Header() {
             </button>
 
             {/* Language Switcher */}
-            <div className="flex items-center gap-1 font-label-lg font-medium text-muted-foreground">
+            <div className="flex items-center gap-1 font-body-md font-medium text-muted-foreground">
               <button
                 onClick={() => handleLocaleChange("th")}
                 className={`transition-colors cursor-pointer uppercase ${locale === "th" ? "font-bold text-primary" : "hover:text-primary"}`}
@@ -139,7 +139,7 @@ export function Header() {
             id="header-search-mobile"
             type="text"
             placeholder={t("searchPlaceholder")}
-            className="w-full bg-muted border border-border rounded-full px-4 py-2 font-label-md text-foreground"
+            className="w-full bg-muted border border-border rounded-full px-4 py-2 font-body-sm text-foreground"
           />
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
         </div>
@@ -149,7 +149,7 @@ export function Header() {
               key={idx}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`font-label-md py-1.5 transition-colors ${
+              className={`font-body-sm py-1.5 transition-colors ${
                 link.active ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-muted-foreground pl-2"
               }`}
             >
