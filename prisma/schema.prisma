@@ -11,3 +11,39 @@ generator client {
 datasource db {
   provider = "mysql"
 }
+
+model ArticleCategory {
+  id        Int       @id @default(autoincrement())
+  slug      String    @unique
+  nameTh    String
+  nameEn    String
+  articles  Article[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+model Article {
+  id                Int              @id @default(autoincrement())
+  slug              String           @unique
+  titleTh           String
+  titleEn           String
+  contentTh         String           @db.Text
+  contentEn         String           @db.Text
+  excerptTh         String?          @db.Text
+  excerptEn         String?          @db.Text
+  coverImage        String?
+  published         Boolean          @default(false)
+  
+  // Relations
+  articleCategoryId Int?
+  category          ArticleCategory? @relation(fields: [articleCategoryId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([slug])
+  @@index([articleCategoryId])
+}
+

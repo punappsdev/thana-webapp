@@ -221,5 +221,16 @@
         "desc": "Wait for the quotation via LINE and Gmail"
       }
     ]
+  },
+  "Articles": {
+    "eyebrow": "Knowledge Base",
+    "title": "Articles & Knowledge",
+    "description": "A collection of useful articles about glass, aluminum, and interior designs.",
+    "search": "Search articles...",
+    "all": "All",
+    "readMore": "Read More",
+    "noArticles": "No articles found.",
+    "back": "Back to Articles",
+    "publishedAt": "Published on"
   }
 }
