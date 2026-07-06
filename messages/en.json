@@ -231,6 +231,9 @@
     "readMore": "Read More",
     "noArticles": "No articles found.",
     "back": "Back to Articles",
-    "publishedAt": "Published on"
+    "publishedAt": "Published on",
+    "home": "Home",
+    "share": "Share",
+    "readingTime": "{minutes} min read"
   }
 }
