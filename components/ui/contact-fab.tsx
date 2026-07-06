@@ -29,7 +29,7 @@ export function ContactFab() {
       >
         {/* Expanding Stack */}
         <div
-          className={`flex flex-col items-end gap-3 transition-all duration-300 ${
+          className={`flex flex-col items-end gap-3 transition-all duration-500 ${
             isOpen
               ? "max-h-[300px] opacity-100 translate-y-0 scale-100 overflow-visible"
               : "max-h-0 opacity-0 translate-y-4 scale-95 pointer-events-none overflow-hidden"
@@ -37,7 +37,7 @@ export function ContactFab() {
         >
           {/* LINE Button */}
           <div className="flex items-center justify-end relative group h-12 w-12">
-            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 whitespace-nowrap pointer-events-none">
               {t("line")}
             </span>
             <a
@@ -56,7 +56,7 @@ export function ContactFab() {
 
           {/* Facebook Messenger Button */}
           <div className="flex items-center justify-end relative group h-12 w-12">
-            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 whitespace-nowrap pointer-events-none">
               {t("messenger")}
             </span>
             <a
@@ -75,7 +75,7 @@ export function ContactFab() {
 
           {/* Telephone Button */}
           <div className="flex items-center justify-end relative group h-12 w-12">
-            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 whitespace-nowrap pointer-events-none">
               {t("tel")}
             </span>
             <a
@@ -92,7 +92,7 @@ export function ContactFab() {
         <button
           id="fab-main-toggle"
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-[#0062a0] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer shrink-0"
+          className="bg-[#0062a0] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all duration-500 cursor-pointer shrink-0"
           aria-label="Contact options"
         >
           <MessageSquare className="h-6 w-6" />
@@ -101,19 +101,19 @@ export function ContactFab() {
 
       {/* Scroll to Top — separate from FAB hover area, shows below FAB when scrolled */}
       <div
-        className={`flex items-center justify-end relative group shrink-0 transition-all duration-300 ${
+        className={`flex items-center justify-end relative group shrink-0 transition-all duration-500 ${
           showScrollTop
             ? "max-h-14 opacity-100 translate-y-0 scale-100 overflow-visible"
             : "max-h-0 opacity-0 translate-y-4 scale-95 pointer-events-none overflow-hidden"
         }`}
       >
-        <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+        <span className="absolute right-14 bg-white text-[#0062a0] px-3 py-1.5 rounded-lg font-label-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-500 whitespace-nowrap pointer-events-none">
           {t("scrollTop")}
         </span>
         <button
           onClick={scrollToTop}
           aria-label={t("scrollTop")}
-          className="bg-white text-[#0062a0] w-14 h-14 rounded-full flex items-center justify-center shadow-xl border border-[#c4e2f5] hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer"
+          className="bg-white text-[#0062a0] w-14 h-14 rounded-full flex items-center justify-center shadow-xl border border-[#c4e2f5] hover:scale-110 active:scale-95 transition-all duration-500 cursor-pointer"
         >
           <ArrowUp className="h-6 w-6 shrink-0" />
         </button>
