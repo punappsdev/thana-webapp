@@ -9,6 +9,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Always prioritize using components from **shadcn/ui** first before building custom components for any new pages, views, or interface elements.
 - Always prioritize using icons from **lucide-react** first if available, and never use emojis as icons.
 - Check all UI work against the design principles and tokens specified in [DESIGN.md] to ensure correct typography, colors, shadows, and spacing.
+- **ห้ามใช้ raw Tailwind text-*** (เช่น `text-lg`, `text-2xl`, `text-3xl` เป็นต้น) ในการกำหนดขนาด/รูปแบบ font บนทุกหน้า UI ให้ใช้ utility classes สำหรับ font ที่ถูกกำหนดไว้ใน [globals.css] (เช่น `font-display-lg`, `font-headline-md`, `font-title-lg`, `font-body-md` เป็นต้น) ตามข้อกำหนดใน [DESIGN.md]
+
 
 
 

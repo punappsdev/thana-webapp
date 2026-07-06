@@ -87,7 +87,7 @@ export default async function ArticlesPage({
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <Link
                 href="/articles"
-                className={`px-4 py-2 text-sm rounded-md font-medium transition-all ${
+                className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
                   !category
                     ? "bg-primary text-white shadow-sm"
                     : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
@@ -99,7 +99,7 @@ export default async function ArticlesPage({
                 <Link
                   key={cat.id}
                   href={`/articles?category=${cat.slug}${query ? `&query=${query}` : ""}`}
-                  className={`px-4 py-2 text-sm rounded-md font-medium transition-all ${
+                  className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
                     category === cat.slug
                       ? "bg-primary text-white shadow-sm"
                       : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
@@ -117,7 +117,7 @@ export default async function ArticlesPage({
                 name="query"
                 defaultValue={query || ""}
                 placeholder={t("search")}
-                className="w-full bg-[#ffffff] border border-[#c4e2f5] focus:border-primary focus:ring-1 focus:ring-primary rounded-md pl-10 pr-4 py-2 text-sm text-on-surface outline-none transition-all"
+                className="w-full bg-[#ffffff] border border-[#c4e2f5] focus:border-primary focus:ring-1 focus:ring-primary rounded-md pl-10 pr-4 py-2 font-label-sm text-on-surface outline-none transition-all"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#747684]" />
               {category && <input type="hidden" name="category" value={category} />}
@@ -129,7 +129,7 @@ export default async function ArticlesPage({
         <section className="max-w-[1280px] mx-auto px-4 md:px-10 pb-16 md:pb-24">
           {articles.length === 0 ? (
             <div className="text-center py-16 bg-[#ffffff] border border-[#c4e2f5] rounded-2xl shadow-blue-sm">
-              <p className="text-[#434653] text-lg font-medium">{t("noArticles")}</p>
+              <p className="text-[#434653] font-body-lg font-medium">{t("noArticles")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -167,7 +167,7 @@ export default async function ArticlesPage({
                     <div className="flex-1 p-6 flex flex-col justify-between">
                       <div className="space-y-3">
                         {/* Meta Tags */}
-                        <div className="flex items-center gap-3 text-xs text-[#747684]">
+                        <div className="flex items-center gap-3 font-label-sm text-[#747684]">
                           {catName && (
                             <span className="bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-medium">
                               {catName}
@@ -183,7 +183,7 @@ export default async function ArticlesPage({
                         </div>
 
                         {/* Title */}
-                        <h2 className="font-prompt text-xl font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
+                        <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
                           <Link href={`/articles/${article.slug}`}>
                             {title}
                           </Link>
@@ -191,7 +191,7 @@ export default async function ArticlesPage({
 
                         {/* Excerpt */}
                         {excerpt && (
-                          <p className="text-[#434653] text-sm line-clamp-3 leading-relaxed">
+                          <p className="text-[#434653] font-body-sm line-clamp-3">
                             {excerpt}
                           </p>
                         )}
@@ -201,7 +201,7 @@ export default async function ArticlesPage({
                       <div className="pt-6 mt-auto">
                         <Link
                           href={`/articles/${article.slug}`}
-                          className="inline-flex items-center text-sm font-semibold text-primary hover:text-primary-container transition-colors"
+                          className="inline-flex items-center font-label-sm font-semibold text-primary hover:text-primary-container transition-colors"
                         >
                           {t("readMore")} →
                         </Link>

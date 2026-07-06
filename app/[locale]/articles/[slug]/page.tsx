@@ -61,7 +61,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
       <main className="flex-1 pt-[72px] md:pt-[80px] pb-16">
         {/* Breadcrumbs */}
         <nav className="bg-[#faf8ff] border-b border-[#c4e2f5]/60 py-4 px-4 md:px-10">
-          <div className="max-w-4xl mx-auto flex items-center gap-2 text-xs md:text-sm text-[#434653]">
+          <div className="max-w-4xl mx-auto flex items-center gap-2 font-label-sm text-[#434653]">
             <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -86,7 +86,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
               {/* Article Header */}
               <div className="space-y-4">
                 {catName && (
-                  <span className="inline-block bg-primary/10 text-primary text-sm px-3.5 py-1 rounded-md font-semibold tracking-wide">
+                  <span className="inline-block bg-primary/10 text-primary font-label-sm px-3.5 py-1 rounded-md font-semibold tracking-wide">
                     {catName}
                   </span>
                 )}
@@ -94,7 +94,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
                   {title}
                 </h1>
 
-                <div className="flex items-center gap-2 text-sm text-[#747684] border-b border-[#ededf7] pb-6">
+                <div className="flex items-center gap-2 font-body-sm text-[#747684] border-b border-[#ededf7] pb-6">
                   <Calendar className="h-4 w-4 text-primary" />
                   <span>
                     {t("publishedAt")}{" "}
@@ -124,7 +124,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
               <div
                 className="max-w-none text-muted-foreground leading-relaxed font-body-md space-y-6 
                            [&>p]:font-body-md [&>p]:leading-relaxed [&>p]:mb-4
-                           [&>h3]:font-prompt [&>h3]:text-2xl [&>h3]:font-bold [&>h3]:text-primary [&>h3]:mt-8 [&>h3]:mb-4 [&>h3]:border-l-4 [&>h3]:border-primary-container [&>h3]:pl-3
+                           [&>h3]:font-headline-md [&>h3]:font-bold [&>h3]:text-primary [&>h3]:mt-8 [&>h3]:mb-4 [&>h3]:border-l-4 [&>h3]:border-primary-container [&>h3]:pl-3
                            [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2 [&>ol]:my-4 [&>ol>li]:font-body-md
                            [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>ul]:my-4 [&>ul>li]:font-body-md
                            [&>strong]:text-foreground [&>strong]:font-semibold"
@@ -135,7 +135,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
               <div className="border-t border-[#ededf7] pt-8 mt-12">
                 <Link
                   href="/articles"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-container transition-all hover:-translate-x-0.5"
+                  className="inline-flex items-center gap-2 font-label-sm font-semibold text-primary hover:text-primary-container transition-all hover:-translate-x-0.5"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   {t("back")}
