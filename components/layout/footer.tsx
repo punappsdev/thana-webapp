@@ -19,7 +19,8 @@ export function Footer() {
             alt="Thana Glass Logo"
             width={160}
             height={48}
-            className="h-12 w-fit object-contain"
+            className="h-12 w-auto object-contain self-start"
+            style={{ width: 'auto' }}
           />
           <p className="text-muted-foreground font-body-sm">
             {t("desc")}

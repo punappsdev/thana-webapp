@@ -72,6 +72,7 @@ export default function AboutPage() {
                     width={220}
                     height={220}
                     className="w-full h-auto object-contain brightness-0 invert"
+                    style={{ width: '100%', height: 'auto' }}
                     priority
                   />
                 </div>
