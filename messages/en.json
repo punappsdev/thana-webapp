@@ -222,6 +222,13 @@
       }
     ]
   },
+  "Portfolio": {
+    "eyebrow": "Our Works",
+    "title": "Project Showcase",
+    "description": "A collection of our glass and aluminum installation works, by category.",
+    "all": "All",
+    "noWorks": "No works found in this category."
+  },
   "Articles": {
     "eyebrow": "Knowledge Base",
     "title": "Articles & Knowledge",

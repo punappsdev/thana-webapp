@@ -30,7 +30,7 @@ export function Header() {
     { label: t("nav.home"), href: "/", active: pathname === "/" },
     { label: t("nav.products"), href: "#" },
     { label: t("nav.news"), href: "#" },
-    { label: t("nav.projects"), href: "#" },
+    { label: t("nav.projects"), href: "/portfolio", active: pathname.startsWith("/portfolio") },
     { label: t("nav.articles"), href: "/articles", active: pathname.startsWith("/articles") },
     { label: t("nav.aboutUs"), href: "/about", active: pathname === "/about" },
     { label: t("nav.contactUs"), href: "/contact", active: pathname === "/contact" },

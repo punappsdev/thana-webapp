@@ -35,7 +35,7 @@ model Article {
   excerptEn         String?          @db.Text
   coverImage        String?
   published         Boolean          @default(false)
-  
+
   // Relations
   articleCategoryId Int?
   category          ArticleCategory? @relation(fields: [articleCategoryId], references: [id], onDelete: SetNull)
@@ -45,5 +45,38 @@ model Article {
 
   @@index([slug])
   @@index([articleCategoryId])
+}
+
+model WorkCategory {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  nameTh    String
+  nameEn    String
+  works     Work[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Work {
+  id              Int           @id @default(autoincrement())
+  slug            String        @unique
+  titleTh         String
+  titleEn         String
+  descriptionTh   String?       @db.Text
+  descriptionEn   String?       @db.Text
+  coverImage      String?
+  published       Boolean       @default(false)
+
+  // Relations
+  workCategoryId  Int?
+  category        WorkCategory? @relation(fields: [workCategoryId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([workCategoryId])
 }
 

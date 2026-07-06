@@ -5,6 +5,8 @@ async function main() {
   console.log("Cleaning old data...");
   await prisma.article.deleteMany({});
   await prisma.articleCategory.deleteMany({});
+  await prisma.work.deleteMany({});
+  await prisma.workCategory.deleteMany({});
 
   console.log("Seeding categories...");
   const catKnowledge = await prisma.articleCategory.create({
@@ -63,6 +65,121 @@ async function main() {
         coverImage: "/api/uploads/articles/minimalist-home.jpg",
         published: true,
         articleCategoryId: catDesign.id,
+      },
+    ],
+  });
+
+  console.log("Seeding work categories...");
+  const workCategories = await Promise.all(
+    [
+      { slug: "general-glass", nameTh: "กระจกทั่วไป", nameEn: "General Glass" },
+      { slug: "safety-glass", nameTh: "กระจกนิรภัย", nameEn: "Safety Glass" },
+      { slug: "decorative-glass", nameTh: "กระจกตกแต่ง", nameEn: "Decorative Glass" },
+      { slug: "aluminum", nameTh: "อลูมิเนียม", nameEn: "Aluminum" },
+      { slug: "installation-hardware", nameTh: "อุปกรณ์ติดตั้ง", nameEn: "Installation Hardware" },
+      { slug: "zinc-sheet", nameTh: "แผ่นซิปซั่ม", nameEn: "Zinc Sheets" },
+    ].map((cat) => prisma.workCategory.create({ data: cat }))
+  );
+  const [catGeneralGlass, catSafetyGlass, catDecorativeGlass, catAluminum, catHardware, catZincSheet] = workCategories;
+
+  console.log("Seeding works...");
+  await prisma.work.createMany({
+    data: [
+      // General Glass
+      {
+        slug: "general-glass-shopfront",
+        titleTh: "หน้ากุ๊กประตูกระจกร้านค้า",
+        titleEn: "Glass Shopfront Front Door",
+        descriptionTh: "ติดตั้งกระจกใสใบใหญ่สำหรับหน้าร้านค้า ให้มองเห็นสินค้าได้ชัดเจน สวยงามและทันสมัย",
+        descriptionEn: "Clear large-pane glass installation for shopfronts, offering a clear product view with a modern look.",
+        coverImage: "/api/uploads/portfolio/general-glass-shopfront.jpg",
+        published: true,
+        workCategoryId: catGeneralGlass.id,
+      },
+      {
+        slug: "general-glass-window",
+        titleTh: "หน้าต่างกระจกใสบ้านพักอาศัย",
+        titleEn: "Clear Glass Residential Windows",
+        descriptionTh: "หน้าต่างกระจกใสสำหรับบ้านพัก รับแสงธรรมชาติเข้าบ้านเต็มพื้นที่",
+        descriptionEn: "Clear glass windows for homes, maximizing natural daylight in every room.",
+        coverImage: "/api/uploads/portfolio/general-glass-window.jpg",
+        published: true,
+        workCategoryId: catGeneralGlass.id,
+      },
+      // Safety Glass
+      {
+        slug: "safety-glass-shower-screen",
+        titleTh: "ฉากกั้นอาบน้ำกระจกเทมเปอร์",
+        titleEn: "Tempered Glass Shower Screen",
+        descriptionTh: "ฉากกั้นอาบน้ำกระจกเทมเปอร์ หนา 10 มม. ปลอดภัย ทนทาน ทำความสะอาดง่าย",
+        descriptionEn: "10mm tempered glass shower screen — safe, durable, and easy to clean.",
+        coverImage: "/api/uploads/portfolio/safety-glass-shower-screen.jpg",
+        published: true,
+        workCategoryId: catSafetyGlass.id,
+      },
+      {
+        slug: "safety-glass-railing",
+        titleTh: "ราวกันตกกระจกลามิเนต",
+        titleEn: "Laminated Glass Balustrade",
+        descriptionTh: "ราวกันตกกระจกลามิเนตสำหรับระเบียงและบันได ผ่านมาตรฐาน มอก.",
+        descriptionEn: "Laminated glass balustrade for balconies and staircases, TIS-certified for safety.",
+        coverImage: "/api/uploads/portfolio/safety-glass-railing.jpg",
+        published: true,
+        workCategoryId: catSafetyGlass.id,
+      },
+      // Decorative Glass
+      {
+        slug: "decorative-glass-partition",
+        titleTh: "ผนังกั้นกระจกลาย",
+        titleEn: "Decorative Glass Partition",
+        descriptionTh: "ผนังกั้นกระจกลายสวยสำหรับสำนักงาน เพิ่มความเป็นส่วนตัวโดยไม่ทึบ",
+        descriptionEn: "Patterned decorative glass partition for offices — privacy without losing light.",
+        coverImage: "/api/uploads/portfolio/decorative-glass-partition.jpg",
+        published: true,
+        workCategoryId: catDecorativeGlass.id,
+      },
+      // Aluminum
+      {
+        slug: "aluminum-slim-door",
+        titleTh: "ประตูบานเลื่อนอลูมิเนียมกรอบบาง",
+        titleEn: "Slim Aluminum Sliding Door",
+        descriptionTh: "ประตูบานเลื่อนอลูมิเนียม Slim Line กรอบบาง โอบรับกระจกใบใหญ่ดูโปร่ง",
+        descriptionEn: "Slim-line aluminum sliding door — ultra-thin frames for a wide, airy glass view.",
+        coverImage: "/api/uploads/portfolio/aluminum-slim-door.jpg",
+        published: true,
+        workCategoryId: catAluminum.id,
+      },
+      {
+        slug: "aluminum-window-frame",
+        titleTh: "ขอบหน้าต่างอลูมิเนียมสีขาว",
+        titleEn: "White Aluminum Window Frame",
+        descriptionTh: "ขอบหน้าต่างอลูมิเนียมสีขาว ทนทานต่อสภาพอากาศ กันสนิม",
+        descriptionEn: "White aluminum window frames — weather-resistant and rust-free.",
+        coverImage: "/api/uploads/portfolio/aluminum-window-frame.jpg",
+        published: true,
+        workCategoryId: catAluminum.id,
+      },
+      // Installation Hardware
+      {
+        slug: "hardware-glass-handle",
+        titleTh: "มือจับกระจกสแตนเลสเกรด 304",
+        titleEn: "Stainless Steel Glass Handle Grade 304",
+        descriptionTh: "มือจับกระจกสแตนเลสเกรด 304 ดีไซน์โมเดิร์น ทนทานการใช้งานหนัก",
+        descriptionEn: "Grade 304 stainless steel glass handle — modern design built for heavy use.",
+        coverImage: "/api/uploads/portfolio/hardware-glass-handle.jpg",
+        published: true,
+        workCategoryId: catHardware.id,
+      },
+      // Zinc Sheets
+      {
+        slug: "zinc-sheet-roofing",
+        titleTh: "หลังคาแผ่นซิปซั่มโรงงาน",
+        titleEn: "Zinc Sheet Factory Roofing",
+        descriptionTh: "ติดตั้งหลังคาแผ่นซิปซั่มสำหรับโรงงานและโกดัง ทนทานต่อทุกสภาพอากาศ",
+        descriptionEn: "Zinc sheet roofing installation for factories and warehouses, built to withstand any weather.",
+        coverImage: "/api/uploads/portfolio/zinc-sheet-roofing.jpg",
+        published: true,
+        workCategoryId: catZincSheet.id,
       },
     ],
   });
