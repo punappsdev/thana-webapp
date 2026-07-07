@@ -14,6 +14,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { CategoryFilter } from "@/components/ui/category-filter";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -101,31 +102,17 @@ export default async function ArticlesPage({
         <section className="max-w-[1280px] mx-auto px-4 md:px-10 py-8">
           <div className="flex flex-col md:flex-row gap-6 justify-between items-center border-b border-[#ededf7] pb-6">
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              <Link
-                href="/articles"
-                className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
-                  !category
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
-                }`}
-              >
-                {t("all")}
-              </Link>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/articles?category=${cat.slug}${query ? `&query=${query}` : ""}`}
-                  className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
-                    category === cat.slug
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
-                  }`}
-                >
-                  {locale === "en" ? cat.nameEn : cat.nameTh}
-                </Link>
-              ))}
-            </div>
+            <CategoryFilter
+              activeKey={category || ""}
+              items={[
+                { key: "", label: t("all"), href: `/articles${query ? `?query=${query}` : ""}` },
+                ...categories.map((cat) => ({
+                  key: cat.slug,
+                  label: locale === "en" ? cat.nameEn : cat.nameTh,
+                  href: `/articles?category=${cat.slug}${query ? `&query=${query}` : ""}`,
+                })),
+              ]}
+            />
 
             {/* Search Box */}
             <form method="GET" action="" className="relative w-full md:w-80">

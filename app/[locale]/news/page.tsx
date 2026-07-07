@@ -15,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { CategoryFilter } from "@/components/ui/category-filter";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -118,39 +119,15 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
               </p>
             </div>
 
-            {/* Filter Controls (Dropdown / Tags style) */}
-            <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              <Link
-                href="/news?type=all"
-                className={`px-4 py-2 font-label-sm rounded-md font-semibold transition-all border ${
-                  type === "all"
-                    ? "bg-primary text-white border-primary shadow-blue-sm"
-                    : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
-                }`}
-              >
-                {t("filterAll")}
-              </Link>
-              <Link
-                href="/news?type=news"
-                className={`px-4 py-2 font-label-sm rounded-md font-semibold transition-all border ${
-                  type === "news"
-                    ? "bg-primary text-white border-primary shadow-blue-sm"
-                    : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
-                }`}
-              >
-                {t("filterNews")}
-              </Link>
-              <Link
-                href="/news?type=promotions"
-                className={`px-4 py-2 font-label-sm rounded-md font-semibold transition-all border ${
-                  type === "promotions"
-                    ? "bg-primary text-white border-primary shadow-blue-sm"
-                    : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
-                }`}
-              >
-                {t("filterPromotions")}
-              </Link>
-            </div>
+            {/* Filter Controls */}
+            <CategoryFilter
+              activeKey={type}
+              items={[
+                { key: "all", label: t("filterAll"), href: "/news?type=all" },
+                { key: "news", label: t("filterNews"), href: "/news?type=news" },
+                { key: "promotions", label: t("filterPromotions"), href: "/news?type=promotions" },
+              ]}
+            />
           </div>
 
           {/* Grid content */}

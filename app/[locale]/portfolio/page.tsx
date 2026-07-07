@@ -3,7 +3,6 @@ import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/routing";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import {
@@ -14,6 +13,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { CategoryFilter } from "@/components/ui/category-filter";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -87,30 +87,18 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
 
         {/* Category Filter */}
         <section className="max-w-[1280px] mx-auto px-4 md:px-10 py-8">
-          <div className="flex flex-wrap gap-2 border-b border-[#ededf7] pb-6">
-            <Link
-              href="/portfolio"
-              className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
-                !category
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
-              }`}
-            >
-              {t("all")}
-            </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/portfolio?category=${cat.slug}`}
-                className={`px-4 py-2 font-label-sm rounded-md font-medium transition-all ${
-                  category === cat.slug
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] hover:bg-[#ededf7]"
-                }`}
-              >
-                {locale === "en" ? cat.nameEn : cat.nameTh}
-              </Link>
-            ))}
+          <div className="border-b border-[#ededf7] pb-6">
+            <CategoryFilter
+              activeKey={category || ""}
+              items={[
+                { key: "", label: t("all"), href: "/portfolio" },
+                ...categories.map((cat) => ({
+                  key: cat.slug,
+                  label: locale === "en" ? cat.nameEn : cat.nameTh,
+                  href: `/portfolio?category=${cat.slug}`,
+                })),
+              ]}
+            />
           </div>
         </section>
 
