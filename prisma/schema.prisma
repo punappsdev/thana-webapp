@@ -80,3 +80,40 @@ model Work {
   @@index([workCategoryId])
 }
 
+model News {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  titleTh     String
+  titleEn     String
+  contentTh   String   @db.Text
+  contentEn   String   @db.Text
+  excerptTh   String?  @db.Text
+  excerptEn   String?  @db.Text
+  coverImage  String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Promotion {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  titleTh     String
+  titleEn     String
+  contentTh   String    @db.Text
+  contentEn   String    @db.Text
+  excerptTh   String?   @db.Text
+  excerptEn   String?   @db.Text
+  coverImage  String?
+  published   Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+

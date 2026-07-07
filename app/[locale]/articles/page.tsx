@@ -4,12 +4,20 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { Calendar, Search, BookOpen } from "lucide-react";
+import { Calendar, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string; query?: string }>;
+  searchParams: Promise<{ category?: string; query?: string; page?: string }>;
 }
 
 export default async function ArticlesPage({
@@ -17,8 +25,13 @@ export default async function ArticlesPage({
   searchParams,
 }: PageProps) {
   const { locale } = await params;
-  const { category, query } = await searchParams;
+  const { category, query, page = "1" } = await searchParams;
+  const pageNumber = parseInt(page, 10) || 1;
+  const limit = 6;
+  const skip = (pageNumber - 1) * limit;
+
   const t = await getTranslations("Articles");
+  const tNews = await getTranslations("News");
 
   // Fetch categories
   const categories = await prisma.articleCategory.findMany({
@@ -41,12 +54,16 @@ export default async function ArticlesPage({
     ];
   }
 
-  // Fetch articles
-  const articles = await prisma.article.findMany({
+  // Fetch articles matching conditions (slice in memory)
+  const allArticles = await prisma.article.findMany({
     where,
     include: { category: true },
     orderBy: { createdAt: "desc" },
   });
+
+  const totalItems = allArticles.length;
+  const totalPages = Math.ceil(totalItems / limit);
+  const articles = allArticles.slice(skip, skip + limit);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -132,85 +149,147 @@ export default async function ArticlesPage({
               <p className="text-[#434653] font-body-lg font-medium">{t("noArticles")}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articles.map((article) => {
-                const title = locale === "en" ? article.titleEn : article.titleTh;
-                const excerpt = locale === "en" ? article.excerptEn : article.excerptTh;
-                const catName = article.category
-                  ? locale === "en"
-                    ? article.category.nameEn
-                    : article.category.nameTh
-                  : null;
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {articles.map((article) => {
+                  const title = locale === "en" ? article.titleEn : article.titleTh;
+                  const excerpt = locale === "en" ? article.excerptEn : article.excerptTh;
+                  const catName = article.category
+                    ? locale === "en"
+                      ? article.category.nameEn
+                      : article.category.nameTh
+                    : null;
 
-                return (
-                  <article
-                    key={article.id}
-                    className="group relative flex flex-col bg-white rounded-2xl border border-[#c4e2f5] shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                  >
-                    {/* Top accent bar */}
-                    <span className="absolute top-0 left-0 h-1 w-0 bg-linear-to-r from-[#078ee4] to-primary group-hover:w-full transition-all duration-500" />
+                  return (
+                    <article
+                      key={article.id}
+                      className="group relative flex flex-col bg-white rounded-2xl border border-[#c4e2f5] shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                    >
+                      {/* Top accent bar */}
+                      <span className="absolute top-0 left-0 h-1 w-0 bg-linear-to-r from-[#078ee4] to-primary group-hover:w-full transition-all duration-500" />
 
-                    {/* Cover Image */}
-                    {article.coverImage && (
-                      <div className="relative aspect-video w-full overflow-hidden bg-[#e2e2eb]">
-                        <Image
-                          src={article.coverImage}
-                          alt={title}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      </div>
-                    )}
+                      {/* Cover Image */}
+                      {article.coverImage && (
+                        <div className="relative aspect-video w-full overflow-hidden bg-[#e2e2eb]">
+                          <Image
+                            src={article.coverImage}
+                            alt={title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        </div>
+                      )}
 
-                    {/* Content Area */}
-                    <div className="flex-1 p-6 flex flex-col justify-between">
-                      <div className="space-y-3">
-                        {/* Meta Tags */}
-                        <div className="flex items-center gap-3 font-label-sm text-[#747684]">
-                          {catName && (
-                            <span className="bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-medium">
-                              {catName}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {new Date(article.createdAt).toLocaleDateString(
-                              locale === "en" ? "en-US" : "th-TH",
-                              { year: "numeric", month: "short", day: "numeric" }
+                      {/* Content Area */}
+                      <div className="flex-1 p-6 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          {/* Meta Tags */}
+                          <div className="flex items-center gap-3 font-label-sm text-[#747684]">
+                            {catName && (
+                              <span className="bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-medium">
+                                {catName}
+                              </span>
                             )}
-                          </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(article.createdAt).toLocaleDateString(
+                                locale === "en" ? "en-US" : "th-TH",
+                                { year: "numeric", month: "short", day: "numeric" }
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
+                            <Link href={`/articles/${article.slug}`}>
+                              {title}
+                            </Link>
+                          </h2>
+
+                          {/* Excerpt */}
+                          {excerpt && (
+                            <p className="text-[#434653] font-body-sm line-clamp-3">
+                              {excerpt}
+                            </p>
+                          )}
                         </div>
 
-                        {/* Title */}
-                        <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
-                          <Link href={`/articles/${article.slug}`}>
-                            {title}
+                        {/* Read More Link */}
+                        <div className="pt-6 mt-auto">
+                          <Link
+                            href={`/articles/${article.slug}`}
+                            className="inline-flex items-center font-label-sm font-semibold text-primary hover:text-primary-container transition-colors"
+                          >
+                            {t("readMore")} →
                           </Link>
-                        </h2>
-
-                        {/* Excerpt */}
-                        {excerpt && (
-                          <p className="text-[#434653] font-body-sm line-clamp-3">
-                            {excerpt}
-                          </p>
-                        )}
+                        </div>
                       </div>
+                    </article>
+                  );
+                })}
+              </div>
 
-                      {/* Read More Link */}
-                      <div className="pt-6 mt-auto">
-                        <Link
-                          href={`/articles/${article.slug}`}
-                          className="inline-flex items-center font-label-sm font-semibold text-primary hover:text-primary-container transition-colors"
-                        >
-                          {t("readMore")} →
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <Pagination className="pt-12">
+                  <PaginationContent>
+                    {/* Previous Button */}
+                    <PaginationItem>
+                      {pageNumber > 1 ? (
+                        <PaginationPrevious
+                          href={`/articles?category=${category || ""}${
+                            query ? `&query=${query}` : ""
+                          }&page=${pageNumber - 1}`}
+                          label={tNews("prevPage")}
+                        />
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-4 h-9 font-semibold rounded-md border border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none">
+                          <ChevronLeft className="h-4 w-4" />
+                          <span>{tNews("prevPage")}</span>
+                        </span>
+                      )}
+                    </PaginationItem>
+
+                    {/* Page links */}
+                    {Array.from({ length: totalPages }, (_, idx) => {
+                      const pNum = idx + 1;
+                      const isCurrent = pNum === pageNumber;
+
+                      return (
+                        <PaginationItem key={pNum}>
+                          <PaginationLink
+                            href={`/articles?category=${category || ""}${
+                              query ? `&query=${query}` : ""
+                            }&page=${pNum}`}
+                            isActive={isCurrent}
+                          >
+                            {pNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    {/* Next Button */}
+                    <PaginationItem>
+                      {pageNumber < totalPages ? (
+                        <PaginationNext
+                          href={`/articles?category=${category || ""}${
+                            query ? `&query=${query}` : ""
+                          }&page=${pageNumber + 1}`}
+                          label={tNews("nextPage")}
+                        />
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-4 h-9 font-semibold rounded-md border border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none">
+                          <span>{tNews("nextPage")}</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </span>
+                      )}
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </section>
       </main>

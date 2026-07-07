@@ -7,6 +7,8 @@ async function main() {
   await prisma.articleCategory.deleteMany({});
   await prisma.work.deleteMany({});
   await prisma.workCategory.deleteMany({});
+  await prisma.news.deleteMany({});
+  await prisma.promotion.deleteMany({});
 
   console.log("Seeding categories...");
   const catKnowledge = await prisma.articleCategory.create({
@@ -182,6 +184,66 @@ async function main() {
         workCategoryId: catZincSheet.id,
       },
     ],
+  });
+
+  console.log("Seeding promotions...");
+  await prisma.promotion.createMany({
+    data: [
+      {
+        slug: "grand-opening-promotion",
+        titleTh: "โปรโมชั่นฉลองเปิดตัวสาขาใหม่ ถลาง รับส่วนลดพิเศษทันที 10%",
+        titleEn: "Grand Opening Promotion Thalang - Get 10% Off Now",
+        contentTh: "<p>ฉลองเปิดตัวสาขาใหม่ถลางอย่างเป็นทางการ เพื่อตอบสนองความต้องการด้านงานกระจกและอลูมิเนียมของลูกค้าที่ดียิ่งขึ้น เราขอมอบส่วนลดพิเศษ 10% สำหรับทุกการสั่งผลิตและติดตั้งกระจกนิรภัยหรือประตูหน้าต่างอลูมิเนียม ตั้งแต่วันนี้ถึงสิ้นเดือนนี้เท่านั้น!</p>",
+        contentEn: "<p>To celebrate the grand opening of our Thalang branch, we are offering an exclusive 10% discount on all custom glass fabrication and aluminum door/window installations. Valid from today until the end of the month!</p>",
+        excerptTh: "โปรโมชั่นพิเศษฉลองเปิดสาขาใหม่ รับส่วนลด 10% สำหรับงานกระจกและอลูมิเนียมทุกชนิด",
+        excerptEn: "Celebrate the opening of our new branch with 10% off all glass and aluminum installations.",
+        coverImage: "/api/uploads/portfolio/general-glass-shopfront.jpg",
+        published: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      },
+      {
+        slug: "rainy-season-window-care",
+        titleTh: "โปรโมชั่นหน้าฝน: เปลี่ยนขอบยางหน้าต่างกระจก รับฟรีสเปรย์ซิลิโคนรักษาแนวกันซึม",
+        titleEn: "Rainy Season Special: Free Silicone Waterproof Spray with Window Service",
+        contentTh: "<p>ต้อนรับฤดูฝนอย่างปลอดภัย ไร้กังวลเรื่องน้ำรั่วซึม เพียงใช้บริการดูแลปรับปรุงหน้าต่างกระจกกับ Thana Glass Group รับฟรีซิลิโคนสเปรย์ป้องกันน้ำกันซึมเกรดพรีเมียม เพื่อบ้านที่สมบูรณ์แบบของคุณ</p>",
+        contentEn: "<p>Welcome the rainy season with confidence. Get a premium waterproof silicone spray for free when booking any window repair or glass replacement service with us.</p>",
+        excerptTh: "ดูแลหน้าต่างกระจกของท่านต้อนรับหน้าฝนวันนี้ รับฟรีสเปรย์ซิลิโคนเกรดพรีเมียม",
+        excerptEn: "Ensure your home remains dry this monsoon. Get a free waterproof spray with any glass service.",
+        coverImage: "/api/uploads/portfolio/aluminum-window-frame.jpg",
+        published: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+      }
+    ]
+  });
+
+  console.log("Seeding news...");
+  await prisma.news.createMany({
+    data: [
+      {
+        slug: "new-tempered-glass-furnace",
+        titleTh: "ธนา กลาส กรุ๊ป นำเข้าเครื่องอบกระจกนิรภัยเทมเปอร์รุ่นล่าสุด เพิ่มกำลังผลิต 2 เท่า",
+        titleEn: "Thana Glass Group Imports Brand New Tempered Glass Furnace, Doubling Production Capacity",
+        contentTh: "<p>เพื่อรองรับโครงการขนาดใหญ่ที่เติบโตขึ้นในภาคใต้ บริษัทฯ ได้ดำเนินการนำเข้าและติดตั้งเครื่องอบกระจกนิรภัยความร้อนสูงรุ่นล่าสุดจากทวีปยุโรป ซึ่งมีคุณสมบัติเด่นในการคุมคุณภาพความแบนเรียบและลดปัญหารอยตำหนิบนผิวกระจกได้อย่างมีประสิทธิภาพ</p>",
+        contentEn: "<p>To support rapidly growing commercial projects, we have successfully installed a state-of-the-art tempering furnace imported from Europe, enhancing flatness quality and doubling our output.</p>",
+        excerptTh: "ยกระดับกำลังการผลิตด้วยเทคโนโลยีอบกระจกใหม่ล่าสุด เพื่อคุณภาพกระจกนิรภัยที่ดีที่สุดสำหรับคุณ",
+        excerptEn: "Boosting production capabilities with advanced European furnace technology to deliver premium safety glass.",
+        coverImage: "/api/uploads/portfolio/safety-glass-shower-screen.jpg",
+        published: true,
+      },
+      {
+        slug: "csr-local-school-renovation",
+        titleTh: "กิจกรรมเพื่อสังคม: สนับสนุนกระจกและอลูมิเนียมเพื่อปรับปรุงอาคารเรียนของโรงเรียนในชุมชน",
+        titleEn: "CSR Activity: Supplying Glass and Aluminum for Local Community School Renovation",
+        contentTh: "<p>ทีมงาน Thana Glass Group ได้เข้าดำเนินการติดตั้งหน้าต่างกระจกและโครงอลูมิเนียมชุดใหม่แก่อาคารเรียนของโรงเรียนในชุมชน เพื่อสนับสนุนสุขภาวะทางสายตาและสร้างความปลอดภัยให้เยาวชน</p>",
+        contentEn: "<p>Our volunteer installation crew recently supplied and set up brand new safety glass windows for local schools, ensuring secure and well-lit spaces for students.</p>",
+        excerptTh: "ร่วมส่งมอบความโปร่งสบายและความปลอดภัยให้แก่เยาวชนผ่านโครงการปรับปรุงหน้าต่างอาคารเรียน",
+        excerptEn: "Contributing safe, modern window installations to school facilities for better student well-being.",
+        coverImage: "/api/uploads/portfolio/general-glass-window.jpg",
+        published: true,
+      }
+    ]
   });
 
   console.log("Seeding complete successfully!");

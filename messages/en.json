@@ -242,5 +242,29 @@
     "home": "Home",
     "share": "Share",
     "readingTime": "{minutes} min read"
+  },
+  "News": {
+    "title": "News & Promotions",
+    "description": "Stay updated with the latest news and special promotions from Thana Glass & Aluminum",
+    "promotionsTitle": "Special Promotions",
+    "newsTitle": "Latest News",
+    "latestTitle": "Latest News & Promotions",
+    "latestSubtitle": "Update the latest news and promotions from Thana Glass Group",
+    "validUntil": "Valid Until: {date}",
+    "noPromotions": "No promotions available at this time",
+    "noNews": "No news updates at this time",
+    "readMore": "Read Details",
+    "readNews": "Read More",
+    "bookNow": "Book Now",
+    "allNews": "All News",
+    "backToNews": "Back to News & Promotions",
+    "home": "Home",
+    "contactLine": "Inquire Promotion via LINE",
+    "publishedAt": "Published on: {date}",
+    "filterAll": "All",
+    "filterNews": "News",
+    "filterPromotions": "Promotions",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   }
 }
