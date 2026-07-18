@@ -238,14 +238,25 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   unavailable: t("unavailableCombination"),
                   sku: t("sku"),
                 }}
+                cartProduct={{
+                  productId: product.id,
+                  slug: product.slug,
+                  // Both languages, so the cart follows the locale switcher
+                  nameTh: product.nameTh,
+                  nameEn: product.nameEn,
+                  image: gallery[0]?.url ?? null,
+                  pricingUnitNameTh: product.pricingUnit?.nameTh ?? null,
+                  pricingUnitNameEn: product.pricingUnit?.nameEn ?? null,
+                }}
               />
 
               <p className="font-label-sm text-[#747684]">{t("priceNote")}</p>
 
               <div className="flex flex-wrap gap-3">
+                {/* Secondary now that adding to the cart is the primary action */}
                 <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-label-md font-semibold text-white bg-linear-to-b from-[#078ee4] to-primary-container hover:brightness-110 shadow-blue-sm transition-all"
+                  href="/cart"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-label-md font-semibold text-primary border border-primary hover:bg-[#f3f3fc] transition-all"
                 >
                   <MessageSquareQuote className="h-4 w-4" />
                   {t("requestQuote")}

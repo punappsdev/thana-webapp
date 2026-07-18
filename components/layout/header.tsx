@@ -5,12 +5,15 @@ import Image from "next/image";
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, Link } from "../../i18n/routing";
+import { useCart } from "@/components/cart/use-cart";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const t = useTranslations("Header");
+  const tCart = useTranslations("Cart");
+  const { count, hydrated, openCart } = useCart();
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -99,13 +102,23 @@ export function Header() {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 xl:h-6 xl:w-6 text-primary" />
             </div>
 
-            {/* Shopping Cart */}
+            {/* Quotation Cart — badge is absolute so it never widens the
+                right-actions cluster, which runs tight in EN at 1024–1280px */}
             <button
               id="header-cart-btn"
-              className="flex items-center justify-center p-2 rounded-full hover:bg-muted transition-all text-primary"
-              aria-label="ShoppingCart"
+              onClick={openCart}
+              className="relative flex items-center justify-center p-2 rounded-full hover:bg-muted transition-all text-primary cursor-pointer"
+              aria-label={tCart("openCart")}
             >
               <ShoppingCart className="h-6 w-6" />
+              {hydrated && count > 0 && (
+                <span
+                  aria-live="polite"
+                  className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 font-label-sm font-semibold text-white"
+                >
+                  {count > 99 ? "99+" : count}
+                </span>
+              )}
             </button>
 
             {/* Language Switcher */}

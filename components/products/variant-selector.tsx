@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Check, PackageX } from "lucide-react";
+import { formatPrice } from "@/lib/products";
+import { AddToQuote, type CartProductInfo } from "./add-to-quote";
 
 export interface VariantOption {
   id: number;
@@ -34,14 +36,12 @@ interface VariantSelectorProps {
     unavailable: string;
     sku: string;
   };
-}
-
-function formatPrice(value: number, locale: string) {
-  return new Intl.NumberFormat(locale === "en" ? "en-US" : "th-TH", {
-    style: "currency",
-    currency: "THB",
-    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-  }).format(value);
+  /**
+   * When present, an add-to-quotation-cart control is rendered below the price
+   * panel. It lives here because this component owns `matchedVariant` — the only
+   * place that knows which variant the customer settled on.
+   */
+  cartProduct?: CartProductInfo;
 }
 
 export function VariantSelector({
@@ -50,6 +50,7 @@ export function VariantSelector({
   locale,
   pricingUnitName,
   labels,
+  cartProduct,
 }: VariantSelectorProps) {
   // Seed the selection from the variant flagged as default, else the first one
   const initial = useMemo(() => {
@@ -248,6 +249,8 @@ export function VariantSelector({
           </p>
         )}
       </div>
+
+      {cartProduct && <AddToQuote product={cartProduct} variant={matchedVariant} />}
     </div>
   );
 }
