@@ -91,6 +91,7 @@ async function main() {
       nameEn: "General Glass",
       descriptionTh: "กระจกใส กระจกสี และกระจกเงาสำหรับงานทั่วไป",
       descriptionEn: "Clear, tinted, and mirror glass for general applications.",
+      coverImage: "/api/uploads/categories/general-glass.jpg",
       sortOrder: 1,
       subs: [
         { slug: "clear-float", nameTh: "กระจกใสโฟลต", nameEn: "Clear Float Glass" },
@@ -104,6 +105,7 @@ async function main() {
       nameEn: "Decorative Glass",
       descriptionTh: "กระจกลาย กระจกฝ้า และกระจกพ่นทรายสำหรับงานตกแต่ง",
       descriptionEn: "Patterned, frosted, and sandblasted glass for interior design.",
+      coverImage: "/api/uploads/categories/decorative-glass.jpg",
       sortOrder: 2,
       subs: [
         { slug: "patterned", nameTh: "กระจกลาย", nameEn: "Patterned Glass" },
@@ -117,6 +119,7 @@ async function main() {
       nameEn: "Safety Glass",
       descriptionTh: "กระจกเทมเปอร์และกระจกลามิเนตที่ผ่านมาตรฐานความปลอดภัย",
       descriptionEn: "Tempered and laminated glass certified for safety applications.",
+      coverImage: "/api/uploads/categories/safety-glass.jpg",
       sortOrder: 3,
       subs: [
         { slug: "tempered", nameTh: "กระจกเทมเปอร์", nameEn: "Tempered Glass" },
@@ -130,6 +133,7 @@ async function main() {
       nameEn: "Gypsum",
       descriptionTh: "แผ่นยิปซั่มและโครงคร่าวสำหรับงานฝ้าเพดานและผนังเบา",
       descriptionEn: "Gypsum boards and framing for ceilings and lightweight walls.",
+      coverImage: "/api/uploads/categories/gypsum.jpg",
       sortOrder: 4,
       subs: [
         { slug: "standard-board", nameTh: "แผ่นยิปซั่มมาตรฐาน", nameEn: "Standard Board" },
@@ -143,6 +147,7 @@ async function main() {
       nameEn: "Aluminum",
       descriptionTh: "เส้นอลูมิเนียมสำหรับประตู หน้าต่าง และงานโครงสร้าง",
       descriptionEn: "Aluminum profiles for doors, windows, and structural work.",
+      coverImage: "/api/uploads/categories/aluminum.jpg",
       sortOrder: 5,
       subs: [
         { slug: "door-profile", nameTh: "เส้นอลูมิเนียมประตู", nameEn: "Door Profile" },
@@ -156,6 +161,7 @@ async function main() {
       nameEn: "Hardware Store",
       descriptionTh: "อุปกรณ์ติดตั้ง มือจับ บานพับ ซิลิโคน และวัสดุสิ้นเปลือง",
       descriptionEn: "Installation hardware, handles, hinges, sealants, and consumables.",
+      coverImage: "/api/uploads/categories/hardware-store.jpg",
       sortOrder: 6,
       subs: [
         { slug: "handles", nameTh: "มือจับ", nameEn: "Handles" },

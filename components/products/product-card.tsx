@@ -66,25 +66,25 @@ export function ProductCard({
         <span className="absolute inset-0 bg-primary/5 pointer-events-none" aria-hidden="true" />
       </div>
 
-      <div className="p-6 flex flex-col flex-1">
-        <h3 className="font-headline-sm text-primary mb-2 font-semibold line-clamp-2">
+      <div className="p-3 md:p-6 flex flex-col flex-1">
+        <h3 className="font-label-md md:font-headline-sm text-primary mb-2 font-semibold line-clamp-2">
           {name}
         </h3>
         {description && (
-          <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4">
+          <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4 hidden md:block">
             {description}
           </p>
         )}
 
-        <div className="mt-auto flex justify-between items-center">
-          <div>
+        <div className="mt-auto flex justify-between items-center gap-2">
+          <div className="min-w-0">
             {price !== null ? (
               <>
-                <span className="font-body-lg text-secondary font-bold">
+                <span className="font-body-lg text-secondary font-bold block truncate">
                   {formatPrice(price, locale)}
                 </span>
                 {product.pricingUnit && (
-                  <span className="block font-label-sm text-muted-foreground">
+                  <span className="block font-label-sm text-muted-foreground truncate">
                     {pick(product.pricingUnit, "name", locale)}
                   </span>
                 )}
@@ -97,7 +97,7 @@ export function ProductCard({
           </div>
           {/* Circular CTA accent — echoes the logo's outer ring */}
           <span
-            className="p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all"
+            className="shrink-0 p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all"
             aria-hidden="true"
           >
             <ArrowRight className="h-4 w-4" />

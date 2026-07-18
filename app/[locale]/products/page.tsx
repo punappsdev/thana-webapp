@@ -19,7 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { CategorySidebar } from "@/components/products/category-sidebar";
+import { CategorySidebar, MobileCategoryChips } from "@/components/products/category-sidebar";
 import { ProductCard } from "@/components/products/product-card";
 import type { Prisma } from "../../../generated/prisma/client";
 
@@ -104,8 +104,33 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       <Header />
 
       <main className="flex-1 pt-[72px] md:pt-[80px]">
+        {/* Mobile sticky chip bar — full-bleed section above the catalog,
+            sticks below the fixed header so users can change filters while
+            scrolling through products. Desktop sidebar is rendered inside
+            the catalog grid below. */}
+        <MobileCategoryChips
+          categories={categories.map((c) => ({
+            slug: c.slug,
+            name: pick(c, "name", locale),
+            count: c._count.products,
+            subCategories: c.subCategories.map((s) => ({
+              slug: s.slug,
+              name: pick(s, "name", locale),
+              count: s._count.products,
+            })),
+          }))}
+          activeCategory={activeCategory?.slug ?? null}
+          activeSub={activeSub?.slug ?? null}
+          totalCount={catalogTotal}
+          labels={{
+            heading: t("categoriesHeading"),
+            all: t("all"),
+            allSubCategories: t("allSubCategories"),
+          }}
+        />
+
         {/* Catalog: sidebar + grid */}
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-12">
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr] gap-6 md:gap-10 items-start">
             <CategorySidebar
               categories={categories.map((c) => ({
@@ -121,7 +146,11 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
               activeCategory={activeCategory?.slug ?? null}
               activeSub={activeSub?.slug ?? null}
               totalCount={catalogTotal}
-              labels={{ heading: t("categoriesHeading"), all: t("all") }}
+              labels={{
+                heading: t("categoriesHeading"),
+                all: t("all"),
+                allSubCategories: t("allSubCategories"),
+              }}
             />
 
             <section>
@@ -157,14 +186,14 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                     {products.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
                         locale={locale}
                         priceOnRequestLabel={t("priceOnRequest")}
-                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 33vw"
                       />
                     ))}
                   </div>
