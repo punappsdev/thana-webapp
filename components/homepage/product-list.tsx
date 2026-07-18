@@ -42,14 +42,14 @@ export async function ProductList({ locale }: { locale: string }) {
             <p className="font-body-md text-muted-foreground">{t("empty")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 locale={locale}
                 priceOnRequestLabel={tProducts("priceOnRequest")}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
               />
             ))}
           </div>

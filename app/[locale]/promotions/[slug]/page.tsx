@@ -74,7 +74,7 @@ export default async function PromotionDetailPage({ params }: DetailProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 pt-[72px] md:pt-[80px] pb-16">
+      <main className="flex-1 main-content-spacer pb-16">
         {/* Promotion Detail Container */}
         <div className="max-w-4xl mx-auto px-4 md:px-8 pt-8">
           {/* Back button */}

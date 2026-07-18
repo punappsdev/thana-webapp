@@ -89,7 +89,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 pt-[72px] md:pt-[80px]">
+      <main className="flex-1 main-content-spacer">
         {/* Top Active Promotions Slider Banner (Only visible if promotions exist) */}
         {activePromotionsForSlider.length > 0 && (
           <section className="relative w-full overflow-hidden select-none bg-primary mb-14 md:mb-16">

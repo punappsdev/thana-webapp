@@ -79,7 +79,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 pt-[72px] md:pt-[80px] pb-16">
+      <main className="flex-1 main-content-spacer pb-16">
         {/* Article Hero */}
         <header className="relative overflow-hidden bg-linear-to-br from-primary to-primary-container text-white">
           {/* Decorative dot grid */}
@@ -94,7 +94,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
           {/* Soft light wash */}
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none" />
 
-          <div className="max-w-4xl mx-auto px-4 md:px-8 py-10 md:py-16 relative z-10 animate-fade-in">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 subpage-banner-padding-compact relative z-10 animate-fade-in">
             {/* Breadcrumb pill */}
             <nav className="mb-6">
               <div className="inline-flex items-center gap-2 font-label-sm text-white px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20">

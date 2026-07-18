@@ -123,7 +123,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
 
-      <main className="flex-1 pt-[72px] md:pt-[80px]">
+      <main className="flex-1 main-content-spacer">
         <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
           {/* Breadcrumb */}
           <nav className="mb-8 flex flex-wrap items-center gap-2 font-label-sm text-[#434653]">

@@ -16,7 +16,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <Header />
       
       {/* Main Content Spacer to adjust for fixed Header height */}
-      <main className="flex-1 pt-[72px] md:pt-[80px]">
+      <main className="flex-1 main-content-spacer">
         <Hero />
         <CategoryGrid locale={locale} />
         <ProductList locale={locale} />

@@ -103,7 +103,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
 
-      <main className="flex-1 pt-[72px] md:pt-[80px]">
+      <main className="flex-1 main-content-spacer">
         {/* Mobile sticky chip bar — full-bleed section above the catalog,
             sticks below the fixed header so users can change filters while
             scrolling through products. Desktop sidebar is rendered inside

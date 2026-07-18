@@ -9,6 +9,7 @@ import { usePathname, useRouter, Link } from "../../i18n/routing";
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const t = useTranslations("Header");
   const locale = useLocale();
   const router = useRouter();
@@ -40,9 +41,8 @@ export function Header() {
     <header className="fixed top-0 left-0 w-full z-50">
       {/* Top Bar Header Content */}
       <div
-        className={`relative z-50 bg-white/95 backdrop-blur-md border-b transition-all duration-300 ${
-          scrolled ? "py-2 border-border/80 shadow-md" : "py-4 border-primary-container shadow-sm"
-        }`}
+        className={`relative z-50 bg-white/95 backdrop-blur-md border-b transition-all duration-300 ${scrolled ? "py-2 border-border/80 shadow-md" : "py-4 border-primary-container shadow-sm"
+          }`}
       >
         <div className="max-w-[1280px] mx-auto px-4 md:px-10 flex justify-between items-center">
           {/* Brand Logo */}
@@ -52,23 +52,28 @@ export function Header() {
               alt="Thana Glass Group Logo"
               width={160}
               height={48}
-              className="h-10 md:h-12 w-auto object-contain"
+              className="h-10 lg:h-8 xl:h-12 w-auto object-contain"
               style={{ width: 'auto' }}
               priority
             />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-3 xl:gap-5">
+          <nav
+            className={`hidden lg:flex items-center gap-2 xl:gap-5 transition-all duration-300 ${
+              searchFocused
+                ? "opacity-0 pointer-events-none max-w-0 overflow-hidden"
+                : "opacity-100 max-w-4xl"
+            }`}
+          >
             {navLinks.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.href}
-                className={`font-body-md whitespace-nowrap transition-colors ${
-                  link.active
+                className={`font-label-md xl:font-body-sm whitespace-nowrap transition-colors ${link.active
                     ? "text-primary border-b-2 border-primary-container pb-1 font-bold"
                     : "text-muted-foreground hover:text-primary"
-                }`}
+                  }`}
               >
                 {link.label}
               </Link>
@@ -76,16 +81,22 @@ export function Header() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 xl:gap-4">
             {/* Search Input (desktop) */}
             <div className="relative hidden lg:block">
               <input
                 id="header-search-input"
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                className="bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-body-md text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 w-40 focus:w-48 transition-all"
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                className={`bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-label-md xl:font-body-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 ${
+                  searchFocused
+                    ? "w-64 lg:w-64 xl:w-80"
+                    : "w-24 lg:w-24 xl:w-52"
+                }`}
               />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 xl:h-6 xl:w-6 text-primary" />
             </div>
 
             {/* Shopping Cart */}
@@ -98,7 +109,7 @@ export function Header() {
             </button>
 
             {/* Language Switcher */}
-            <div className="flex items-center gap-1 font-body-md font-medium text-muted-foreground">
+            <div className="flex items-center gap-1 font-label-md xl:font-body-sm font-medium text-muted-foreground">
               <button
                 onClick={() => handleLocaleChange("th")}
                 className={`transition-colors cursor-pointer uppercase ${locale === "th" ? "font-bold text-primary" : "hover:text-primary"}`}
@@ -128,11 +139,10 @@ export function Header() {
 
       {/* Mobile Navigation Drawer */}
       <div
-        className={`absolute left-0 w-full lg:hidden bg-white border-b border-border py-6 px-4 shadow-lg flex flex-col gap-4 transition-all duration-300 ease-in-out z-40 ${
-          mobileMenuOpen
+        className={`absolute left-0 w-full lg:hidden bg-white border-b border-border py-6 px-4 shadow-lg flex flex-col gap-4 transition-all duration-300 ease-in-out z-40 ${mobileMenuOpen
             ? "top-full translate-y-0 opacity-100 visible"
             : "top-0 -translate-y-full opacity-0 invisible"
-        }`}
+          }`}
       >
         {/* Search (mobile) */}
         <div className="relative w-full">
@@ -150,9 +160,8 @@ export function Header() {
               key={idx}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`font-body-sm py-1.5 transition-colors ${
-                link.active ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-muted-foreground pl-2"
-              }`}
+              className={`font-body-sm py-1.5 transition-colors ${link.active ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-muted-foreground pl-2"
+                }`}
             >
               {link.label}
             </Link>

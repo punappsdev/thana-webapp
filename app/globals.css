@@ -247,3 +247,43 @@
   font-weight: 500;
   line-height: 1.2;
 }
+
+.main-content-spacer {
+  padding-top: 72px;
+}
+
+@media (min-width: 1024px) {
+  .main-content-spacer {
+    padding-top: 68px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .main-content-spacer {
+    padding-top: 80px;
+  }
+}
+
+.subpage-banner-padding {
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+
+@media (min-width: 768px) {
+  .subpage-banner-padding {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+}
+
+.subpage-banner-padding-compact {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+@media (min-width: 768px) {
+  .subpage-banner-padding-compact {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+}
