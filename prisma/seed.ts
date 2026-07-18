@@ -6,9 +6,21 @@ async function main() {
   await prisma.article.deleteMany({});
   await prisma.articleCategory.deleteMany({});
   await prisma.work.deleteMany({});
-  await prisma.workCategory.deleteMany({});
   await prisma.news.deleteMany({});
   await prisma.promotion.deleteMany({});
+  await prisma.variantAttributeValue.deleteMany({});
+  await prisma.productVariant.deleteMany({});
+  await prisma.productAttributeValue.deleteMany({});
+  await prisma.productImage.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.categoryAttribute.deleteMany({});
+  await prisma.attributeValue.deleteMany({});
+  await prisma.attribute.deleteMany({});
+  await prisma.subCategory.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.brand.deleteMany({});
+  await prisma.productUnit.deleteMany({});
+  await prisma.pricingUnit.deleteMany({});
 
   console.log("Seeding categories...");
   const catKnowledge = await prisma.articleCategory.create({
@@ -71,18 +83,100 @@ async function main() {
     ],
   });
 
-  console.log("Seeding work categories...");
-  const workCategories = await Promise.all(
-    [
-      { slug: "general-glass", nameTh: "กระจกทั่วไป", nameEn: "General Glass" },
-      { slug: "safety-glass", nameTh: "กระจกนิรภัย", nameEn: "Safety Glass" },
-      { slug: "decorative-glass", nameTh: "กระจกตกแต่ง", nameEn: "Decorative Glass" },
-      { slug: "aluminum", nameTh: "อลูมิเนียม", nameEn: "Aluminum" },
-      { slug: "installation-hardware", nameTh: "อุปกรณ์ติดตั้ง", nameEn: "Installation Hardware" },
-      { slug: "zinc-sheet", nameTh: "แผ่นซิปซั่ม", nameEn: "Zinc Sheets" },
-    ].map((cat) => prisma.workCategory.create({ data: cat }))
-  );
-  const [catGeneralGlass, catSafetyGlass, catDecorativeGlass, catAluminum, catHardware, catZincSheet] = workCategories;
+  console.log("Seeding categories (shared by products and portfolio)...");
+  const categoryData = [
+    {
+      slug: "general-glass",
+      nameTh: "กระจกทั่วไป",
+      nameEn: "General Glass",
+      descriptionTh: "กระจกใส กระจกสี และกระจกเงาสำหรับงานทั่วไป",
+      descriptionEn: "Clear, tinted, and mirror glass for general applications.",
+      sortOrder: 1,
+      subs: [
+        { slug: "clear-float", nameTh: "กระจกใสโฟลต", nameEn: "Clear Float Glass" },
+        { slug: "tinted", nameTh: "กระจกสีตัดแสง", nameEn: "Tinted Glass" },
+        { slug: "mirror", nameTh: "กระจกเงา", nameEn: "Mirror" },
+      ],
+    },
+    {
+      slug: "decorative-glass",
+      nameTh: "กระจกตกแต่ง",
+      nameEn: "Decorative Glass",
+      descriptionTh: "กระจกลาย กระจกฝ้า และกระจกพ่นทรายสำหรับงานตกแต่ง",
+      descriptionEn: "Patterned, frosted, and sandblasted glass for interior design.",
+      sortOrder: 2,
+      subs: [
+        { slug: "patterned", nameTh: "กระจกลาย", nameEn: "Patterned Glass" },
+        { slug: "frosted", nameTh: "กระจกฝ้า", nameEn: "Frosted Glass" },
+        { slug: "sandblasted", nameTh: "กระจกพ่นทราย", nameEn: "Sandblasted Glass" },
+      ],
+    },
+    {
+      slug: "safety-glass",
+      nameTh: "กระจกนิรภัย",
+      nameEn: "Safety Glass",
+      descriptionTh: "กระจกเทมเปอร์และกระจกลามิเนตที่ผ่านมาตรฐานความปลอดภัย",
+      descriptionEn: "Tempered and laminated glass certified for safety applications.",
+      sortOrder: 3,
+      subs: [
+        { slug: "tempered", nameTh: "กระจกเทมเปอร์", nameEn: "Tempered Glass" },
+        { slug: "laminated", nameTh: "กระจกลามิเนต", nameEn: "Laminated Glass" },
+        { slug: "insulated", nameTh: "กระจกฉนวนสองชั้น", nameEn: "Insulated Glass" },
+      ],
+    },
+    {
+      slug: "gypsum",
+      nameTh: "ยิปซั่ม",
+      nameEn: "Gypsum",
+      descriptionTh: "แผ่นยิปซั่มและโครงคร่าวสำหรับงานฝ้าเพดานและผนังเบา",
+      descriptionEn: "Gypsum boards and framing for ceilings and lightweight walls.",
+      sortOrder: 4,
+      subs: [
+        { slug: "standard-board", nameTh: "แผ่นยิปซั่มมาตรฐาน", nameEn: "Standard Board" },
+        { slug: "moisture-resistant", nameTh: "แผ่นยิปซั่มทนชื้น", nameEn: "Moisture Resistant Board" },
+        { slug: "ceiling-frame", nameTh: "โครงคร่าวฝ้า", nameEn: "Ceiling Frame" },
+      ],
+    },
+    {
+      slug: "aluminum",
+      nameTh: "อลูมิเนียม",
+      nameEn: "Aluminum",
+      descriptionTh: "เส้นอลูมิเนียมสำหรับประตู หน้าต่าง และงานโครงสร้าง",
+      descriptionEn: "Aluminum profiles for doors, windows, and structural work.",
+      sortOrder: 5,
+      subs: [
+        { slug: "door-profile", nameTh: "เส้นอลูมิเนียมประตู", nameEn: "Door Profile" },
+        { slug: "window-profile", nameTh: "เส้นอลูมิเนียมหน้าต่าง", nameEn: "Window Profile" },
+        { slug: "partition-profile", nameTh: "เส้นอลูมิเนียมกั้นห้อง", nameEn: "Partition Profile" },
+      ],
+    },
+    {
+      slug: "hardware-store",
+      nameTh: "คลังอุปกรณ์",
+      nameEn: "Hardware Store",
+      descriptionTh: "อุปกรณ์ติดตั้ง มือจับ บานพับ ซิลิโคน และวัสดุสิ้นเปลือง",
+      descriptionEn: "Installation hardware, handles, hinges, sealants, and consumables.",
+      sortOrder: 6,
+      subs: [
+        { slug: "handles", nameTh: "มือจับ", nameEn: "Handles" },
+        { slug: "hinges", nameTh: "บานพับและอุปกรณ์ยึด", nameEn: "Hinges & Fittings" },
+        { slug: "sealant", nameTh: "ซิลิโคนและกาว", nameEn: "Sealants & Adhesives" },
+      ],
+    },
+  ];
+
+  const categoryBy: Record<string, number> = {};
+  const subCategoryBy: Record<string, number> = {};
+  for (const { subs, ...cat } of categoryData) {
+    const created = await prisma.category.create({ data: cat });
+    categoryBy[cat.slug] = created.id;
+    for (const [i, sub] of subs.entries()) {
+      const createdSub = await prisma.subCategory.create({
+        data: { ...sub, sortOrder: i + 1, categoryId: created.id },
+      });
+      subCategoryBy[`${cat.slug}/${sub.slug}`] = createdSub.id;
+    }
+  }
 
   console.log("Seeding works...");
   await prisma.work.createMany({
@@ -96,7 +190,7 @@ async function main() {
         descriptionEn: "Clear large-pane glass installation for shopfronts, offering a clear product view with a modern look.",
         coverImage: "/api/uploads/portfolio/general-glass-shopfront.jpg",
         published: true,
-        workCategoryId: catGeneralGlass.id,
+        categoryId: categoryBy["general-glass"],
       },
       {
         slug: "general-glass-window",
@@ -106,7 +200,7 @@ async function main() {
         descriptionEn: "Clear glass windows for homes, maximizing natural daylight in every room.",
         coverImage: "/api/uploads/portfolio/general-glass-window.jpg",
         published: true,
-        workCategoryId: catGeneralGlass.id,
+        categoryId: categoryBy["general-glass"],
       },
       // Safety Glass
       {
@@ -117,7 +211,7 @@ async function main() {
         descriptionEn: "10mm tempered glass shower screen — safe, durable, and easy to clean.",
         coverImage: "/api/uploads/portfolio/safety-glass-shower-screen.jpg",
         published: true,
-        workCategoryId: catSafetyGlass.id,
+        categoryId: categoryBy["safety-glass"],
       },
       {
         slug: "safety-glass-railing",
@@ -127,7 +221,7 @@ async function main() {
         descriptionEn: "Laminated glass balustrade for balconies and staircases, TIS-certified for safety.",
         coverImage: "/api/uploads/portfolio/safety-glass-railing.jpg",
         published: true,
-        workCategoryId: catSafetyGlass.id,
+        categoryId: categoryBy["safety-glass"],
       },
       // Decorative Glass
       {
@@ -138,7 +232,7 @@ async function main() {
         descriptionEn: "Patterned decorative glass partition for offices — privacy without losing light.",
         coverImage: "/api/uploads/portfolio/decorative-glass-partition.jpg",
         published: true,
-        workCategoryId: catDecorativeGlass.id,
+        categoryId: categoryBy["decorative-glass"],
       },
       // Aluminum
       {
@@ -149,7 +243,7 @@ async function main() {
         descriptionEn: "Slim-line aluminum sliding door — ultra-thin frames for a wide, airy glass view.",
         coverImage: "/api/uploads/portfolio/aluminum-slim-door.jpg",
         published: true,
-        workCategoryId: catAluminum.id,
+        categoryId: categoryBy["aluminum"],
       },
       {
         slug: "aluminum-window-frame",
@@ -159,7 +253,7 @@ async function main() {
         descriptionEn: "White aluminum window frames — weather-resistant and rust-free.",
         coverImage: "/api/uploads/portfolio/aluminum-window-frame.jpg",
         published: true,
-        workCategoryId: catAluminum.id,
+        categoryId: categoryBy["aluminum"],
       },
       // Installation Hardware
       {
@@ -170,7 +264,7 @@ async function main() {
         descriptionEn: "Grade 304 stainless steel glass handle — modern design built for heavy use.",
         coverImage: "/api/uploads/portfolio/hardware-glass-handle.jpg",
         published: true,
-        workCategoryId: catHardware.id,
+        categoryId: categoryBy["hardware-store"],
       },
       // Zinc Sheets
       {
@@ -181,7 +275,7 @@ async function main() {
         descriptionEn: "Zinc sheet roofing installation for factories and warehouses, built to withstand any weather.",
         coverImage: "/api/uploads/portfolio/zinc-sheet-roofing.jpg",
         published: true,
-        workCategoryId: catZincSheet.id,
+        categoryId: categoryBy["gypsum"],
       },
     ],
   });
@@ -245,6 +339,393 @@ async function main() {
       }
     ]
   });
+
+  console.log("Seeding product units...");
+  const units = await Promise.all(
+    [
+      { code: "sheet", nameTh: "แผ่น", nameEn: "Sheet" },
+      { code: "piece", nameTh: "ชิ้น", nameEn: "Piece" },
+      { code: "roll", nameTh: "ม้วน", nameEn: "Roll" },
+      { code: "meter", nameTh: "เมตร", nameEn: "Meter" },
+      { code: "sqm", nameTh: "ตารางเมตร", nameEn: "Square Meter" },
+      { code: "set", nameTh: "ชุด", nameEn: "Set" },
+    ].map((u) => prisma.productUnit.create({ data: u }))
+  );
+  const unitBy = Object.fromEntries(units.map((u) => [u.code, u.id]));
+
+  const pricingUnits = await Promise.all(
+    [
+      { code: "per-sheet", nameTh: "ราคาต่อแผ่น", nameEn: "Price per sheet" },
+      { code: "per-piece", nameTh: "ราคาต่อชิ้น", nameEn: "Price per piece" },
+      { code: "per-pair", nameTh: "ราคาต่อคู่", nameEn: "Price per pair" },
+      { code: "per-pack", nameTh: "ราคาต่อแพ็ค", nameEn: "Price per pack" },
+      { code: "per-roll", nameTh: "ราคาต่อม้วน", nameEn: "Price per roll" },
+      { code: "per-sqm", nameTh: "ราคาต่อตารางเมตร", nameEn: "Price per sq.m." },
+      { code: "per-meter", nameTh: "ราคาต่อเมตร", nameEn: "Price per meter" },
+    ].map((u) => prisma.pricingUnit.create({ data: u }))
+  );
+  const pricingBy = Object.fromEntries(pricingUnits.map((u) => [u.code, u.id]));
+
+  console.log("Seeding brands...");
+  const brands = await Promise.all(
+    [
+      { slug: "thana-glass", name: "Thana Glass" },
+      { slug: "guardian", name: "Guardian Glass" },
+      { slug: "agc", name: "AGC" },
+      { slug: "scg", name: "SCG" },
+      { slug: "gyproc", name: "Gyproc" },
+      { slug: "ykk", name: "YKK AP" },
+    ].map((b) => prisma.brand.create({ data: b }))
+  );
+  const brandBy = Object.fromEntries(brands.map((b) => [b.slug, b.id]));
+
+  console.log("Seeding attributes...");
+  const attributeData = [
+    {
+      slug: "thickness",
+      nameTh: "ความหนา",
+      nameEn: "Thickness",
+      unit: "mm",
+      inputType: "NUMBER" as const,
+      sortOrder: 1,
+      values: [
+        { slug: "5mm", valueTh: "5 มม.", valueEn: "5 mm", numericValue: 5 },
+        { slug: "6mm", valueTh: "6 มม.", valueEn: "6 mm", numericValue: 6 },
+        { slug: "8mm", valueTh: "8 มม.", valueEn: "8 mm", numericValue: 8 },
+        { slug: "10mm", valueTh: "10 มม.", valueEn: "10 mm", numericValue: 10 },
+        { slug: "12mm", valueTh: "12 มม.", valueEn: "12 mm", numericValue: 12 },
+        { slug: "9-5mm", valueTh: "9.5 มม.", valueEn: "9.5 mm", numericValue: 9.5 },
+        { slug: "12-5mm", valueTh: "12.5 มม.", valueEn: "12.5 mm", numericValue: 12.5 },
+      ],
+    },
+    {
+      slug: "size",
+      nameTh: "ขนาด",
+      nameEn: "Size",
+      inputType: "SELECT" as const,
+      sortOrder: 2,
+      values: [
+        { slug: "1220x2440", valueTh: "1220 x 2440 มม.", valueEn: "1220 x 2440 mm" },
+        { slug: "1220x3000", valueTh: "1220 x 3000 มม.", valueEn: "1220 x 3000 mm" },
+        { slug: "1830x2440", valueTh: "1830 x 2440 มม.", valueEn: "1830 x 2440 mm" },
+        { slug: "2440x3660", valueTh: "2440 x 3660 มม.", valueEn: "2440 x 3660 mm" },
+        { slug: "custom", valueTh: "สั่งตัดตามขนาด", valueEn: "Custom Cut" },
+      ],
+    },
+    {
+      slug: "color",
+      nameTh: "สี",
+      nameEn: "Color",
+      inputType: "COLOR" as const,
+      sortOrder: 3,
+      values: [
+        { slug: "clear", valueTh: "ใส", valueEn: "Clear", colorHex: "#EAF2F5" },
+        { slug: "green", valueTh: "เขียว", valueEn: "Green", colorHex: "#4E7A63" },
+        { slug: "bronze", valueTh: "ชา", valueEn: "Bronze", colorHex: "#8B6A42" },
+        { slug: "blue", valueTh: "ฟ้า", valueEn: "Blue", colorHex: "#5A87A8" },
+        { slug: "black", valueTh: "ดำ", valueEn: "Black", colorHex: "#1C1C1C" },
+        { slug: "white", valueTh: "ขาว", valueEn: "White", colorHex: "#F5F5F5" },
+        { slug: "anodized-silver", valueTh: "อลูมิเนียมอโนไดซ์เงิน", valueEn: "Anodized Silver", colorHex: "#C0C4C7" },
+      ],
+    },
+    {
+      slug: "edge-type",
+      nameTh: "ประเภทขอบ",
+      nameEn: "Edge Type",
+      inputType: "SELECT" as const,
+      sortOrder: 4,
+      values: [
+        { slug: "raw", valueTh: "ขอบดิบ", valueEn: "Raw Edge" },
+        { slug: "seamed", valueTh: "ขอบลบคม", valueEn: "Seamed Edge" },
+        { slug: "polished", valueTh: "ขอบเจียร", valueEn: "Polished Edge" },
+        { slug: "beveled", valueTh: "ขอบปาดเหลี่ยม", valueEn: "Beveled Edge" },
+      ],
+    },
+    {
+      slug: "surface-finish",
+      nameTh: "ผิวสำเร็จ",
+      nameEn: "Surface Finish",
+      inputType: "SELECT" as const,
+      sortOrder: 5,
+      values: [
+        { slug: "glossy", valueTh: "ผิวเงา", valueEn: "Glossy" },
+        { slug: "matte", valueTh: "ผิวด้าน", valueEn: "Matte" },
+        { slug: "brushed", valueTh: "ผิวขัดลาย", valueEn: "Brushed" },
+      ],
+    },
+  ];
+
+  const attrValueBy: Record<string, number> = {};
+  const attributeBy: Record<string, number> = {};
+  for (const { values, ...attr } of attributeData) {
+    const created = await prisma.attribute.create({ data: attr });
+    attributeBy[attr.slug] = created.id;
+    for (const [i, val] of values.entries()) {
+      const createdVal = await prisma.attributeValue.create({
+        data: { ...val, sortOrder: i + 1, attributeId: created.id },
+      });
+      attrValueBy[`${attr.slug}:${val.slug}`] = createdVal.id;
+    }
+  }
+
+  console.log("Linking attributes to categories...");
+  const categoryAttributeMap: Record<string, string[]> = {
+    "general-glass": ["thickness", "size", "color", "edge-type"],
+    "decorative-glass": ["thickness", "size", "color", "surface-finish"],
+    "safety-glass": ["thickness", "size", "color", "edge-type"],
+    gypsum: ["thickness", "size"],
+    aluminum: ["size", "color", "surface-finish"],
+    "hardware-store": ["color", "surface-finish"],
+  };
+  for (const [catSlug, attrSlugs] of Object.entries(categoryAttributeMap)) {
+    await prisma.categoryAttribute.createMany({
+      data: attrSlugs.map((attrSlug, i) => ({
+        categoryId: categoryBy[catSlug],
+        attributeId: attributeBy[attrSlug],
+        sortOrder: i + 1,
+      })),
+    });
+  }
+
+  console.log("Seeding products...");
+  const productData = [
+    {
+      slug: "clear-float-glass",
+      sku: "GG-CLR-001",
+      nameTh: "กระจกใสโฟลต",
+      nameEn: "Clear Float Glass",
+      descriptionTh:
+        "กระจกใสโฟลตคุณภาพสูง ผิวเรียบสม่ำเสมอ ให้แสงผ่านได้สูงถึง 90% เหมาะสำหรับหน้าต่าง ประตู และงานตกแต่งภายในทั่วไป",
+      descriptionEn:
+        "High-quality clear float glass with a uniform surface and up to 90% light transmission. Ideal for windows, doors, and general interior work.",
+      usageGuideTh:
+        "ควรใช้ในตำแหน่งที่ไม่รับแรงกระแทกสูง สำหรับบานที่สูงเกิน 1.5 เมตร แนะนำให้เปลี่ยนเป็นกระจกนิรภัย ทำความสะอาดด้วยน้ำยาเช็ดกระจกและผ้าไมโครไฟเบอร์",
+      usageGuideEn:
+        "Use in areas not subject to high impact. For panels over 1.5 m tall, switch to safety glass. Clean with glass cleaner and a microfiber cloth.",
+      coverImage: "/api/uploads/products/clear-float-glass.jpg",
+      basePrice: 450,
+      categorySlug: "general-glass",
+      subCategorySlug: "general-glass/clear-float",
+      brandSlug: "agc",
+      unitCode: "sheet",
+      pricingCode: "per-sqm",
+      featured: true,
+      published: true,
+      attributes: [
+        "thickness:5mm",
+        "thickness:6mm",
+        "thickness:8mm",
+        "color:clear",
+        "edge-type:raw",
+        "edge-type:polished",
+        "size:1220x2440",
+        "size:custom",
+      ],
+      variants: [
+        { sku: "GG-CLR-001-5-RAW", price: 450, values: ["thickness:5mm", "edge-type:raw"], isDefault: true },
+        { sku: "GG-CLR-001-5-POL", price: 520, values: ["thickness:5mm", "edge-type:polished"] },
+        { sku: "GG-CLR-001-6-RAW", price: 540, values: ["thickness:6mm", "edge-type:raw"] },
+        { sku: "GG-CLR-001-6-POL", price: 610, values: ["thickness:6mm", "edge-type:polished"] },
+        { sku: "GG-CLR-001-8-RAW", price: 720, values: ["thickness:8mm", "edge-type:raw"] },
+      ],
+    },
+    {
+      slug: "tempered-safety-glass",
+      sku: "SG-TMP-001",
+      nameTh: "กระจกเทมเปอร์นิรภัย",
+      nameEn: "Tempered Safety Glass",
+      descriptionTh:
+        "กระจกนิรภัยเทมเปอร์ผ่านการอบความร้อนสูง แข็งแรงกว่ากระจกธรรมดา 4-5 เท่า เมื่อแตกจะเป็นเม็ดเล็กไม่มีคม ผ่านมาตรฐาน มอก.",
+      descriptionEn:
+        "Heat-treated tempered safety glass, 4-5 times stronger than ordinary glass. Shatters into small blunt granules. TIS certified.",
+      usageGuideTh:
+        "ต้องตัดและเจาะรูให้เสร็จก่อนนำเข้าเตาอบ ไม่สามารถตัดหรือเจาะภายหลังได้ ระวังการกระแทกที่ขอบกระจกซึ่งเป็นจุดอ่อนที่สุด",
+      usageGuideEn:
+        "All cutting and drilling must be completed before tempering — the glass cannot be modified afterwards. Protect the edges, which are the weakest point.",
+      coverImage: "/api/uploads/products/tempered-safety-glass.jpg",
+      catalogPdf: "/api/uploads/products/catalogs/tempered-safety-glass.pdf",
+      basePrice: 980,
+      categorySlug: "safety-glass",
+      subCategorySlug: "safety-glass/tempered",
+      brandSlug: "thana-glass",
+      unitCode: "sheet",
+      pricingCode: "per-sqm",
+      featured: true,
+      published: true,
+      attributes: [
+        "thickness:6mm",
+        "thickness:8mm",
+        "thickness:10mm",
+        "thickness:12mm",
+        "color:clear",
+        "color:green",
+        "edge-type:seamed",
+        "edge-type:polished",
+        "size:custom",
+      ],
+      variants: [
+        { sku: "SG-TMP-001-6-CLR", price: 980, values: ["thickness:6mm", "color:clear", "edge-type:polished"], isDefault: true },
+        { sku: "SG-TMP-001-8-CLR", price: 1250, values: ["thickness:8mm", "color:clear", "edge-type:polished"] },
+        { sku: "SG-TMP-001-10-CLR", price: 1580, values: ["thickness:10mm", "color:clear", "edge-type:polished"] },
+        { sku: "SG-TMP-001-12-CLR", price: 1980, values: ["thickness:12mm", "color:clear", "edge-type:polished"] },
+        { sku: "SG-TMP-001-8-GRN", price: 1390, values: ["thickness:8mm", "color:green", "edge-type:polished"] },
+        { sku: "SG-TMP-001-10-GRN", price: 1720, values: ["thickness:10mm", "color:green", "edge-type:polished"] },
+      ],
+    },
+    {
+      slug: "frosted-decorative-glass",
+      sku: "DG-FRS-001",
+      nameTh: "กระจกฝ้าตกแต่ง",
+      nameEn: "Frosted Decorative Glass",
+      descriptionTh:
+        "กระจกฝ้าผิวด้าน ให้ความเป็นส่วนตัวโดยยังคงปล่อยให้แสงธรรมชาติผ่าน เหมาะสำหรับผนังกั้นห้อง ประตูห้องน้ำ และงานตกแต่งภายใน",
+      descriptionEn:
+        "Matte frosted glass that provides privacy while letting natural light through. Ideal for partitions, bathroom doors, and interior features.",
+      usageGuideTh:
+        "หลีกเลี่ยงการใช้สารเคมีที่มีฤทธิ์กัดกร่อนบนผิวฝ้า เช็ดคราบด้วยผ้าชุบน้ำหมาดๆ ทันทีเพื่อป้องกันคราบฝัง",
+      usageGuideEn:
+        "Avoid abrasive chemicals on the frosted surface. Wipe stains promptly with a damp cloth to prevent them setting in.",
+      coverImage: "/api/uploads/products/frosted-decorative-glass.jpg",
+      basePrice: 780,
+      categorySlug: "decorative-glass",
+      subCategorySlug: "decorative-glass/frosted",
+      brandSlug: "guardian",
+      unitCode: "sheet",
+      pricingCode: "per-sqm",
+      published: true,
+      attributes: ["thickness:5mm", "thickness:6mm", "thickness:8mm", "color:clear", "surface-finish:matte", "size:custom"],
+      variants: [
+        { sku: "DG-FRS-001-5", price: 780, values: ["thickness:5mm", "surface-finish:matte"], isDefault: true },
+        { sku: "DG-FRS-001-6", price: 860, values: ["thickness:6mm", "surface-finish:matte"] },
+        { sku: "DG-FRS-001-8", price: 1040, values: ["thickness:8mm", "surface-finish:matte"] },
+      ],
+    },
+    {
+      slug: "standard-gypsum-board",
+      sku: "GY-STD-001",
+      nameTh: "แผ่นยิปซั่มมาตรฐาน",
+      nameEn: "Standard Gypsum Board",
+      descriptionTh:
+        "แผ่นยิปซั่มมาตรฐานสำหรับงานฝ้าเพดานและผนังเบาภายใน น้ำหนักเบา ติดตั้งง่าย ตัดแต่งได้สะดวก",
+      descriptionEn:
+        "Standard gypsum board for interior ceilings and lightweight partition walls. Light, easy to install, and simple to cut.",
+      usageGuideTh:
+        "เก็บแผ่นในที่แห้ง วางราบบนพื้นเรียบเพื่อป้องกันการโก่งตัว ไม่เหมาะกับพื้นที่เปียกชื้น ให้ใช้รุ่นทนชื้นแทน",
+      usageGuideEn:
+        "Store flat in a dry area to prevent warping. Not suitable for wet areas — use the moisture-resistant variant instead.",
+      coverImage: "/api/uploads/products/standard-gypsum-board.jpg",
+      basePrice: 165,
+      categorySlug: "gypsum",
+      subCategorySlug: "gypsum/standard-board",
+      brandSlug: "gyproc",
+      unitCode: "sheet",
+      pricingCode: "per-sheet",
+      published: true,
+      attributes: ["thickness:9-5mm", "thickness:12-5mm", "size:1220x2440", "size:1220x3000"],
+      variants: [
+        { sku: "GY-STD-001-95-2440", price: 165, values: ["thickness:9-5mm", "size:1220x2440"], isDefault: true, stockQty: 320 },
+        { sku: "GY-STD-001-95-3000", price: 205, values: ["thickness:9-5mm", "size:1220x3000"], stockQty: 180 },
+        { sku: "GY-STD-001-125-2440", price: 215, values: ["thickness:12-5mm", "size:1220x2440"], stockQty: 240 },
+        { sku: "GY-STD-001-125-3000", price: 265, values: ["thickness:12-5mm", "size:1220x3000"], stockQty: 96 },
+      ],
+    },
+    {
+      slug: "aluminum-sliding-door-profile",
+      sku: "AL-DR-001",
+      nameTh: "เส้นอลูมิเนียมประตูบานเลื่อน",
+      nameEn: "Aluminum Sliding Door Profile",
+      descriptionTh:
+        "เส้นอลูมิเนียมสำหรับประตูบานเลื่อน กรอบบางดีไซน์ Slim Line แข็งแรง ทนทานต่อสภาพอากาศ ไม่เป็นสนิม",
+      descriptionEn:
+        "Slim-line aluminum profile for sliding doors. Strong, weather-resistant, and rust-free.",
+      usageGuideTh:
+        "ตัดเส้นด้วยใบเลื่อยสำหรับอลูมิเนียมโดยเฉพาะเพื่อไม่ให้ผิวเสียหาย ระวังการขูดขีดผิวอโนไดซ์ระหว่างขนย้าย",
+      usageGuideEn:
+        "Cut with an aluminum-specific saw blade to avoid surface damage. Protect the anodized finish from scratches during transport.",
+      coverImage: "/api/uploads/products/aluminum-sliding-door-profile.jpg",
+      catalogPdf: "/api/uploads/products/catalogs/aluminum-profiles.pdf",
+      basePrice: 340,
+      categorySlug: "aluminum",
+      subCategorySlug: "aluminum/door-profile",
+      brandSlug: "ykk",
+      unitCode: "meter",
+      pricingCode: "per-meter",
+      featured: true,
+      published: true,
+      attributes: ["color:black", "color:white", "color:anodized-silver", "surface-finish:matte", "surface-finish:brushed"],
+      variants: [
+        { sku: "AL-DR-001-BLK", price: 340, values: ["color:black", "surface-finish:matte"], isDefault: true },
+        { sku: "AL-DR-001-WHT", price: 340, values: ["color:white", "surface-finish:matte"] },
+        { sku: "AL-DR-001-SLV", price: 385, values: ["color:anodized-silver", "surface-finish:brushed"] },
+      ],
+    },
+    {
+      slug: "stainless-glass-handle-304",
+      sku: "HW-HDL-304",
+      nameTh: "มือจับกระจกสแตนเลส เกรด 304",
+      nameEn: "Stainless Steel Glass Handle Grade 304",
+      descriptionTh:
+        "มือจับประตูกระจกสแตนเลสเกรด 304 ดีไซน์โมเดิร์น ทนต่อการกัดกร่อน เหมาะกับงานภายในและภายนอก จำหน่ายเป็นคู่",
+      descriptionEn:
+        "Grade 304 stainless steel glass door handle with a modern design. Corrosion-resistant, suitable for indoor and outdoor use. Sold in pairs.",
+      usageGuideTh:
+        "ติดตั้งกับกระจกที่เจาะรูไว้แล้วเท่านั้น ขันน็อตให้แน่นพอดี ไม่ควรขันแรงเกินไปเพราะอาจทำให้กระจกร้าว",
+      usageGuideEn:
+        "Install only on pre-drilled glass. Tighten the bolts firmly but do not over-torque, as this can crack the glass.",
+      coverImage: "/api/uploads/products/stainless-glass-handle.jpg",
+      basePrice: 1450,
+      categorySlug: "hardware-store",
+      subCategorySlug: "hardware-store/handles",
+      brandSlug: "thana-glass",
+      unitCode: "set",
+      pricingCode: "per-pair",
+      published: true,
+      attributes: ["color:anodized-silver", "color:black", "surface-finish:brushed", "surface-finish:matte"],
+      variants: [
+        { sku: "HW-HDL-304-BRS", price: 1450, values: ["color:anodized-silver", "surface-finish:brushed"], isDefault: true, stockQty: 45 },
+        { sku: "HW-HDL-304-BLK", price: 1690, values: ["color:black", "surface-finish:matte"], stockQty: 22 },
+      ],
+    },
+  ];
+
+  for (const p of productData) {
+    const {
+      categorySlug,
+      subCategorySlug,
+      brandSlug,
+      unitCode,
+      pricingCode,
+      attributes,
+      variants,
+      ...product
+    } = p;
+
+    await prisma.product.create({
+      data: {
+        ...product,
+        categoryId: categoryBy[categorySlug],
+        subCategoryId: subCategoryBy[subCategorySlug],
+        brandId: brandBy[brandSlug],
+        unitId: unitBy[unitCode],
+        pricingUnitId: pricingBy[pricingCode] ?? null,
+        attributeLinks: {
+          create: attributes.map((key) => ({ attributeValueId: attrValueBy[key] })),
+        },
+        variants: {
+          create: variants.map((v, i) => {
+            const { values, ...variant } = v;
+            return {
+              ...variant,
+              sortOrder: i + 1,
+              attributeValues: {
+                create: values.map((key) => ({ attributeValueId: attrValueBy[key] })),
+              },
+            };
+          }),
+        },
+      },
+    });
+  }
 
   console.log("Seeding complete successfully!");
 }

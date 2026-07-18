@@ -30,9 +30,11 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
   const t = await getTranslations("Portfolio");
   const tNews = await getTranslations("News");
 
-  // Fetch categories
-  const categories = await prisma.workCategory.findMany({
-    orderBy: { nameEn: "asc" },
+  // Fetch categories — shared with products, so only show ones that
+  // actually have a published work behind them
+  const categories = await prisma.category.findMany({
+    where: { published: true, works: { some: { published: true } } },
+    orderBy: { sortOrder: "asc" },
   });
 
   // Build filter condition

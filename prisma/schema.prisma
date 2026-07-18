@@ -47,37 +47,25 @@ model Article {
   @@index([articleCategoryId])
 }
 
-model WorkCategory {
-  id        Int      @id @default(autoincrement())
-  slug      String   @unique
-  nameTh    String
-  nameEn    String
-  works     Work[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([slug])
-}
-
 model Work {
-  id              Int           @id @default(autoincrement())
-  slug            String        @unique
-  titleTh         String
-  titleEn         String
-  descriptionTh   String?       @db.Text
-  descriptionEn   String?       @db.Text
-  coverImage      String?
-  published       Boolean       @default(false)
+  id            Int       @id @default(autoincrement())
+  slug          String    @unique
+  titleTh       String
+  titleEn       String
+  descriptionTh String?   @db.Text
+  descriptionEn String?   @db.Text
+  coverImage    String?
+  published     Boolean   @default(false)
 
-  // Relations
-  workCategoryId  Int?
-  category        WorkCategory? @relation(fields: [workCategoryId], references: [id], onDelete: SetNull)
+  // Relations — shares the Category table with Product
+  categoryId    Int?
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([slug])
-  @@index([workCategoryId])
+  @@index([categoryId])
 }
 
 model News {
@@ -114,6 +102,259 @@ model Promotion {
   updatedAt   DateTime  @updatedAt
 
   @@index([slug])
+}
+
+// ---------------------------------------------------------------------------
+// Categories — shared by Product and Work (portfolio)
+// ---------------------------------------------------------------------------
+
+model Category {
+  id            Int                 @id @default(autoincrement())
+  slug          String              @unique
+  nameTh        String
+  nameEn        String
+  descriptionTh String?             @db.Text
+  descriptionEn String?             @db.Text
+  coverImage    String?
+  sortOrder     Int                 @default(0)
+  published     Boolean             @default(true)
+
+  subCategories SubCategory[]
+  products      Product[]
+  works         Work[]
+  attributes    CategoryAttribute[]
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([slug])
+}
+
+model SubCategory {
+  id         Int       @id @default(autoincrement())
+  slug       String
+  nameTh     String
+  nameEn     String
+  coverImage String?
+  sortOrder  Int       @default(0)
+  published  Boolean   @default(true)
+
+  // Relations
+  categoryId Int
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Product[]
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Slug only needs to be unique within its parent category
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+// ---------------------------------------------------------------------------
+// Products
+// ---------------------------------------------------------------------------
+
+model Brand {
+  id         Int       @id @default(autoincrement())
+  slug       String    @unique
+  name       String
+  logo       String?
+  websiteUrl String?
+  products   Product[]
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+/// หน่วยสินค้า เช่น แผ่น, ชิ้น, ม้วน
+model ProductUnit {
+  id       Int       @id @default(autoincrement())
+  code     String    @unique
+  nameTh   String
+  nameEn   String
+  products Product[]
+}
+
+/// หน่วยจำหน่าย เช่น ราคาต่อแผ่น, ราคาต่อคู่, ราคาต่อแพ็ค
+model PricingUnit {
+  id       Int       @id @default(autoincrement())
+  code     String    @unique
+  nameTh   String
+  nameEn   String
+  products Product[]
+}
+
+model Product {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  sku           String   @unique
+  nameTh        String
+  nameEn        String
+  descriptionTh String?  @db.Text
+  descriptionEn String?  @db.Text
+  usageGuideTh  String?  @db.Text
+  usageGuideEn  String?  @db.Text
+
+  coverImage    String?
+  catalogPdf    String?
+
+  basePrice     Decimal? @db.Decimal(12, 2)
+  currency      String   @default("THB")
+
+  featured      Boolean  @default(false)
+  published     Boolean  @default(false)
+  sortOrder     Int      @default(0)
+
+  // Relations
+  unitId         Int?
+  unit           ProductUnit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  pricingUnitId  Int?
+  pricingUnit    PricingUnit?        @relation(fields: [pricingUnitId], references: [id], onDelete: SetNull)
+  brandId        Int?
+  brand          Brand?              @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  categoryId     Int?
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subCategoryId  Int?
+  subCategory    SubCategory?        @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+
+  images         ProductImage[]
+  variants       ProductVariant[]
+  attributeLinks ProductAttributeValue[]
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([subCategoryId])
+  @@index([brandId])
+  @@index([unitId])
+  @@index([pricingUnitId])
+  @@index([published, featured])
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  url       String
+  altTh     String?
+  altEn     String?
+  sortOrder Int     @default(0)
+
+  // Relations
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+enum AttributeInputType {
+  SELECT
+  COLOR
+  NUMBER
+  TEXT
+}
+
+/// คุณสมบัติสินค้า เช่น ความหนา, ขนาด, สี, ประเภทขอบ
+model Attribute {
+  id        Int                @id @default(autoincrement())
+  slug      String             @unique
+  nameTh    String
+  nameEn    String
+  unit      String?
+  inputType AttributeInputType @default(SELECT)
+  sortOrder Int                @default(0)
+
+  values     AttributeValue[]
+  categories CategoryAttribute[]
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model AttributeValue {
+  id           Int      @id @default(autoincrement())
+  slug         String
+  valueTh      String
+  valueEn      String
+  colorHex     String?
+  numericValue Decimal? @db.Decimal(12, 3)
+  sortOrder    Int      @default(0)
+
+  // Relations
+  attributeId  Int
+  attribute    Attribute              @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  products     ProductAttributeValue[]
+  variants     VariantAttributeValue[]
+
+  @@unique([attributeId, slug])
+  @@index([attributeId])
+}
+
+/// กำหนดว่าหมวดหมู่ไหนใช้คุณสมบัติอะไรบ้าง (ใช้สร้าง filter ของแต่ละหมวด)
+model CategoryAttribute {
+  id          Int       @id @default(autoincrement())
+  isFilter    Boolean   @default(true)
+  isRequired  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+
+  // Relations
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  attributeId Int
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, attributeId])
+  @@index([attributeId])
+}
+
+/// ค่าคุณสมบัติที่สินค้าตัวนี้มี ใช้กรองในหน้า listing โดยไม่ต้อง join variant
+model ProductAttributeValue {
+  id               Int            @id @default(autoincrement())
+  productId        Int
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeValueId Int
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, attributeValueId])
+  @@index([attributeValueId])
+}
+
+/// 1 variant = 1 ชุดคุณสมบัติที่ลูกค้าเลือก มีราคา/สต็อกของตัวเอง
+model ProductVariant {
+  id           Int      @id @default(autoincrement())
+  sku          String?  @unique
+  price        Decimal  @db.Decimal(12, 2)
+  comparePrice Decimal? @db.Decimal(12, 2)
+  image        String?
+  stockQty     Int?
+  isAvailable  Boolean  @default(true)
+  isDefault    Boolean  @default(false)
+  sortOrder    Int      @default(0)
+
+  // Relations
+  productId       Int
+  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeValues VariantAttributeValue[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model VariantAttributeValue {
+  id               Int            @id @default(autoincrement())
+  variantId        Int
+  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attributeValueId Int
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, attributeValueId])
+  @@index([attributeValueId])
 }
 
 

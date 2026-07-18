@@ -43,6 +43,7 @@ export async function GET(
   else if (ext === ".webp") contentType = "image/webp";
   else if (ext === ".gif") contentType = "image/gif";
   else if (ext === ".svg") contentType = "image/svg+xml";
+  else if (ext === ".pdf") contentType = "application/pdf";
 
   const fileBuffer = fs.readFileSync(absolutePath);
 
