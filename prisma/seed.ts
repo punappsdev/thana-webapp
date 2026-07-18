@@ -623,10 +623,10 @@ async function main() {
       published: true,
       attributes: ["thickness:9-5mm", "thickness:12-5mm", "size:1220x2440", "size:1220x3000"],
       variants: [
-        { sku: "GY-STD-001-95-2440", price: 165, values: ["thickness:9-5mm", "size:1220x2440"], isDefault: true, stockQty: 320 },
-        { sku: "GY-STD-001-95-3000", price: 205, values: ["thickness:9-5mm", "size:1220x3000"], stockQty: 180 },
-        { sku: "GY-STD-001-125-2440", price: 215, values: ["thickness:12-5mm", "size:1220x2440"], stockQty: 240 },
-        { sku: "GY-STD-001-125-3000", price: 265, values: ["thickness:12-5mm", "size:1220x3000"], stockQty: 96 },
+        { sku: "GY-STD-001-95-2440", price: 165, values: ["thickness:9-5mm", "size:1220x2440"], isDefault: true },
+        { sku: "GY-STD-001-95-3000", price: 205, values: ["thickness:9-5mm", "size:1220x3000"] },
+        { sku: "GY-STD-001-125-2440", price: 215, values: ["thickness:12-5mm", "size:1220x2440"] },
+        { sku: "GY-STD-001-125-3000", price: 265, values: ["thickness:12-5mm", "size:1220x3000"] },
       ],
     },
     {
@@ -682,8 +682,8 @@ async function main() {
       published: true,
       attributes: ["color:anodized-silver", "color:black", "surface-finish:brushed", "surface-finish:matte"],
       variants: [
-        { sku: "HW-HDL-304-BRS", price: 1450, values: ["color:anodized-silver", "surface-finish:brushed"], isDefault: true, stockQty: 45 },
-        { sku: "HW-HDL-304-BLK", price: 1690, values: ["color:black", "surface-finish:matte"], stockQty: 22 },
+        { sku: "HW-HDL-304-BRS", price: 1450, values: ["color:anodized-silver", "surface-finish:brushed"], isDefault: true },
+        { sku: "HW-HDL-304-BLK", price: 1690, values: ["color:black", "surface-finish:matte"] },
       ],
     },
   ];

@@ -330,7 +330,11 @@ model ProductVariant {
   price        Decimal  @db.Decimal(12, 2)
   comparePrice Decimal? @db.Decimal(12, 2)
   image        String?
+  /// Reserved for a future stock feature — not read or written anywhere yet.
+  /// Products are quote-request only, so no stock level is shown to customers.
   stockQty     Int?
+  /// Whether this combination is offered at all. Drives the greyed-out options
+  /// in the variant picker — unrelated to stock levels.
   isAvailable  Boolean  @default(true)
   isDefault    Boolean  @default(false)
   sortOrder    Int      @default(0)

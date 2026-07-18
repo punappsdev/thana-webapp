@@ -52,32 +52,35 @@
     "title": "Recommended Products",
     "desc": "Top quality products highly popular in various projects",
     "viewAll": "All",
-    "products": [
-      {
-        "title": "Aluminum Profile 1.5 Series",
-        "desc": "Extra thick aluminum for high-rise buildings, excellent wind resistance.",
-        "price": "฿ 1,250 / sq.m.",
-        "tag": "New Arrival"
-      },
-      {
-        "title": "Tempered Glass 10mm",
-        "desc": "Safety glass processed under high heat, 5x stronger than regular glass.",
-        "price": "฿ 850 / sq.m.",
-        "tag": "Hot Seller"
-      },
-      {
-        "title": "T-Bar Ceiling Grid System",
-        "desc": "Quality ceiling framework, easy to install, rust-free, suitable for commercial spaces.",
-        "price": "฿ 45 / pc",
-        "tag": ""
-      },
-      {
-        "title": "Stainless Steel Handle Grade 304",
-        "desc": "Genuine stainless steel hardware, modern design, durable under heavy use.",
-        "price": "฿ 1,190 / set",
-        "tag": ""
-      }
-    ]
+    "empty": "No featured products at the moment"
+  },
+  "Products": {
+    "eyebrow": "Product Catalog",
+    "title": "All Products",
+    "description": "Quality glass, gypsum, aluminum, and installation hardware — backed by expert consultation from our team.",
+    "all": "All",
+    "allSubCategories": "All sub-categories",
+    "noProducts": "No products found in this category",
+    "resultCount": "{count} items found",
+    "viewDetail": "View details",
+    "from": "From",
+    "priceOnRequest": "Request a price",
+    "sku": "Product code",
+    "brand": "Brand",
+    "unit": "Unit",
+    "pricingUnit": "Sold by",
+    "category": "Category",
+    "descriptionHeading": "Product details",
+    "usageGuide": "Usage guide",
+    "specifications": "Specifications",
+    "selectOptions": "Select options",
+    "selectAllPrompt": "Select all options to see the price",
+    "unavailableCombination": "This combination is not available",
+    "priceNote": "Prices may vary with quantity and site conditions — request a quote to confirm.",
+    "downloadCatalog": "Download catalog (PDF)",
+    "backToProducts": "Back to products",
+    "requestQuote": "Request a quote",
+    "notFound": "Product not found"
   },
   "AboutUs": {
     "tag": "ABOUT THANA GLASS GROUP",

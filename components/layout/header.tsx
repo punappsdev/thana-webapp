@@ -28,7 +28,7 @@ export function Header() {
 
   const navLinks = [
     { label: t("nav.home"), href: "/", active: pathname === "/" },
-    { label: t("nav.products"), href: "#" },
+    { label: t("nav.products"), href: "/products", active: pathname.startsWith("/products") },
     { label: t("nav.news"), href: "/news", active: pathname === "/news" },
     { label: t("nav.projects"), href: "/portfolio", active: pathname.startsWith("/portfolio") },
     { label: t("nav.articles"), href: "/articles", active: pathname.startsWith("/articles") },

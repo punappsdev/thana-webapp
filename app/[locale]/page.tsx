@@ -8,7 +8,9 @@ import { CtaSection } from "@/components/homepage/cta-section";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
 
-export default function Home() {
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -17,7 +19,7 @@ export default function Home() {
       <main className="flex-1 pt-[72px] md:pt-[80px]">
         <Hero />
         <CategoryGrid />
-        <ProductList />
+        <ProductList locale={locale} />
         <QuotationSteps />
         <AboutUs />
         <CtaSection />

@@ -1,46 +1,24 @@
-"use client";
-
-import { ChevronRight, ShoppingCart } from "lucide-react";
+import { ChevronRight, Package, ArrowRight } from "lucide-react";
 import { Link } from "../../i18n/routing";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import Image from "next/image";
+import { prisma } from "@/lib/prisma";
+import { formatPrice, pick, priceRange } from "@/lib/products";
 
-export function ProductList() {
-  const t = useTranslations("ProductList");
+export async function ProductList({ locale }: { locale: string }) {
+  const t = await getTranslations("ProductList");
+  const tProducts = await getTranslations("Products");
 
-  const products = [
-    {
-      title: t("products.0.title"),
-      desc: t("products.0.desc"),
-      price: t("products.0.price"),
-      tag: t("products.0.tag"),
-      tagBg: "bg-[#621900]",
-      imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAO7ON0rcdGH4N6v-t5JyxhlsSmTNH-GlBmn4o5GtyzjblC7E1gYoQjChOu3Do0U_RiOkLQW5FJWh_FMx-kXwhBAu3FF534NmkOpgg8kQg_4AWy8Bq-Oe4HlrFqnPs7Z2Y9DCxcSrH8IU_TsVJrQ86ps-6xLhIkzCyVL-UyQO4FZ03wNEudHHXU63dpnKrr_C1w_ThuQxRPZ36RgT93MoeRp3kzsLdXnPVXMbrm5PFdiZdngJeMq9HJ3uMhdSABscHAOxYNnfqPc0Y",
+  const products = await prisma.product.findMany({
+    where: { published: true },
+    include: {
+      category: true,
+      pricingUnit: true,
+      variants: { select: { price: true } },
     },
-    {
-      title: t("products.1.title"),
-      desc: t("products.1.desc"),
-      price: t("products.1.price"),
-      tag: t("products.1.tag"),
-      tagBg: "bg-[#0062a0]",
-      imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDfTilJsRx64PVVHt0L7GM11D9M6ikv76uXiOlrlEYZbSkUmGt6JftWwIqhKFc2x8YPEGYhlxd7yp6SP4-697gzMf1ZUtahBdxYgkgHV6YW416CScKWeGRkmv3lQLCou5G586ZKZ-w-Q6n8EpwZhkmi2RO1ujvkenyRAkyMUDYec1gNKqX2p_2vA_AwdKMmWxsCKugU1YGEmSt9bNN7NDDLe_ocHD2eYNiVLhVLx6bVt8PsxQxxe30-rE4xT1fThy9B9FE0cevasow",
-    },
-    {
-      title: t("products.2.title"),
-      desc: t("products.2.desc"),
-      price: t("products.2.price"),
-      tag: t("products.2.tag"),
-      tagBg: "",
-      imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDYCB64Gd4ImWJP0o-gNGCdDsf7JakLTlNMe0PIgLmsr3Y5QH5EzG_mMsJHHlkK00P3y0yLrPXh5Jg8EksywZ9iKbKtaW8fymrbpsqSu4PG8FS_DPqQDT2m3ilIWtl5tVEQHslfZf_YlwC2I3mJaxapkx0j4JWUh8K8CYHw1M-sJAvn5q438bhbniSn0HHSMO-st_Sd0SxdFnvE-2pFfxKaghkXQfshUyZbgkdUab_teGY9sOkdAcqqJQs8X_6qE7dNh-k4O42RblQ",
-    },
-    {
-      title: t("products.3.title"),
-      desc: t("products.3.desc"),
-      price: t("products.3.price"),
-      tag: t("products.3.tag"),
-      tagBg: "",
-      imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0K9gYU35jEZLC0ZA8fy3ZLffsZakkcbzzN0qY8H129rJUhZNH_rLxVoPHGClV_vHXCo72QgSWbnvFzqqzLjxNRJpz2Rd564kvkSAqatly8VXBnxaAx7LmmLkBTkhXJbzPJczF1DGuHoM0rtilA6lfDmuT-9PMK1vj3J1TYIhM1iwylcwPe_OlmN8MUFIUcCdMk2DZICebz7U5JKIr64_O4-OrNWL7TI3xb7glEDn9vcjOD5UHgBLQlmSGx4AAckVW4-a7KInYJR0",
-    },
-  ];
+    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
+    take: 4,
+  });
 
   return (
     <section className="py-12 bg-white">
@@ -50,62 +28,100 @@ export function ProductList() {
             <h2 className="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">
               {t("title")}
             </h2>
-            <p className="font-body-md text-muted-foreground">
-              {t("desc")}
-            </p>
+            <p className="font-body-md text-muted-foreground">{t("desc")}</p>
           </div>
           <Link
-            href="#"
-            className="text-primary font-bold hover:underline flex items-center gap-1 font-label-sm"
+            href="/products"
+            className="text-primary font-bold hover:underline flex items-center gap-1 font-label-sm shrink-0"
           >
             {t("viewAll")} <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((prod, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl overflow-hidden group transition-all duration-300 border border-border/50"
-              style={{ boxShadow: "0 10px 30px -10px rgba(0, 64, 173, 0.08)" }}
-            >
-              <div className="relative overflow-hidden aspect-square">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={prod.imageUrl}
-                  alt={prod.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {prod.tag && (
-                  <span
-                    className={`absolute top-4 left-4 text-white font-label-sm font-bold px-3 py-1 rounded-full ${prod.tagBg}`}
-                  >
-                    {prod.tag}
-                  </span>
-                )}
-              </div>
-              <div className="p-6">
-                <h4 className="font-headline-sm text-primary mb-2 font-semibold">
-                  {prod.title}
-                </h4>
-                <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4 min-h-[40px]">
-                  {prod.desc}
-                </p>
-                <div className="flex justify-between items-center">
-                  <span className="font-body-lg text-secondary font-bold">
-                    {prod.price}
-                  </span>
-                  <button
-                    className="p-2 rounded-full border border-primary-container text-primary hover:bg-primary-container hover:text-white transition-all cursor-pointer"
-                    aria-label="Add to cart"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-12 border border-[#c4e2f5] rounded-xl">
+            <p className="font-body-md text-muted-foreground">{t("empty")}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.map((product) => {
+              const name = pick(product, "name", locale);
+              const description = pick(product, "description", locale);
+              const range = priceRange(product.variants);
+              const basePrice = product.basePrice ? Number(product.basePrice) : null;
+              const price = range ? range.min : basePrice;
+
+              return (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.slug}`}
+                  className="bg-white rounded-xl overflow-hidden group transition-all duration-300 border border-border/50 flex flex-col"
+                  style={{ boxShadow: "0 10px 30px -10px rgba(0, 64, 173, 0.08)" }}
+                >
+                  <div className="relative overflow-hidden aspect-square bg-[#e2e2eb]">
+                    {product.coverImage ? (
+                      <Image
+                        src={product.coverImage}
+                        alt={name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-10 w-10 text-[#747684]" />
+                      </div>
+                    )}
+                    <span className="absolute inset-0 bg-primary/5 pointer-events-none" />
+                    {product.featured && (
+                      <span className="absolute top-4 left-4 bg-[#621900] text-white font-label-sm font-bold px-3 py-1 rounded-full">
+                        {product.category ? pick(product.category, "name", locale) : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="font-headline-sm text-primary mb-2 font-semibold line-clamp-2">
+                      {name}
+                    </h3>
+                    {description && (
+                      <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4">
+                        {description}
+                      </p>
+                    )}
+
+                    <div className="mt-auto flex justify-between items-center">
+                      <div>
+                        {price !== null ? (
+                          <>
+                            <span className="font-body-lg text-secondary font-bold">
+                              {formatPrice(price, locale)}
+                            </span>
+                            {product.pricingUnit && (
+                              <span className="block font-label-sm text-muted-foreground">
+                                {pick(product.pricingUnit, "name", locale)}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="font-label-md text-[#434653] font-semibold">
+                            {tProducts("priceOnRequest")}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className="p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all"
+                        aria-hidden="true"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
