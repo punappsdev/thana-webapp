@@ -119,52 +119,89 @@ export function MediaField({
       {label ? <Label htmlFor={inputId} className="font-label-md">{label}</Label> : null}
       {hiddenInput}
       {filePicker}
-      <div
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setDragging(false);
-          const file = event.dataTransfer.files?.[0];
-          if (file) void upload(file);
-        }}
-        className={cn(
-          "flex items-center gap-4 rounded-lg border border-dashed p-3 transition-colors",
-          dragging ? "border-primary bg-primary/5" : "border-input",
-        )}
-      >
-        {url ? (
-          <Preview url={url} isPdf={isPdf} size={64} />
-        ) : (
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-md bg-muted">
-            <Upload className="size-5 text-muted-foreground" />
-          </div>
-        )}
-
-        <div className="min-w-0 flex-1">
-          {url ? (
-            <p className="truncate font-body-sm" title={url}>{decodeURIComponent(url.split("/").pop() || url)}</p>
-          ) : (
-            <p className="font-body-sm text-muted-foreground">ลากไฟล์มาวาง หรือเลือกจากเครื่อง</p>
+      
+      {!url ? (
+        <div
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragging(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file) void upload(file);
+          }}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex flex-col items-center justify-center text-center gap-3 rounded-lg border border-dashed p-6 transition-all cursor-pointer select-none",
+            dragging
+              ? "border-primary bg-primary/5 shadow-blue-sm"
+              : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
           )}
-          <p className="mt-0.5 font-label-sm text-muted-foreground">{rules.hint}</p>
+        >
+          <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
+            {pending ? (
+              <Loader2 className="size-5 animate-spin text-primary" />
+            ) : (
+              <Upload className="size-5 text-muted-foreground" />
+            )}
+          </div>
+          <div className="space-y-1">
+            <p className="font-label-sm text-foreground font-medium">
+              {pending ? "กำลังอัปโหลด..." : "คลิกเพื่อเลือกไฟล์ หรือลากมาวาง"}
+            </p>
+            <p className="font-label-sm text-muted-foreground/80">{rules.hint}</p>
+          </div>
         </div>
+      ) : (
+        <div
+          className="flex flex-col gap-3 rounded-lg border border-solid p-3 bg-card shadow-blue-sm"
+        >
+          {/* Line 1: Preview & Info */}
+          <div className="flex items-center gap-3 min-w-0">
+            <Preview url={url} isPdf={isPdf} size={48} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-body-sm font-medium text-foreground" title={url}>
+                {decodeURIComponent(url.split("/").pop() || url)}
+              </p>
+              <p className="font-label-sm text-muted-foreground">อัปโหลดแล้ว</p>
+            </div>
+          </div>
 
-        <div className="flex shrink-0 gap-1">
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()}>
-            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-            {pending ? "กำลังอัปโหลด..." : url ? "เปลี่ยนไฟล์" : "เลือกไฟล์"}
-          </Button>
-          {url ? (
-            <Button type="button" variant="ghost" size="icon-sm" aria-label="ลบไฟล์" onClick={() => setUrl("")}>
-              <Trash2 className="size-4 text-destructive" />
+          {/* Line 2: Actions */}
+          <div className="flex items-center justify-end gap-1.5 pt-2.5 border-t border-muted">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={(e) => {
+                e.stopPropagation();
+                inputRef.current?.click();
+              }}
+              className="h-8 px-3 font-label-sm gap-1.5"
+            >
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+              <span>เปลี่ยนไฟล์</span>
             </Button>
-          ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="ลบไฟล์"
+              onClick={(e) => {
+                e.stopPropagation();
+                setUrl("");
+              }}
+              className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
