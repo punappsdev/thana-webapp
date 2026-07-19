@@ -24,7 +24,7 @@ export default async function AdminDashboardPage() {
 
   const metrics = [
     { label: "สินค้าทั้งหมด", value: products, detail: `${productDrafts} ฉบับร่าง`, icon: Package },
-    { label: "เนื้อหาฉบับร่าง", value: contentDrafts, detail: "รอตรวจและเผยแพร่", icon: FilePenLine },
+    { label: "เนื้อหาฉบับร่าง", value: contentDrafts, detail: "ผลงาน, บทความ, ข่าว, โปรโมชั่น", icon: FilePenLine },
     { label: "โปรโมชั่นใช้งาน", value: activePromotions, detail: "เผยแพร่และยังไม่หมดอายุ", icon: Tags },
   ];
 

@@ -109,15 +109,15 @@ export function AdminShell({ user, children }: { user: { name: string; email: st
               <p className="hidden font-label-sm text-muted-foreground sm:block">Thana Glass Group</p>
             </div>
           </div>
-          <Link href="/admin/profile" className="flex items-center gap-3 rounded-md px-2 py-1 hover:bg-accent">
-            <div className="flex size-9 items-center justify-center rounded-full bg-primary-fixed text-on-primary-fixed">
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-container text-primary-foreground shadow-sm">
               <UserRound className="size-4" />
             </div>
-            <div className="hidden text-right sm:block">
-              <p className="font-label-sm font-semibold">{user.name}</p>
-              <p className="font-label-sm text-muted-foreground">{user.email}</p>
+            <div className="hidden text-left sm:block">
+              <p className="font-label-sm font-semibold leading-none">{user.name}</p>
+              <p className="mt-1 font-label-sm text-muted-foreground leading-none">{user.email}</p>
             </div>
-          </Link>
+          </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8">{children}</main>
       </div>
