@@ -1,21 +1,9 @@
 import type { Metadata } from "next";
-import { Prompt, Noto_Sans_Thai } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { CartSheet } from "@/components/cart/cart-sheet";
+import { notoSansThai, prompt } from "@/lib/fonts";
 import "../globals.css";
-
-const prompt = Prompt({
-  variable: "--font-prompt",
-  subsets: ["latin", "thai"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const notoSansThai = Noto_Sans_Thai({
-  variable: "--font-noto-sans-thai",
-  subsets: ["thai"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "Thana Glass | กระจกนิรภัย กระจกอลูมิเนียม ภูเก็ต",

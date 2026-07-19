@@ -12,6 +12,99 @@ datasource db {
   provider = "mysql"
 }
 
+enum AdminActivityAction {
+  CREATE
+  UPDATE
+  PUBLISH
+  UNPUBLISH
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  UPLOAD
+}
+
+enum MediaKind {
+  IMAGE
+  PDF
+}
+
+model AdminUser {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String
+  passwordHash      String
+  active            Boolean        @default(true)
+  passwordChangedAt DateTime       @default(now())
+  sessions          AdminSession[]
+  activities        ActivityLog[]
+  media             MediaAsset[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([active])
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?   @db.VarChar(64)
+  userAgent String?   @db.VarChar(512)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AdminLoginAttempt {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(191)
+  ipAddress String   @db.VarChar(64)
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, ipAddress, createdAt])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id         Int                 @id @default(autoincrement())
+  adminId    String?
+  admin      AdminUser?          @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action     AdminActivityAction
+  entityType String              @db.VarChar(64)
+  entityId   String?             @db.VarChar(191)
+  label      String?             @db.VarChar(255)
+  metadata   Json?
+  createdAt  DateTime            @default(now())
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id           String     @id @default(cuid())
+  path         String     @unique @db.VarChar(512)
+  url          String     @unique @db.VarChar(768)
+  originalName String     @db.VarChar(255)
+  mimeType     String     @db.VarChar(100)
+  kind         MediaKind
+  size         Int
+  width        Int?
+  height       Int?
+  uploadedById String?
+  uploadedBy   AdminUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+
+  @@index([kind])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
 model ArticleCategory {
   id        Int       @id @default(autoincrement())
   slug      String    @unique
@@ -25,81 +118,81 @@ model ArticleCategory {
 }
 
 model Article {
-  id                Int              @id @default(autoincrement())
-  slug              String           @unique
-  titleTh           String
-  titleEn           String
-  contentTh         String           @db.Text
-  contentEn         String           @db.Text
-  excerptTh         String?          @db.Text
-  excerptEn         String?          @db.Text
-  coverImage        String?
-  published         Boolean          @default(false)
+  id         Int     @id @default(autoincrement())
+  slug       String  @unique
+  titleTh    String
+  titleEn    String
+  contentTh  String  @db.Text
+  contentEn  String  @db.Text
+  excerptTh  String? @db.Text
+  excerptEn  String? @db.Text
+  coverImage String?
+  published  Boolean @default(false)
 
   // Relations
   articleCategoryId Int?
   category          ArticleCategory? @relation(fields: [articleCategoryId], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([articleCategoryId])
 }
 
 model Work {
-  id            Int       @id @default(autoincrement())
-  slug          String    @unique
+  id            Int     @id @default(autoincrement())
+  slug          String  @unique
   titleTh       String
   titleEn       String
-  descriptionTh String?   @db.Text
-  descriptionEn String?   @db.Text
+  descriptionTh String? @db.Text
+  descriptionEn String? @db.Text
   coverImage    String?
-  published     Boolean   @default(false)
+  published     Boolean @default(false)
 
   // Relations — shares the Category table with Product
-  categoryId    Int?
-  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([categoryId])
 }
 
 model News {
-  id          Int      @id @default(autoincrement())
-  slug        String   @unique
-  titleTh     String
-  titleEn     String
-  contentTh   String   @db.Text
-  contentEn   String   @db.Text
-  excerptTh   String?  @db.Text
-  excerptEn   String?  @db.Text
-  coverImage  String?
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  slug       String   @unique
+  titleTh    String
+  titleEn    String
+  contentTh  String   @db.Text
+  contentEn  String   @db.Text
+  excerptTh  String?  @db.Text
+  excerptEn  String?  @db.Text
+  coverImage String?
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([slug])
 }
 
 model Promotion {
-  id          Int       @id @default(autoincrement())
-  slug        String    @unique
-  titleTh     String
-  titleEn     String
-  contentTh   String    @db.Text
-  contentEn   String    @db.Text
-  excerptTh   String?   @db.Text
-  excerptEn   String?   @db.Text
-  coverImage  String?
-  published   Boolean   @default(false)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int       @id @default(autoincrement())
+  slug       String    @unique
+  titleTh    String
+  titleEn    String
+  contentTh  String    @db.Text
+  contentEn  String    @db.Text
+  excerptTh  String?   @db.Text
+  excerptEn  String?   @db.Text
+  coverImage String?
+  published  Boolean   @default(false)
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([slug])
 }
@@ -109,43 +202,43 @@ model Promotion {
 // ---------------------------------------------------------------------------
 
 model Category {
-  id            Int                 @id @default(autoincrement())
-  slug          String              @unique
+  id            Int     @id @default(autoincrement())
+  slug          String  @unique
   nameTh        String
   nameEn        String
-  descriptionTh String?             @db.Text
-  descriptionEn String?             @db.Text
+  descriptionTh String? @db.Text
+  descriptionEn String? @db.Text
   coverImage    String?
-  sortOrder     Int                 @default(0)
-  published     Boolean             @default(true)
+  sortOrder     Int     @default(0)
+  published     Boolean @default(true)
 
   subCategories SubCategory[]
   products      Product[]
   works         Work[]
   attributes    CategoryAttribute[]
 
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
 
 model SubCategory {
-  id         Int       @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   slug       String
   nameTh     String
   nameEn     String
   coverImage String?
-  sortOrder  Int       @default(0)
-  published  Boolean   @default(true)
+  sortOrder  Int     @default(0)
+  published  Boolean @default(true)
 
   // Relations
   categoryId Int
   category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   products   Product[]
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Slug only needs to be unique within its parent category
   @@unique([categoryId, slug])
@@ -164,8 +257,8 @@ model Brand {
   websiteUrl String?
   products   Product[]
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
@@ -189,44 +282,44 @@ model PricingUnit {
 }
 
 model Product {
-  id            Int      @id @default(autoincrement())
-  slug          String   @unique
-  sku           String   @unique
+  id            Int     @id @default(autoincrement())
+  slug          String  @unique
+  sku           String  @unique
   nameTh        String
   nameEn        String
-  descriptionTh String?  @db.Text
-  descriptionEn String?  @db.Text
-  usageGuideTh  String?  @db.Text
-  usageGuideEn  String?  @db.Text
+  descriptionTh String? @db.Text
+  descriptionEn String? @db.Text
+  usageGuideTh  String? @db.Text
+  usageGuideEn  String? @db.Text
 
-  coverImage    String?
-  catalogPdf    String?
+  coverImage String?
+  catalogPdf String?
 
-  basePrice     Decimal? @db.Decimal(12, 2)
-  currency      String   @default("THB")
+  basePrice Decimal? @db.Decimal(12, 2)
+  currency  String   @default("THB")
 
-  featured      Boolean  @default(false)
-  published     Boolean  @default(false)
-  sortOrder     Int      @default(0)
+  featured  Boolean @default(false)
+  published Boolean @default(false)
+  sortOrder Int     @default(0)
 
   // Relations
-  unitId         Int?
-  unit           ProductUnit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
-  pricingUnitId  Int?
-  pricingUnit    PricingUnit?        @relation(fields: [pricingUnitId], references: [id], onDelete: SetNull)
-  brandId        Int?
-  brand          Brand?              @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  categoryId     Int?
-  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  subCategoryId  Int?
-  subCategory    SubCategory?        @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+  unitId        Int?
+  unit          ProductUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  pricingUnitId Int?
+  pricingUnit   PricingUnit? @relation(fields: [pricingUnitId], references: [id], onDelete: SetNull)
+  brandId       Int?
+  brand         Brand?       @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  categoryId    Int?
+  category      Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subCategoryId Int?
+  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
 
   images         ProductImage[]
   variants       ProductVariant[]
   attributeLinks ProductAttributeValue[]
 
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([categoryId])
@@ -271,8 +364,8 @@ model Attribute {
   values     AttributeValue[]
   categories CategoryAttribute[]
 
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AttributeValue {
@@ -285,10 +378,10 @@ model AttributeValue {
   sortOrder    Int      @default(0)
 
   // Relations
-  attributeId  Int
-  attribute    Attribute              @relation(fields: [attributeId], references: [id], onDelete: Cascade)
-  products     ProductAttributeValue[]
-  variants     VariantAttributeValue[]
+  attributeId Int
+  attribute   Attribute               @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  products    ProductAttributeValue[]
+  variants    VariantAttributeValue[]
 
   @@unique([attributeId, slug])
   @@index([attributeId])
@@ -296,10 +389,10 @@ model AttributeValue {
 
 /// กำหนดว่าหมวดหมู่ไหนใช้คุณสมบัติอะไรบ้าง (ใช้สร้าง filter ของแต่ละหมวด)
 model CategoryAttribute {
-  id          Int       @id @default(autoincrement())
-  isFilter    Boolean   @default(true)
-  isRequired  Boolean   @default(false)
-  sortOrder   Int       @default(0)
+  id         Int     @id @default(autoincrement())
+  isFilter   Boolean @default(true)
+  isRequired Boolean @default(false)
+  sortOrder  Int     @default(0)
 
   // Relations
   categoryId  Int
@@ -341,11 +434,11 @@ model ProductVariant {
 
   // Relations
   productId       Int
-  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
   attributeValues VariantAttributeValue[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([productId])
 }
@@ -360,5 +453,3 @@ model VariantAttributeValue {
   @@unique([variantId, attributeValueId])
   @@index([attributeValueId])
 }
-
-

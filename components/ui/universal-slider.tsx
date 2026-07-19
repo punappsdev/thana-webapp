@@ -37,7 +37,6 @@ function CountdownTimer({
   locale: string;
   isMobileBadge?: boolean;
 }) {
-  const t = useTranslations("News");
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -59,21 +58,24 @@ function CountdownTimer({
       };
     };
 
-    setTimeLeft(calculateTimeLeft());
+    const initialTimer = window.setTimeout(() => setTimeLeft(calculateTimeLeft()), 0);
     const timer = setInterval(() => {
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
       if (!remaining) clearInterval(timer);
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+    };
   }, [endDate]);
 
   if (!timeLeft) return null;
 
   if (isMobileBadge) {
     return (
-      <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-2.5 py-1 rounded-md font-label-sm font-semibold text-[10px] tracking-wide backdrop-blur-xs border border-white/10">
+      <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-2.5 py-1 rounded-md font-label-sm font-semibold tracking-wide backdrop-blur-xs border border-white/10">
         <Clock className="h-3 w-3 text-[#3ca6fe]" />
         {timeLeft.days > 0 ? `${timeLeft.days}d ` : ""}{String(timeLeft.hours).padStart(2, "0")}:{String(timeLeft.minutes).padStart(2, "0")}:{String(timeLeft.seconds).padStart(2, "0")}
       </span>

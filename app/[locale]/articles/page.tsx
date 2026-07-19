@@ -15,6 +15,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
+import type { Prisma } from "@/generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -40,7 +41,7 @@ export default async function ArticlesPage({
   });
 
   // Build filter condition
-  const where: any = { published: true };
+  const where: Prisma.ArticleWhereInput = { published: true };
 
   if (category) {
     where.category = { slug: category };

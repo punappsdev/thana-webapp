@@ -4,7 +4,7 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { Calendar, Megaphone, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { UniversalSlider, SlideItem } from "@/components/ui/universal-slider";
 import {
@@ -16,6 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
+import type { News, Promotion } from "@/generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -47,8 +48,8 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   });
 
   // Fetch items for the grid list based on filters
-  let newsList: any[] = [];
-  let promotionsList: any[] = [];
+  let newsList: News[] = [];
+  let promotionsList: Promotion[] = [];
 
   if (type === "all" || type === "news") {
     newsList = await prisma.news.findMany({

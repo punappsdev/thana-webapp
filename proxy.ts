@@ -1,7 +1,27 @@
 import createMiddleware from 'next-intl/middleware';
 import {routing} from './i18n/routing';
+import {NextRequest, NextResponse} from 'next/server';
+import {ADMIN_SESSION_COOKIE} from './lib/admin/constants';
 
-export default createMiddleware(routing);
+const intlMiddleware = createMiddleware(routing);
+
+export default function proxy(request: NextRequest) {
+  const {pathname} = request.nextUrl;
+
+  if (pathname.startsWith('/admin')) {
+    const isLogin = pathname === '/admin/login';
+    const hasSessionCookie = request.cookies.has(ADMIN_SESSION_COOKIE);
+    if (!isLogin && !hasSessionCookie) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+    if (isLogin && hasSessionCookie) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  return intlMiddleware(request);
+}
 
 export const config = {
   matcher: [

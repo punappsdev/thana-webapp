@@ -16,6 +16,12 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Admin panel
+
+The authenticated Thai-language content administration panel is available at `/admin`. It manages products and variants, catalog references, portfolio entries, articles, news, promotions, media, activity logs, and the administrator password.
+
+See [`docs/ADMIN.md`](docs/ADMIN.md) for environment variables, database migration, administrator bootstrap, media import, VPS requirements, and verification commands.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
