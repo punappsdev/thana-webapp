@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /** An attribute from the shared dictionary, with every value ever defined for it. */
@@ -109,8 +111,8 @@ export function ProductAttributeList({
         onPick={(attribute) =>
           add({ _key: newAttributeKey(), attributeId: attribute.id, newNameTh: "", newNameEn: "", isVariantAxis: variantAxis, valueIds: [], newValues: [] })
         }
-        onCreate={(name) =>
-          add({ _key: newAttributeKey(), attributeId: null, newNameTh: name, newNameEn: "", isVariantAxis: variantAxis, valueIds: [], newValues: [] })
+        onCreate={(nameTh, nameEn) =>
+          add({ _key: newAttributeKey(), attributeId: null, newNameTh: nameTh, newNameEn: nameEn, isVariantAxis: variantAxis, valueIds: [], newValues: [] })
         }
       />
     </div>
@@ -186,7 +188,7 @@ function AttributeCard({
         <ValuePicker
           available={available}
           onPick={(value) => onUpdate({ valueIds: [...draft.valueIds, value.id] })}
-          onCreate={(name) => onUpdate({ newValues: [...draft.newValues, { _key: crypto.randomUUID(), valueTh: name, valueEn: "" }] })}
+          onCreate={(valueTh, valueEn) => onUpdate({ newValues: [...draft.newValues, { _key: crypto.randomUUID(), valueTh, valueEn }] })}
         />
       </div>
 
@@ -210,6 +212,70 @@ function ValueChip({ label, colorHex, isNew, onRemove }: { label: string; colorH
   );
 }
 
+/**
+ * Both languages are collected up front when something new is created. The old
+ * flow stored the Thai text in the English column too, so the /en storefront
+ * silently rendered Thai labels with nothing to signal the missing translation.
+ */
+function BilingualCreateForm({
+  title,
+  thLabel,
+  enLabel,
+  initialTh,
+  onCancel,
+  onSubmit,
+}: {
+  title: string;
+  thLabel: string;
+  enLabel: string;
+  initialTh: string;
+  onCancel: () => void;
+  onSubmit: (th: string, en: string) => void;
+}) {
+  const [th, setTh] = useState(initialTh);
+  const [en, setEn] = useState("");
+  const ready = th.trim().length > 0 && en.trim().length > 0;
+
+  const submit = () => {
+    if (ready) onSubmit(th.trim(), en.trim());
+  };
+
+  return (
+    <div className="space-y-3 p-3">
+      <p className="font-label-md font-semibold">{title}</p>
+      <div className="space-y-2">
+        <Label className="font-label-sm">{thLabel}</Label>
+        <Input value={th} onChange={(event) => setTh(event.target.value)} className="font-body-sm" />
+      </div>
+      <div className="space-y-2">
+        <Label className="font-label-sm">{enLabel}</Label>
+        <Input
+          autoFocus
+          value={en}
+          onChange={(event) => setEn(event.target.value)}
+          placeholder="เช่น Width"
+          className="font-body-sm"
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              submit();
+            }
+          }}
+        />
+      </div>
+      <p className="font-label-sm text-muted-foreground">ต้องกรอกทั้งสองภาษา เพราะหน้าเว็บมีทั้งไทยและอังกฤษ</p>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          ยกเลิก
+        </Button>
+        <Button type="button" size="sm" disabled={!ready} onClick={submit}>
+          เพิ่ม
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function AttributePicker({
   dictionary,
   usedIds,
@@ -221,15 +287,31 @@ function AttributePicker({
   usedIds: Set<number>;
   label: string;
   onPick: (attribute: DictionaryAttribute) => void;
-  onCreate: (name: string) => void;
+  onCreate: (nameTh: string, nameEn: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [creating, setCreating] = useState<string | null>(null);
   const selectable = useMemo(() => dictionary.filter((item) => !usedIds.has(item.id)), [dictionary, usedIds]);
   const exactMatch = selectable.some((item) => item.nameTh.trim() === search.trim());
 
+  const close = () => {
+    setSearch("");
+    setCreating(null);
+    setOpen(false);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setSearch("");
+          setCreating(null);
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <Plus className="size-3.5" />
@@ -237,20 +319,26 @@ function AttributePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
+        {creating !== null ? (
+          <BilingualCreateForm
+            title="สร้างรายการใหม่"
+            thLabel="ชื่อภาษาไทย"
+            enLabel="ชื่อภาษาอังกฤษ"
+            initialTh={creating}
+            onCancel={() => setCreating(null)}
+            onSubmit={(th, en) => {
+              onCreate(th, en);
+              close();
+            }}
+          />
+        ) : (
         <Command>
           <CommandInput placeholder="ค้นหา หรือพิมพ์ชื่อใหม่แล้วกดสร้าง" value={search} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty className="py-3 font-body-sm">พิมพ์ชื่อเพื่อสร้างใหม่</CommandEmpty>
             {search.trim() && !exactMatch ? (
               <CommandGroup>
-                <CommandItem
-                  value={`__create__${search}`}
-                  onSelect={() => {
-                    onCreate(search.trim());
-                    setSearch("");
-                    setOpen(false);
-                  }}
-                >
+                <CommandItem value={`__create__${search}`} onSelect={() => setCreating(search.trim())}>
                   <Plus className="size-4" />
                   สร้าง &ldquo;{search.trim()}&rdquo;
                 </CommandItem>
@@ -275,6 +363,7 @@ function AttributePicker({
             ) : null}
           </CommandList>
         </Command>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -287,14 +376,30 @@ function ValuePicker({
 }: {
   available: { id: number; valueTh: string; valueEn: string; colorHex: string | null }[];
   onPick: (value: { id: number; valueTh: string }) => void;
-  onCreate: (name: string) => void;
+  onCreate: (valueTh: string, valueEn: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [creating, setCreating] = useState<string | null>(null);
   const exactMatch = available.some((item) => item.valueTh.trim() === search.trim());
 
+  const close = () => {
+    setSearch("");
+    setCreating(null);
+    setOpen(false);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setSearch("");
+          setCreating(null);
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <Plus className="size-3.5" />
@@ -302,20 +407,26 @@ function ValuePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
+        {creating !== null ? (
+          <BilingualCreateForm
+            title="สร้างค่าใหม่"
+            thLabel="ค่าภาษาไทย"
+            enLabel="ค่าภาษาอังกฤษ"
+            initialTh={creating}
+            onCancel={() => setCreating(null)}
+            onSubmit={(th, en) => {
+              onCreate(th, en);
+              close();
+            }}
+          />
+        ) : (
         <Command>
           <CommandInput placeholder="ค้นหา หรือพิมพ์ค่าใหม่" value={search} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty className="py-3 font-body-sm">พิมพ์เพื่อสร้างค่าใหม่</CommandEmpty>
             {search.trim() && !exactMatch ? (
               <CommandGroup>
-                <CommandItem
-                  value={`__create__${search}`}
-                  onSelect={() => {
-                    onCreate(search.trim());
-                    setSearch("");
-                    setOpen(false);
-                  }}
-                >
+                <CommandItem value={`__create__${search}`} onSelect={() => setCreating(search.trim())}>
                   <Plus className="size-4" />
                   สร้าง &ldquo;{search.trim()}&rdquo;
                 </CommandItem>
@@ -341,6 +452,7 @@ function ValuePicker({
             ) : null}
           </CommandList>
         </Command>
+        )}
       </PopoverContent>
     </Popover>
   );

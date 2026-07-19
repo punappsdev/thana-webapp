@@ -117,10 +117,18 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     return { success: false, message: "ข้อมูลรูปภาพ คุณลักษณะ หรือตัวเลือกไม่ถูกต้อง" };
   }
 
+  // Anything created here lands in the shared dictionary and is rendered on both
+  // the Thai and English storefront, so neither language may be left blank —
+  // otherwise /en silently shows Thai text with nothing flagging the gap.
   for (const attribute of attributes) {
-    if (attribute.attributeId === null && !attribute.newNameTh) return { success: false, message: "กรุณาตั้งชื่อคุณลักษณะใหม่ให้ครบ" };
+    if (attribute.attributeId === null && (!attribute.newNameTh || !attribute.newNameEn)) {
+      return { success: false, message: "กรุณากรอกชื่อรายการใหม่ให้ครบทั้งภาษาไทยและภาษาอังกฤษ" };
+    }
     if (!attribute.valueIds.length && !attribute.newValues.length) {
-      return { success: false, message: `กรุณาเพิ่มค่าให้คุณลักษณะ "${attribute.newNameTh || "ที่เลือกไว้"}" อย่างน้อยหนึ่งค่า` };
+      return { success: false, message: `กรุณาเพิ่มค่าให้ "${attribute.newNameTh || "รายการที่เลือกไว้"}" อย่างน้อยหนึ่งค่า` };
+    }
+    if (attribute.newValues.some((value) => !value.valueTh || !value.valueEn)) {
+      return { success: false, message: "กรุณากรอกค่าใหม่ให้ครบทั้งภาษาไทยและภาษาอังกฤษ" };
     }
   }
 
@@ -221,9 +229,9 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
             const created = await tx.attributeValue.create({
               data: {
                 attributeId,
-                slug: uniqueSlug(value.valueEn || value.valueTh, taken, "value"),
+                slug: uniqueSlug(value.valueEn, taken, "value"),
                 valueTh: value.valueTh,
-                valueEn: value.valueEn || value.valueTh,
+                valueEn: value.valueEn,
                 sortOrder: nextSortOrder++,
               },
             });
@@ -310,9 +318,9 @@ async function createAttribute(tx: Prisma.TransactionClient, attribute: Attribut
   const existingSlugs = await tx.attribute.findMany({ select: { slug: true } });
   const created = await tx.attribute.create({
     data: {
-      slug: uniqueSlug(attribute.newNameEn || attribute.newNameTh, new Set(existingSlugs.map((item) => item.slug)), "attribute"),
+      slug: uniqueSlug(attribute.newNameEn, new Set(existingSlugs.map((item) => item.slug)), "attribute"),
       nameTh: attribute.newNameTh,
-      nameEn: attribute.newNameEn || attribute.newNameTh,
+      nameEn: attribute.newNameEn,
     },
   });
   return created.id;
