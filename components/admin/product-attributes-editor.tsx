@@ -269,7 +269,6 @@ function AttributePicker({
                     }}
                   >
                     <span>{attribute.nameTh}</span>
-                    <span className="ml-auto font-label-sm text-muted-foreground">{attribute.values.length} ค่า</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

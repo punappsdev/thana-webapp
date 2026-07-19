@@ -8,7 +8,6 @@ import {
   Boxes,
   BriefcaseBusiness,
   FileText,
-  FolderTree,
   ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -28,8 +27,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { label: "ภาพรวม", href: "/admin", icon: LayoutDashboard },
   { label: "สินค้า", href: "/admin/products", icon: Package },
-  { label: "หมวดหมู่", href: "/admin/catalog/categories", icon: FolderTree },
-  { label: "ข้อมูลแคตตาล็อก", href: "/admin/catalog", icon: Boxes },
+  { label: "ข้อมูลสินค้า", href: "/admin/catalog", icon: Boxes },
   { label: "ผลงาน", href: "/admin/content/works", icon: BriefcaseBusiness },
   { label: "บทความ", href: "/admin/content/articles", icon: BookOpen },
   { label: "ข่าว", href: "/admin/content/news", icon: Newspaper },
