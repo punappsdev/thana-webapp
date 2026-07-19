@@ -12,6 +12,7 @@ import { MediaField } from "@/components/admin/media-field";
 import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,17 +55,36 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
     ? <RichTextEditor name={`body${locale}`} initialValue={locale === "Th" ? record?.bodyTh || "" : record?.bodyEn || ""} onDirty={markDirty} />
     : <Textarea name={`body${locale}`} defaultValue={locale === "Th" ? record?.bodyTh : record?.bodyEn} rows={8} className="font-body-sm" />;
 
+  const isPublished = record?.published ?? false;
+
   return (
     <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="resource" value={config.resource} />
       <input type="hidden" name="id" value={record?.id || ""} />
       <input type="hidden" name="updatedAt" value={record?.updatedAt.toISOString() || ""} />
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div><h1 className="font-headline-lg font-semibold">{record ? `แก้ไข${config.singular}` : `เพิ่ม${config.singular}`}</h1><p className="font-body-sm text-muted-foreground">บันทึกร่างได้ทันที และกรอกข้อมูลสองภาษาให้ครบก่อนเผยแพร่</p></div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-headline-lg font-semibold">{record ? `แก้ไข${config.singular}` : `เพิ่ม${config.singular}`}</h1>
+            {record ? <Badge variant={isPublished ? "default" : "secondary"}>{isPublished ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
+          </div>
+          <p className="font-body-sm text-muted-foreground mt-1">
+            {isPublished ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "บันทึกร่างได้ทันที และกรอกข้อมูลสองภาษาให้ครบก่อนเผยแพร่"}
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           {record ? <Button asChild type="button" variant="outline"><Link href={`/admin/preview/${config.resource}/${record.id}?locale=th`} target="_blank"><Eye className="size-4" />Preview</Link></Button> : null}
-          <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}><Save className="size-4" />บันทึกร่าง</Button>
-          <Button type="submit" name="intent" value="publish" disabled={pending}><ExternalLink className="size-4" />เผยแพร่</Button>
+          {isPublished ? (
+            <>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}><Save className="size-4" />ยกเลิกเผยแพร่ (เปลี่ยนเป็นร่าง)</Button>
+              <Button type="submit" name="intent" value="publish" disabled={pending}><Save className="size-4" />บันทึกการแก้ไข</Button>
+            </>
+          ) : (
+            <>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}><Save className="size-4" />บันทึกร่าง</Button>
+              <Button type="submit" name="intent" value="publish" disabled={pending}><ExternalLink className="size-4" />เผยแพร่</Button>
+            </>
+          )}
         </div>
       </div>
 

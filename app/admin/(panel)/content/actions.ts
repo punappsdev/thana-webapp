@@ -112,7 +112,10 @@ export async function deleteContentAction(formData: FormData): Promise<void> {
       case "promotions": return prisma.promotion.findUnique({ where: { id } });
     }
   })();
-  if (!existing || confirmation !== existing.titleTh) throw new Error("Delete confirmation does not match");
+  if (!existing) throw new Error("Content item not found");
+  const normConf = confirmation.trim().toUpperCase();
+  const isMatch = normConf === "DELETE" || (existing.titleTh && normConf === existing.titleTh.trim().toUpperCase());
+  if (!isMatch) throw new Error("Delete confirmation does not match");
   if (existing.published) throw new Error("Unpublish content before permanent deletion");
   switch (resource) {
     case "works": await prisma.work.delete({ where: { id } }); break;

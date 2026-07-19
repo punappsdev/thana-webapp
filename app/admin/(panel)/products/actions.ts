@@ -324,7 +324,9 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   const confirmation = String(formData.get("confirmation") || "");
   const prisma = getPrisma();
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
-  if (product.published || confirmation !== product.nameTh) throw new Error("Unpublish and confirm product name before deletion");
+  const normConf = confirmation.trim().toUpperCase();
+  const isMatch = normConf === "DELETE" || (product.nameTh && normConf === product.nameTh.trim().toUpperCase());
+  if (product.published || !isMatch) throw new Error("Unpublish and confirm product deletion before proceeding");
   await prisma.product.delete({ where: { id } });
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: "products", entityId: id, label: product.nameTh });
   revalidatePath("/admin/products");

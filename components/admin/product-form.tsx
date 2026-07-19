@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, ImagePlus, Save, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, ImagePlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveProductAction } from "@/app/admin/(panel)/products/actions";
 import { AdminSelect } from "@/components/admin/admin-select";
+import { Badge } from "@/components/ui/badge";
 import {
   ProductAttributeList,
   newAttributeKey,
@@ -218,25 +219,46 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-headline-lg font-semibold">{record ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</h1>
-          <p className="font-body-sm text-muted-foreground">จัดการข้อมูล รูปภาพ คุณลักษณะ และตัวเลือกใน transaction เดียว</p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-headline-lg font-semibold">{record ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</h1>
+            {record ? <Badge variant={record.published ? "default" : "secondary"}>{record.published ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
+          </div>
+          <p className="font-body-sm text-muted-foreground mt-1">
+            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการข้อมูล รูปภาพ คุณลักษณะ และตัวเลือกใน transaction เดียว"}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {record ? (
-            <Button asChild variant="outline">
+            <Button asChild type="button" variant="outline">
               <Link href={`/admin/preview/products/${record.id}`} target="_blank">
                 <Eye className="size-4" />
                 Preview
               </Link>
             </Button>
           ) : null}
-          <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
-            <Save className="size-4" />
-            บันทึกร่าง
-          </Button>
-          <Button type="submit" name="intent" value="publish" disabled={pending}>
-            เผยแพร่
-          </Button>
+          {record?.published ? (
+            <>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
+                <Save className="size-4" />
+                ยกเลิกเผยแพร่ (เปลี่ยนเป็นร่าง)
+              </Button>
+              <Button type="submit" name="intent" value="publish" disabled={pending}>
+                <Save className="size-4" />
+                บันทึกการแก้ไข
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
+                <Save className="size-4" />
+                บันทึกร่าง
+              </Button>
+              <Button type="submit" name="intent" value="publish" disabled={pending}>
+                <ExternalLink className="size-4" />
+                เผยแพร่
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
