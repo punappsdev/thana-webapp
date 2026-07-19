@@ -17,7 +17,8 @@
  */
 export type CartItem = {
   productId: number;
-  variantId: number;
+  /** Null for a product sold at its base price, with no options to choose. */
+  variantId: number | null;
   /** Kept so a line can link back to the product page */
   slug: string;
   nameTh: string;
@@ -38,7 +39,7 @@ export const MAX_QTY = 9999;
 
 /** Identifies a line: the same product in two variants is two separate lines. */
 export function lineKey(item: Pick<CartItem, "productId" | "variantId">): string {
-  return `${item.productId}:${item.variantId}`;
+  return `${item.productId}:${item.variantId ?? "base"}`;
 }
 
 export function clampQty(qty: number): number {
@@ -55,7 +56,7 @@ function parseItem(raw: unknown): CartItem | null {
   const it = raw as Record<string, unknown>;
 
   if (typeof it.productId !== "number" || !Number.isFinite(it.productId)) return null;
-  if (typeof it.variantId !== "number" || !Number.isFinite(it.variantId)) return null;
+  if (it.variantId !== null && (typeof it.variantId !== "number" || !Number.isFinite(it.variantId))) return null;
   if (typeof it.slug !== "string" || it.slug === "") return null;
   if (typeof it.nameTh !== "string" || typeof it.nameEn !== "string") return null;
   if (typeof it.unitPrice !== "number" || !Number.isFinite(it.unitPrice)) return null;
@@ -63,7 +64,7 @@ function parseItem(raw: unknown): CartItem | null {
 
   return {
     productId: it.productId,
-    variantId: it.variantId,
+    variantId: it.variantId as number | null,
     slug: it.slug,
     nameTh: it.nameTh,
     nameEn: it.nameEn,

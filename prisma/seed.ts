@@ -13,7 +13,7 @@ async function main() {
   await prisma.productAttributeValue.deleteMany({});
   await prisma.productImage.deleteMany({});
   await prisma.product.deleteMany({});
-  await prisma.categoryAttribute.deleteMany({});
+  await prisma.productAttribute.deleteMany({});
   await prisma.attributeValue.deleteMany({});
   await prisma.attribute.deleteMany({});
   await prisma.subCategory.deleteMany({});
@@ -474,25 +474,6 @@ async function main() {
     }
   }
 
-  console.log("Linking attributes to categories...");
-  const categoryAttributeMap: Record<string, string[]> = {
-    "general-glass": ["thickness", "size", "color", "edge-type"],
-    "decorative-glass": ["thickness", "size", "color", "surface-finish"],
-    "safety-glass": ["thickness", "size", "color", "edge-type"],
-    gypsum: ["thickness", "size"],
-    aluminum: ["size", "color", "surface-finish"],
-    "hardware-store": ["color", "surface-finish"],
-  };
-  for (const [catSlug, attrSlugs] of Object.entries(categoryAttributeMap)) {
-    await prisma.categoryAttribute.createMany({
-      data: attrSlugs.map((attrSlug, i) => ({
-        categoryId: categoryBy[catSlug],
-        attributeId: attributeBy[attrSlug],
-        sortOrder: i + 1,
-      })),
-    });
-  }
-
   console.log("Seeding products...");
   const productData = [
     {
@@ -706,6 +687,11 @@ async function main() {
       ...product
     } = p;
 
+    // Attributes belong to the product, so derive its set from the value keys
+    // it declares. An attribute is a variant axis when a variant selects from it.
+    const attributeSlugs = [...new Set(attributes.map((key) => key.split(":")[0]))];
+    const axisSlugs = new Set(variants.flatMap((v) => v.values.map((key) => key.split(":")[0])));
+
     await prisma.product.create({
       data: {
         ...product,
@@ -714,6 +700,13 @@ async function main() {
         brandId: brandBy[brandSlug],
         unitId: unitBy[unitCode],
         pricingUnitId: pricingBy[pricingCode] ?? null,
+        attributes: {
+          create: attributeSlugs.map((slug, i) => ({
+            attributeId: attributeBy[slug],
+            isVariantAxis: axisSlugs.has(slug),
+            sortOrder: i + 1,
+          })),
+        },
         attributeLinks: {
           create: attributes.map((key) => ({ attributeValueId: attrValueBy[key] })),
         },

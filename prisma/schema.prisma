@@ -215,7 +215,6 @@ model Category {
   subCategories SubCategory[]
   products      Product[]
   works         Work[]
-  attributes    CategoryAttribute[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -316,6 +315,7 @@ model Product {
 
   images         ProductImage[]
   variants       ProductVariant[]
+  attributes     ProductAttribute[]
   attributeLinks ProductAttributeValue[]
 
   createdAt DateTime @default(now())
@@ -361,8 +361,8 @@ model Attribute {
   inputType AttributeInputType @default(SELECT)
   sortOrder Int                @default(0)
 
-  values     AttributeValue[]
-  categories CategoryAttribute[]
+  values   AttributeValue[]
+  products ProductAttribute[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -387,20 +387,21 @@ model AttributeValue {
   @@index([attributeId])
 }
 
-/// กำหนดว่าหมวดหมู่ไหนใช้คุณสมบัติอะไรบ้าง (ใช้สร้าง filter ของแต่ละหมวด)
-model CategoryAttribute {
-  id         Int     @id @default(autoincrement())
-  isFilter   Boolean @default(true)
-  isRequired Boolean @default(false)
-  sortOrder  Int     @default(0)
+/// คุณลักษณะที่สินค้าตัวนี้ใช้ — แต่ละสินค้ากำหนดชุดของตัวเองได้อิสระ
+/// isVariantAxis = true คือคุณลักษณะที่ลูกค้าเลือกได้และทำให้ราคาต่างกัน
+/// (ใช้ generate variants); false คือแสดงในตารางข้อมูลจำเพาะอย่างเดียว
+model ProductAttribute {
+  id            Int     @id @default(autoincrement())
+  isVariantAxis Boolean @default(false)
+  sortOrder     Int     @default(0)
 
   // Relations
-  categoryId  Int
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   attributeId Int
   attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
 
-  @@unique([categoryId, attributeId])
+  @@unique([productId, attributeId])
   @@index([attributeId])
 }
 
@@ -421,6 +422,8 @@ model ProductVariant {
   id           Int      @id @default(autoincrement())
   sku          String?  @unique
   price        Decimal  @db.Decimal(12, 2)
+  /// Reserved for a future promotion feature — not read or written anywhere yet.
+  /// There is no discount system, so no "before" price is collected or shown.
   comparePrice Decimal? @db.Decimal(12, 2)
   image        String?
   /// Reserved for a future stock feature — not read or written anywhere yet.

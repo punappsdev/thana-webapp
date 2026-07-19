@@ -5,6 +5,7 @@ import {
   validateBilingualPublish,
   validateProductVariants,
   validateProductClassification,
+  validateVariantAxisCoverage,
 } from "@/lib/admin/validation";
 
 describe("admin validation", () => {
@@ -43,10 +44,33 @@ describe("admin validation", () => {
     expect(isStaleVersion("invalid", stored)).toBe(true);
   });
 
-  it("rejects a subcategory or attribute that does not belong to the selected category", () => {
-    expect(validateProductClassification({ categoryId: 1, subCategory: { id: 9, categoryId: 2 }, selectedAttributeIds: [3, 4], allowedAttributeIds: [3] })).toEqual([
+  it("rejects a subcategory that does not belong to the selected category", () => {
+    expect(validateProductClassification({ categoryId: 1, subCategory: { id: 9, categoryId: 2 } })).toEqual([
       "หมวดหมู่ย่อยไม่อยู่ในหมวดหมู่ที่เลือก",
-      "มีคุณลักษณะที่ไม่ได้กำหนดให้กับหมวดหมู่นี้",
+    ]);
+  });
+
+  it("accepts any attribute a product declares, regardless of its category", () => {
+    expect(validateProductClassification({ categoryId: 1, subCategory: { id: 9, categoryId: 1 } })).toEqual([]);
+    expect(validateProductClassification({ categoryId: null, subCategory: null })).toEqual([]);
+  });
+
+  it("requires every variant to carry exactly one value per variant axis", () => {
+    const axes = [
+      { attributeId: 1, nameTh: "ความหนา", valueIds: [10, 11] },
+      { attributeId: 2, nameTh: "สี", valueIds: [20, 21] },
+    ];
+
+    expect(validateVariantAxisCoverage([{ attributeValueIds: [10, 20] }, { attributeValueIds: [11, 21] }], axes)).toEqual([]);
+
+    expect(validateVariantAxisCoverage([{ attributeValueIds: [10] }], axes)).toEqual(['ทุกตัวเลือกต้องระบุ "สี"']);
+
+    expect(validateVariantAxisCoverage([{ attributeValueIds: [20, 21, 10] }], axes)).toEqual([
+      'แต่ละตัวเลือกระบุ "สี" ได้เพียงค่าเดียว',
+    ]);
+
+    expect(validateVariantAxisCoverage([{ attributeValueIds: [10, 20, 99] }], axes)).toEqual([
+      "ตัวเลือกมีค่าคุณลักษณะที่ไม่ได้อยู่ในรายการของสินค้านี้",
     ]);
   });
 });

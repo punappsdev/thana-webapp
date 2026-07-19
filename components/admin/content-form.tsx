@@ -7,13 +7,16 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, Eye, Save } from "lucide-react";
 import { toast } from "sonner";
 import { saveContentAction } from "@/app/admin/(panel)/content/actions";
+import { FormTabPanel } from "@/components/admin/form-tab-panel";
+import { MediaField } from "@/components/admin/media-field";
+import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { ContentConfig } from "@/lib/admin/content-config";
 import type { ContentRecord } from "@/lib/admin/content-data";
@@ -25,6 +28,7 @@ const formatDateTime = (date: Date | null) => date ? new Date(date.getTime() - d
 export function ContentForm({ config, record, categories }: { config: ContentConfig; record: ContentRecord | null; categories: { id: number; nameTh: string; nameEn: string }[] }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveContentAction, initialState);
+  const handleSubmit = useNoResetSubmit(action);
   const dirtyRef = useRef(false);
   const [titleEn, setTitleEn] = useState(record?.titleEn || "");
   const [slug, setSlug] = useState(record?.slug || "");
@@ -51,7 +55,7 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
     : <Textarea name={`body${locale}`} defaultValue={locale === "Th" ? record?.bodyTh : record?.bodyEn} rows={8} className="font-body-sm" />;
 
   return (
-    <form action={action} onChange={markDirty} className="space-y-6">
+    <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="resource" value={config.resource} />
       <input type="hidden" name="id" value={record?.id || ""} />
       <input type="hidden" name="updatedAt" value={record?.updatedAt.toISOString() || ""} />
@@ -71,16 +75,16 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
           <CardContent>
             <Tabs defaultValue="th">
               <TabsList><TabsTrigger value="th" className="font-label-md">ไทย</TabsTrigger><TabsTrigger value="en" className="font-label-md">English</TabsTrigger></TabsList>
-              <TabsContent value="th" className="mt-5 space-y-5">
+              <FormTabPanel value="th" className="mt-5 space-y-5">
                 <div className="space-y-2"><Label htmlFor="titleTh" className="font-label-md">ชื่อภาษาไทย</Label><Input id="titleTh" name="titleTh" defaultValue={record?.titleTh} className="font-body-sm" />{fieldError("titleTh") ? <p className="font-body-sm text-destructive">{fieldError("titleTh")}</p> : null}</div>
                 {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptTh" className="font-label-md">คำโปรยภาษาไทย</Label><Textarea id="excerptTh" name="excerptTh" defaultValue={record?.excerptTh} rows={3} className="font-body-sm" /></div> : null}
                 <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "เนื้อหาภาษาไทย" : "คำอธิบายภาษาไทย"}</Label>{bodyField("Th")}{fieldError("contentTh") ? <p className="font-body-sm text-destructive">{fieldError("contentTh")}</p> : null}</div>
-              </TabsContent>
-              <TabsContent value="en" className="mt-5 space-y-5">
+              </FormTabPanel>
+              <FormTabPanel value="en" className="mt-5 space-y-5">
                 <div className="space-y-2"><Label htmlFor="titleEn" className="font-label-md">English title</Label><Input id="titleEn" name="titleEn" value={titleEn} onChange={(event) => { setTitleEn(event.target.value); markDirty(); }} onBlur={() => { if (!slug) setSlug(slugifyAdminTitle(titleEn)); }} className="font-body-sm" />{fieldError("titleEn") ? <p className="font-body-sm text-destructive">{fieldError("titleEn")}</p> : null}</div>
                 {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptEn" className="font-label-md">English excerpt</Label><Textarea id="excerptEn" name="excerptEn" defaultValue={record?.excerptEn} rows={3} className="font-body-sm" /></div> : null}
                 <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "English content" : "English description"}</Label>{bodyField("En")}{fieldError("contentEn") ? <p className="font-body-sm text-destructive">{fieldError("contentEn")}</p> : null}</div>
-              </TabsContent>
+              </FormTabPanel>
             </Tabs>
           </CardContent>
         </Card>
@@ -88,7 +92,7 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="space-y-2"><Label htmlFor="slug" className="font-label-md">Slug</Label><Input id="slug" name="slug" value={slug} onChange={(event) => { setSlug(event.target.value); markDirty(); }} className="font-body-sm" />{fieldError("slug") ? <p className="font-body-sm text-destructive">{fieldError("slug")}</p> : null}</div>
-            <div className="space-y-2"><Label htmlFor="coverImage" className="font-label-md">URL รูปปก</Label><Input id="coverImage" name="coverImage" defaultValue={record?.coverImage || ""} placeholder="/api/uploads/..." className="font-body-sm" /><Button asChild type="button" variant="link" className="h-auto p-0"><Link href="/admin/media" target="_blank">เปิดคลังไฟล์</Link></Button></div>
+            <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} />
             {config.categoryKind ? <div className="space-y-2"><Label className="font-label-md">หมวดหมู่</Label><Select name="categoryId" defaultValue={record?.categoryId ? String(record.categoryId) : "none"}><SelectTrigger className="font-body-sm"><SelectValue placeholder="ไม่ระบุหมวดหมู่" /></SelectTrigger><SelectContent><SelectItem value="none">ไม่ระบุหมวดหมู่</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.nameTh} / {category.nameEn}</SelectItem>)}</SelectContent></Select></div> : null}
             {config.hasPromotionDates ? <><div className="space-y-2"><Label htmlFor="startDate" className="font-label-md">วันเริ่มต้น</Label><Input id="startDate" name="startDate" type="datetime-local" defaultValue={formatDateTime(record?.startDate || null)} className="font-body-sm" /></div><div className="space-y-2"><Label htmlFor="endDate" className="font-label-md">วันสิ้นสุด</Label><Input id="endDate" name="endDate" type="datetime-local" defaultValue={formatDateTime(record?.endDate || null)} className="font-body-sm" /></div></> : null}
           </CardContent></Card>

@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Check, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/components/cart/use-cart";
 import { MAX_QTY, clampQty } from "@/lib/cart";
-import type { VariantOption } from "./variant-selector";
 
 /**
  * Product-level details a cart line needs, snapshotted at add time. Names come
@@ -21,13 +20,23 @@ export interface CartProductInfo {
   pricingUnitNameEn: string | null;
 }
 
-interface AddToQuoteProps {
-  product: CartProductInfo;
-  /** Null while the customer has not landed on a real combination */
-  variant: VariantOption | null;
+/**
+ * What a cart line needs about the thing being added. `variantId` is null for a
+ * product with no options at all, which is quoted at its base price.
+ */
+export interface QuoteLine {
+  variantId: number | null;
+  sku: string | null;
+  unitPrice: number;
 }
 
-export function AddToQuote({ product, variant }: AddToQuoteProps) {
+interface AddToQuoteProps {
+  product: CartProductInfo;
+  /** Null while the customer has not landed on something orderable */
+  line: QuoteLine | null;
+}
+
+export function AddToQuote({ product, line }: AddToQuoteProps) {
   const t = useTranslations("Cart");
   const { add, openCart } = useCart();
   const [qty, setQty] = useState(1);
@@ -40,16 +49,16 @@ export function AddToQuote({ product, variant }: AddToQuoteProps) {
     };
   }, []);
 
-  const disabled = variant === null || !variant.isAvailable;
+  const disabled = line === null;
 
   const handleAdd = () => {
-    if (!variant || !variant.isAvailable) return;
+    if (!line) return;
 
     add({
       ...product,
-      variantId: variant.id,
-      sku: variant.sku,
-      unitPrice: variant.price,
+      variantId: line.variantId,
+      sku: line.sku,
+      unitPrice: line.unitPrice,
       qty,
     });
 

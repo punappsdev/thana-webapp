@@ -49,6 +49,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           },
         },
       },
+      attributes: { orderBy: { sortOrder: "asc" } },
       attributeLinks: {
         include: { attributeValue: { include: { attribute: true } } },
       },
@@ -66,7 +67,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
     id: v.id,
     sku: v.sku,
     price: Number(v.price),
-    comparePrice: v.comparePrice !== null ? Number(v.comparePrice) : null,
     isAvailable: v.isAvailable,
     isDefault: v.isDefault,
     valueIds: v.attributeValues.map((av) => av.attributeValueId),
@@ -102,14 +102,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
   }
   const groups = Array.from(groupMap.values());
 
-  // Spec table: every attribute value on the product, variant-driven or not
-  const specs = new Map<string, string[]>();
+  /**
+   * Spec table: every attribute value on the product, variant-driven or not.
+   * Keyed by attribute id — keying by the localized label would merge two
+   * distinct attributes that happen to share a Thai name into one row.
+   */
+  const specOrder = new Map(product.attributes.map((link) => [link.attributeId, link.sortOrder]));
+  const specMap = new Map<number, { label: string; values: string[] }>();
   for (const link of product.attributeLinks) {
     const attr = link.attributeValue.attribute;
     const label = pick(attr, "name", locale) + (attr.unit ? ` (${attr.unit})` : "");
-    const value = pick(link.attributeValue, "value", locale);
-    specs.set(label, [...(specs.get(label) ?? []), value]);
+    const entry = specMap.get(attr.id) ?? { label, values: [] };
+    entry.values.push(pick(link.attributeValue, "value", locale));
+    specMap.set(attr.id, entry);
   }
+  const specs = Array.from(specMap.entries()).sort(
+    ([a], [b]) => (specOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (specOrder.get(b) ?? Number.MAX_SAFE_INTEGER),
+  );
 
   const gallery = [
     ...(product.coverImage ? [{ url: product.coverImage, alt: name }] : []),
@@ -231,6 +240,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 groups={groups}
                 variants={variants}
                 locale={locale}
+                basePrice={product.basePrice !== null ? Number(product.basePrice) : null}
+                baseSku={product.sku}
                 pricingUnitName={product.pricingUnit ? pick(product.pricingUnit, "name", locale) : null}
                 labels={{
                   selectOptions: t("selectOptions"),
@@ -304,16 +315,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {specs.size > 0 && (
+            {specs.length > 0 && (
               <aside className="rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm h-fit">
                 <h2 className="font-headline-sm font-semibold text-primary mb-4">
                   {t("specifications")}
                 </h2>
                 <dl className="divide-y divide-[#ededf7]">
-                  {Array.from(specs.entries()).map(([label, values]) => (
-                    <div key={label} className="py-3 first:pt-0 last:pb-0">
-                      <dt className="font-label-sm text-[#747684] mb-1">{label}</dt>
-                      <dd className="font-body-sm text-on-surface">{values.join(", ")}</dd>
+                  {specs.map(([attributeId, spec]) => (
+                    <div key={attributeId} className="py-3 first:pt-0 last:pb-0">
+                      <dt className="font-label-sm text-[#747684] mb-1">{spec.label}</dt>
+                      <dd className="font-body-sm text-on-surface">{spec.values.join(", ")}</dd>
                     </div>
                   ))}
                   {product.pricingUnit && (
