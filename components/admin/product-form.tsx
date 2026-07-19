@@ -211,6 +211,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="id" value={record?.id || ""} />
       <input type="hidden" name="updatedAt" value={record?.updatedAt ? new Date(record.updatedAt).toISOString() : ""} />
+      <input type="hidden" name="currency" value={record?.currency || "THB"} />
       <input type="hidden" name="imagesJson" value={JSON.stringify(images)} readOnly />
       <input type="hidden" name="attributesJson" value={JSON.stringify(attributesPayload)} readOnly />
       <input type="hidden" name="variantsJson" value={JSON.stringify(variantsPayload)} readOnly />
@@ -301,25 +302,24 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                 <CardTitle className="font-headline-sm">รหัสและราคา</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Field label="Slug">
+                <Field label="ชื่อในลิงก์ (URL)">
                   <Input name="slug" value={slug} onChange={(event) => setSlug(event.target.value)} className="font-body-sm" />
+                  <p className="font-body-sm text-muted-foreground mt-1.5">
+                    ใช้กำหนดที่อยู่หน้าเว็บของสินค้านี้ (ภาษาอังกฤษ ตัวเลข และเครื่องหมายขีดกลางเท่านั้น เช่น glass-door-01)
+                  </p>
                 </Field>
                 <Field label="SKU หลัก">
                   <Input name="sku" defaultValue={record?.sku} className="font-body-sm" />
                 </Field>
-                <Field label="ราคาฐาน">
+                <Field label="ราคา">
                   <Input name="basePrice" type="number" min="0" step="0.01" defaultValue={record?.basePrice ?? ""} className="font-body-sm" />
-                </Field>
-                <Field label="สกุลเงิน">
-                  <Input name="currency" defaultValue={record?.currency || "THB"} className="font-body-sm" />
                 </Field>
                 <Field label="ลำดับ">
                   <Input name="sortOrder" type="number" defaultValue={record?.sortOrder || 0} className="font-body-sm" />
+                  <p className="font-body-sm text-muted-foreground mt-1.5">
+                    ใช้จัดเรียงลำดับการแสดงผลสินค้าบนหน้าเว็บ (เลขน้อยจะอยู่ก่อน เช่น 1, 2)
+                  </p>
                 </Field>
-                <label className="flex items-center gap-2 font-label-md">
-                  <input name="featured" type="checkbox" defaultChecked={record?.featured} />
-                  สินค้าแนะนำ
-                </label>
               </CardContent>
             </Card>
           </div>
@@ -358,7 +358,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                   <div className="rounded-lg border border-dashed p-4">
                     <p className="font-body-sm text-muted-foreground">
                       สินค้านี้ไม่มีตัวเลือก ลูกค้าจะขอใบเสนอราคาได้ทันทีที่
-                      <span className="font-semibold text-foreground"> ราคาฐาน</span> ที่กรอกไว้ในแท็บข้อมูลหลัก
+                      <span className="font-semibold text-foreground"> ราคา</span> ที่กรอกไว้ในแท็บข้อมูลหลัก
                     </p>
                   </div>
                 }

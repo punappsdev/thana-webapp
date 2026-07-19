@@ -91,7 +91,14 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
 
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">
-            <div className="space-y-2"><Label htmlFor="slug" className="font-label-md">Slug</Label><Input id="slug" name="slug" value={slug} onChange={(event) => { setSlug(event.target.value); markDirty(); }} className="font-body-sm" />{fieldError("slug") ? <p className="font-body-sm text-destructive">{fieldError("slug")}</p> : null}</div>
+            <div className="space-y-2">
+              <Label htmlFor="slug" className="font-label-md">ชื่อในลิงก์ (URL)</Label>
+              <Input id="slug" name="slug" value={slug} onChange={(event) => { setSlug(event.target.value); markDirty(); }} className="font-body-sm" />
+              <p className="font-body-sm text-muted-foreground mt-1.5">
+                ใช้กำหนดที่อยู่หน้าเว็บของเนื้อหานี้ (ภาษาอังกฤษ ตัวเลข และเครื่องหมายขีดกลางเท่านั้น เช่น news-title-01)
+              </p>
+              {fieldError("slug") ? <p className="font-body-sm text-destructive">{fieldError("slug")}</p> : null}
+            </div>
             <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} />
             {config.categoryKind ? <div className="space-y-2"><Label className="font-label-md">หมวดหมู่</Label><Select name="categoryId" defaultValue={record?.categoryId ? String(record.categoryId) : "none"}><SelectTrigger className="font-body-sm"><SelectValue placeholder="ไม่ระบุหมวดหมู่" /></SelectTrigger><SelectContent><SelectItem value="none">ไม่ระบุหมวดหมู่</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.nameTh} / {category.nameEn}</SelectItem>)}</SelectContent></Select></div> : null}
             {config.hasPromotionDates ? <><div className="space-y-2"><Label htmlFor="startDate" className="font-label-md">วันเริ่มต้น</Label><Input id="startDate" name="startDate" type="datetime-local" defaultValue={formatDateTime(record?.startDate || null)} className="font-body-sm" /></div><div className="space-y-2"><Label htmlFor="endDate" className="font-label-md">วันสิ้นสุด</Label><Input id="endDate" name="endDate" type="datetime-local" defaultValue={formatDateTime(record?.endDate || null)} className="font-body-sm" /></div></> : null}

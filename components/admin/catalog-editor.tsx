@@ -29,7 +29,7 @@ export function CatalogEditor({ resource, edit, categories, attributes }: { reso
       keeping the previously edited row's values. */}
   <CardContent><form key={String(edit?.id ?? "new")} onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
     <input type="hidden" name="resource" value={resource} /><input type="hidden" name="id" value={value("id")} />
-    {["categories", "subcategories", "brands", "attributes", "attribute-values", "article-categories"].includes(resource) ? field("slug", "Slug") : null}
+    {["categories", "subcategories", "brands", "attributes", "attribute-values", "article-categories"].includes(resource) ? field("slug", "ชื่อในลิงก์ (URL)") : null}
     {["units", "pricing-units"].includes(resource) ? field("code", "รหัส") : null}
     {resource === "brands" ? field("name", "ชื่อแบรนด์") : null}
     {bilingual ? <>{field("nameTh", "ชื่อภาษาไทย")}{field("nameEn", "ชื่อภาษาอังกฤษ")}</> : null}
