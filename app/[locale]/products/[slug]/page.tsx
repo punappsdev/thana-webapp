@@ -6,8 +6,8 @@ import { pick } from "@/lib/products";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
-import Image from "next/image";
-import { ArrowLeft, FileText, Package, Lightbulb, MessageSquareQuote } from "lucide-react";
+import { ArrowLeft, FileText, Lightbulb, MessageSquareQuote } from "lucide-react";
+import { ProductGallery } from "@/components/products/product-gallery";
 import {
   VariantSelector,
   type AttributeGroup,
@@ -166,44 +166,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
             {/* Gallery */}
-            <div className="space-y-4">
-              <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl border border-[#c4e2f5] bg-[#e2e2eb] shadow-blue-sm">
-                {gallery.length > 0 ? (
-                  <Image
-                    src={gallery[0].url}
-                    alt={gallery[0].alt}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <Package className="h-14 w-14 text-[#747684]" />
-                  </div>
-                )}
-                <span className="absolute inset-0 bg-primary/5 pointer-events-none" />
-              </div>
-
-              {gallery.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
-                  {gallery.slice(1, 5).map((img, i) => (
-                    <div
-                      key={i}
-                      className="relative aspect-square overflow-hidden rounded-lg border border-[#c4e2f5] bg-[#e2e2eb]"
-                    >
-                      <Image
-                        src={img.url}
-                        alt={img.alt}
-                        fill
-                        className="object-cover"
-                        sizes="120px"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ProductGallery images={gallery} locale={locale} />
 
             {/* Summary + variant picker */}
             <div className="space-y-6">

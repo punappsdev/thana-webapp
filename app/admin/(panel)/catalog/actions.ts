@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { isCatalogResource } from "@/lib/admin/catalog-config";
+import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { codeFromName, fallbackToken, isUniqueConstraintError } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
@@ -26,6 +27,16 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
   if (usesCode) { if (!d.code) d.code = codeFromName(d.nameEn) || fallbackToken("U").toUpperCase().replace(/[^A-Z0-9]+/g, ""); }
   else if (!d.slug) { d.slug = slugifyAdminTitle(slugSource) || fallbackToken(d.resource); }
   const baseSlug = d.slug; const baseCode = d.code;
+  // Snapshot the current image before an edit so a replaced logo/cover can be
+  // cleaned up afterwards (only if nothing else still uses the file).
+  const oldMediaUrl = id ? await (async () => {
+    switch (d.resource) {
+      case "brands": return (await prisma.brand.findUnique({ where: { id }, select: { logo: true } }))?.logo ?? null;
+      case "categories": return (await prisma.category.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
+      case "subcategories": return (await prisma.subCategory.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
+      default: return null;
+    }
+  })() : null;
   try {
     const writeOnce = () => (async () => {
       switch (d.resource) {
@@ -53,6 +64,8 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
     if (!saved) return { success: false, message: "ประเภทข้อมูลไม่ถูกต้อง" };
     await recordActivity({ adminId: admin.id, action: id ? "UPDATE" : "CREATE", entityType: d.resource, entityId: saved.id, label: d.nameTh || d.name || d.valueTh || d.code || d.slug });
     revalidatePath(`/admin/catalog/${d.resource}`); revalidatePath("/products"); revalidatePath("/en/products");
+    const newMediaUrl = d.resource === "brands" ? d.logo : d.coverImage;
+    if (oldMediaUrl && oldMediaUrl !== newMediaUrl) await deleteOrphanedMedia([oldMediaUrl]);
     return { success: true, message: "บันทึกข้อมูลสำเร็จ" };
   } catch (error) { return { success: false, message: error instanceof Error && error.message.startsWith("กรุณา") ? error.message : "บันทึกไม่สำเร็จ อาจมี Slug หรือรหัสซ้ำ" }; }
 }
@@ -65,6 +78,16 @@ export async function deleteCatalogAction(formData: FormData): Promise<void> {
   const prisma = getPrisma();
   const blocked = await (async () => { switch (resource) { case "categories": { const x = await prisma.category.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, subCategories: true, works: true } } } }); return x._count.products + x._count.subCategories + x._count.works; } case "subcategories": return (await prisma.subCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "brands": return (await prisma.brand.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "units": return (await prisma.productUnit.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "pricing-units": return (await prisma.pricingUnit.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "attributes": { const x = await prisma.attribute.findUniqueOrThrow({ where: { id }, include: { _count: { select: { values: true, products: true } } } }); return x._count.values + x._count.products; } case "attribute-values": { const x = await prisma.attributeValue.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, variants: true } } } }); return x._count.products + x._count.variants; } case "article-categories": return (await prisma.articleCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { articles: true } } } }))._count.articles; } })();
   if (blocked > 0) throw new Error("ข้อมูลนี้ถูกอ้างอิงอยู่และไม่สามารถลบได้");
+  const mediaUrl = await (async () => {
+    switch (resource) {
+      case "brands": return (await prisma.brand.findUnique({ where: { id }, select: { logo: true } }))?.logo ?? null;
+      case "categories": return (await prisma.category.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
+      case "subcategories": return (await prisma.subCategory.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
+      default: return null;
+    }
+  })();
   switch (resource) { case "categories": await prisma.category.delete({ where: { id } }); break; case "subcategories": await prisma.subCategory.delete({ where: { id } }); break; case "brands": await prisma.brand.delete({ where: { id } }); break; case "units": await prisma.productUnit.delete({ where: { id } }); break; case "pricing-units": await prisma.pricingUnit.delete({ where: { id } }); break; case "attributes": await prisma.attribute.delete({ where: { id } }); break; case "attribute-values": await prisma.attributeValue.delete({ where: { id } }); break; case "article-categories": await prisma.articleCategory.delete({ where: { id } }); break; }
-  await recordActivity({ adminId: admin.id, action: "DELETE", entityType: resource, entityId: id }); revalidatePath(`/admin/catalog/${resource}`);
+  await recordActivity({ adminId: admin.id, action: "DELETE", entityType: resource, entityId: id });
+  await deleteOrphanedMedia([mediaUrl]);
+  revalidatePath(`/admin/catalog/${resource}`);
 }

@@ -461,11 +461,15 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                 <MediaField name="catalogPdf" label="Catalog PDF" accept="pdf" defaultValue={record?.catalogPdf} />
               </div>
               <div className="flex items-center justify-between">
-                <h3 className="font-headline-sm">รูปเพิ่มเติม</h3>
+                <div>
+                  <h3 className="font-headline-sm">รูปเพิ่มเติม ({images.length}/4)</h3>
+                  <p className="font-body-sm text-muted-foreground">แสดงเป็นแกลเลอรีให้ลูกค้าคลิกดูภาพใหญ่ในหน้าสินค้า (สูงสุด 4 รูป)</p>
+                </div>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setImages((current) => [...current, { _key: crypto.randomUUID(), url: "", altTh: "", altEn: "", sortOrder: current.length }])}
+                  disabled={images.length >= 4}
+                  onClick={() => setImages((current) => current.length >= 4 ? current : [...current, { _key: crypto.randomUUID(), url: "", altTh: "", altEn: "", sortOrder: current.length }])}
                 >
                   <ImagePlus className="size-4" />
                   เพิ่มรูป

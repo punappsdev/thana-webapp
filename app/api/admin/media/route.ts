@@ -3,9 +3,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileTypeFromBuffer } from "file-type";
 import { NextRequest, NextResponse } from "next/server";
+import type { MediaKind } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
-import { countMediaReferences } from "@/lib/admin/media";
+import { countMediaReferences, unlinkMediaAsset } from "@/lib/admin/media";
 import { resolveUploadPath, validateUploadMetadata } from "@/lib/admin/security";
 import { getPrisma } from "@/lib/prisma";
 
@@ -43,19 +44,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  try { await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
+  const { searchParams } = new URL(request.url);
+  const kindParam = searchParams.get("kind");
+  const query = searchParams.get("query")?.trim() || "";
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const take = 24;
+  const kinds: MediaKind[] = kindParam === "image" ? ["IMAGE"] : kindParam === "pdf" ? ["PDF"] : ["IMAGE", "PDF"];
+  const where = {
+    kind: { in: kinds },
+    ...(query ? { OR: [{ originalName: { contains: query } }, { url: { contains: query } }] } : {}),
+  };
+  const [items, total] = await Promise.all([
+    getPrisma().mediaAsset.findMany({ where, skip: (page - 1) * take, take, orderBy: { createdAt: "desc" }, select: { id: true, url: true, originalName: true, kind: true, size: true } }),
+    getPrisma().mediaAsset.count({ where }),
+  ]);
+  return NextResponse.json({ items, total, page, totalPages: Math.max(1, Math.ceil(total / take)) });
+}
+
 export async function DELETE(request: NextRequest) {
   let admin;
   try { admin = await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
-  const uploadDir = process.env.UPLOAD_DIR;
-  if (!uploadDir) return NextResponse.json({ message: "UPLOAD_DIR is not configured" }, { status: 500 });
   const body = await request.json().catch(() => ({})) as { id?: string };
   if (!body.id) return NextResponse.json({ message: "Invalid media id" }, { status: 400 });
   const asset = await getPrisma().mediaAsset.findUnique({ where: { id: body.id } });
   if (!asset) return NextResponse.json({ message: "ไม่พบไฟล์" }, { status: 404 });
   if (await countMediaReferences(asset.url)) return NextResponse.json({ message: "ไฟล์นี้กำลังถูกใช้งาน จึงไม่สามารถลบได้" }, { status: 409 });
-  const absolutePath = resolveUploadPath(uploadDir, asset.path);
-  await getPrisma().mediaAsset.delete({ where: { id: asset.id } });
-  await fs.unlink(absolutePath).catch((error: NodeJS.ErrnoException) => { if (error.code !== "ENOENT") throw error; });
+  await unlinkMediaAsset(asset);
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: "MediaAsset", entityId: asset.id, label: asset.originalName });
   return NextResponse.json({ success: true });
 }

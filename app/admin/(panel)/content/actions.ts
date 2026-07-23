@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { contentConfigs, isContentResource } from "@/lib/admin/content-config";
+import { deleteOrphanedMedia, extractUploadUrls } from "@/lib/admin/media";
 import { sanitizeRichHtml } from "@/lib/admin/security";
 import { fallbackToken, isUniqueConstraintError } from "@/lib/admin/slug";
 import { isStaleVersion, slugifyAdminTitle, validateBilingualPublish, type ActionResult } from "@/lib/admin/validation";
@@ -56,6 +57,17 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
 
   const prisma = getPrisma();
   const id = typeof parsed.data.id === "number" ? parsed.data.id : undefined;
+  // Snapshot current media (cover + images embedded in the body) before the write
+  // so anything dropped on this edit can be cleaned up if nothing else uses it.
+  const oldMedia = id ? await (async () => {
+    switch (resource) {
+      case "works": return prisma.work.findUnique({ where: { id }, select: { coverImage: true, descriptionTh: true, descriptionEn: true } });
+      case "articles": return prisma.article.findUnique({ where: { id }, select: { coverImage: true, contentTh: true, contentEn: true } });
+      case "news": return prisma.news.findUnique({ where: { id }, select: { coverImage: true, contentTh: true, contentEn: true } });
+      case "promotions": return prisma.promotion.findUnique({ where: { id }, select: { coverImage: true, contentTh: true, contentEn: true } });
+    }
+  })() : null;
+  const oldUrls = oldMedia ? [oldMedia.coverImage, ...extractUploadUrls("contentTh" in oldMedia ? oldMedia.contentTh : null), ...extractUploadUrls("contentEn" in oldMedia ? oldMedia.contentEn : null), ...extractUploadUrls("descriptionTh" in oldMedia ? oldMedia.descriptionTh : null), ...extractUploadUrls("descriptionEn" in oldMedia ? oldMedia.descriptionEn : null)] : [];
   if (id && parsed.data.updatedAt) {
     const existing = await (async () => {
       switch (resource) {
@@ -108,6 +120,8 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
     if (!saved) return { success: false, message: "บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
     await recordActivity({ adminId: admin.id, action: id ? (published ? "PUBLISH" : "UPDATE") : "CREATE", entityType: resource, entityId: saved.id, label: parsed.data.titleTh, metadata: { published } });
     refreshResource(resource, saved.slug);
+    const newUrls = new Set([parsed.data.coverImage, ...extractUploadUrls(parsed.data.bodyTh), ...extractUploadUrls(parsed.data.bodyEn)].filter(Boolean) as string[]);
+    await deleteOrphanedMedia(oldUrls.filter((url): url is string => !!url && !newUrls.has(url)));
     return { success: true, message: `บันทึก${config.singular}สำเร็จ` };
   } catch (error) {
     if (isUniqueConstraintError(error)) return { success: false, message: "ลิงก์ของรายการนี้ซ้ำกับที่มีอยู่ กรุณาลองใหม่" };
@@ -131,6 +145,8 @@ export async function deleteContentAction(formData: FormData): Promise<void> {
   })();
   if (!existing) throw new Error("Content item not found");
   if (existing.published) throw new Error("Unpublish content before permanent deletion");
+  const rec = existing as { coverImage: string | null; contentTh?: string | null; contentEn?: string | null; descriptionTh?: string | null; descriptionEn?: string | null };
+  const mediaUrls = [rec.coverImage, ...extractUploadUrls(rec.contentTh), ...extractUploadUrls(rec.contentEn), ...extractUploadUrls(rec.descriptionTh), ...extractUploadUrls(rec.descriptionEn)];
   switch (resource) {
     case "works": await prisma.work.delete({ where: { id } }); break;
     case "articles": await prisma.article.delete({ where: { id } }); break;
@@ -138,5 +154,6 @@ export async function deleteContentAction(formData: FormData): Promise<void> {
     case "promotions": await prisma.promotion.delete({ where: { id } }); break;
   }
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: resource, entityId: id, label: existing.titleTh });
+  await deleteOrphanedMedia(mediaUrls);
   refreshResource(resource);
 }

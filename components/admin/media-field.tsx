@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useId, useRef, useState } from "react";
 import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { MediaLibraryPicker } from "@/components/admin/media-library-picker";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -121,38 +122,43 @@ export function MediaField({
       {filePicker}
       
       {!url ? (
-        <div
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            const file = event.dataTransfer.files?.[0];
-            if (file) void upload(file);
-          }}
-          onClick={() => inputRef.current?.click()}
-          className={cn(
-            "flex flex-col items-center justify-center text-center gap-3 rounded-lg border border-dashed p-6 transition-all cursor-pointer select-none",
-            dragging
-              ? "border-primary bg-primary/5 shadow-blue-sm"
-              : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
-          )}
-        >
-          <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
-            {pending ? (
-              <Loader2 className="size-5 animate-spin text-primary" />
-            ) : (
-              <Upload className="size-5 text-muted-foreground" />
+        <div className="space-y-2">
+          <div
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              const file = event.dataTransfer.files?.[0];
+              if (file) void upload(file);
+            }}
+            onClick={() => inputRef.current?.click()}
+            className={cn(
+              "flex flex-col items-center justify-center text-center gap-3 rounded-lg border border-dashed p-6 transition-all cursor-pointer select-none",
+              dragging
+                ? "border-primary bg-primary/5 shadow-blue-sm"
+                : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
             )}
+          >
+            <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
+              {pending ? (
+                <Loader2 className="size-5 animate-spin text-primary" />
+              ) : (
+                <Upload className="size-5 text-muted-foreground" />
+              )}
+            </div>
+            <div className="space-y-1">
+              <p className="font-label-sm text-foreground font-medium">
+                {pending ? "กำลังอัปโหลด..." : "คลิกเพื่อเลือกไฟล์ หรือลากมาวาง"}
+              </p>
+              <p className="font-label-sm text-muted-foreground/80">{rules.hint}</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <p className="font-label-sm text-foreground font-medium">
-              {pending ? "กำลังอัปโหลด..." : "คลิกเพื่อเลือกไฟล์ หรือลากมาวาง"}
-            </p>
-            <p className="font-label-sm text-muted-foreground/80">{rules.hint}</p>
+          <div className="flex justify-center">
+            <MediaLibraryPicker accept={accept} onSelect={setUrl} />
           </div>
         </div>
       ) : (
@@ -171,7 +177,8 @@ export function MediaField({
           </div>
 
           {/* Line 2: Actions */}
-          <div className="flex items-center justify-end gap-1.5 pt-2.5 border-t border-muted">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 pt-2.5 border-t border-muted">
+            <MediaLibraryPicker accept={accept} onSelect={setUrl} />
             <Button
               type="button"
               variant="outline"

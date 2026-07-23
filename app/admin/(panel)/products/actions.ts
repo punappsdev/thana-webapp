@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import type { Prisma } from "@/generated/prisma/client";
+import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import {
@@ -17,7 +18,7 @@ import {
   type ActionResult,
 } from "@/lib/admin/validation";
 
-const imageSchema = z.array(z.object({ url: z.string().trim().min(1), altTh: z.string().optional().default(""), altEn: z.string().optional().default(""), sortOrder: z.number().int().default(0) }));
+const imageSchema = z.array(z.object({ url: z.string().trim().min(1), altTh: z.string().optional().default(""), altEn: z.string().optional().default(""), sortOrder: z.number().int().default(0) })).max(4, "ใส่รูปเพิ่มเติมได้สูงสุด 4 รูป");
 
 /**
  * An attribute card is either an existing dictionary entry (`attributeId`) or a
@@ -150,6 +151,9 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
 
   const prisma = getPrisma();
   const id = typeof d.id === "number" ? d.id : undefined;
+  // Snapshot the current media URLs before the write so files dropped on this
+  // edit can be cleaned up afterwards (only if nothing else still uses them).
+  const oldMedia = id ? await prisma.product.findUnique({ where: { id }, select: { coverImage: true, catalogPdf: true, images: { select: { url: true } }, variants: { select: { image: true } } } }) : null;
   const categoryId = typeof d.categoryId === "number" ? d.categoryId : null;
   const subCategoryId = typeof d.subCategoryId === "number" ? d.subCategoryId : null;
 
@@ -321,6 +325,11 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
       metadata: { published, variants: variants.length, images: images.length, attributes: attributes.length },
     });
     ["/admin/products", "/products", "/en/products", `/products/${product.slug}`, `/en/products/${product.slug}`].forEach((path) => revalidatePath(path));
+    if (oldMedia) {
+      const kept = new Set<string>([d.coverImage, d.catalogPdf, ...images.map((image) => image.url), ...pricedVariants.map((variant) => variant.image)].filter(Boolean) as string[]);
+      const removed = [oldMedia.coverImage, oldMedia.catalogPdf, ...oldMedia.images.map((image) => image.url), ...oldMedia.variants.map((variant) => variant.image)].filter((url): url is string => !!url && !kept.has(url));
+      await deleteOrphanedMedia(removed);
+    }
     return { success: true, message: "บันทึกสินค้าสำเร็จ" };
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("AXIS:")) return { success: false, message: error.message.slice(5) };
@@ -349,10 +358,12 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const id = Number(formData.get("id"));
   const prisma = getPrisma();
-  const product = await prisma.product.findUniqueOrThrow({ where: { id } });
+  const product = await prisma.product.findUniqueOrThrow({ where: { id }, include: { images: { select: { url: true } }, variants: { select: { image: true } } } });
   if (product.published) throw new Error("Unpublish product before permanent deletion");
   await prisma.product.delete({ where: { id } });
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: "products", entityId: id, label: product.nameTh });
+  // Clean up files this product owned, keeping any still reused elsewhere.
+  await deleteOrphanedMedia([product.coverImage, product.catalogPdf, ...product.images.map((image) => image.url), ...product.variants.map((variant) => variant.image)]);
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath("/en/products");
