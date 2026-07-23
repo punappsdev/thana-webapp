@@ -15,6 +15,7 @@ export async function countMediaReferences(url: string): Promise<number> {
     prisma.article.count({ where: { OR: [{ coverImage: url }, { contentTh: { contains: url } }, { contentEn: { contains: url } }] } }),
     prisma.news.count({ where: { OR: [{ coverImage: url }, { contentTh: { contains: url } }, { contentEn: { contains: url } }] } }),
     prisma.promotion.count({ where: { OR: [{ coverImage: url }, { contentTh: { contains: url } }, { contentEn: { contains: url } }] } }),
+    prisma.banner.count({ where: { imageUrl: url } }),
   ]);
   return counts.reduce((sum, count) => sum + count, 0);
 }

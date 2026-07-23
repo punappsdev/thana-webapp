@@ -13,6 +13,7 @@ export interface SlideItem {
   tag?: string | null;
   bgImage?: string | null;
   link?: string | null;
+  ctaLabel?: string | null;
   endDate?: Date | string | null;
 }
 
@@ -290,7 +291,7 @@ export function UniversalSlider({
                           href={slide.link}
                           className="inline-flex items-center justify-center gap-2 h-9 md:h-11 px-5 md:px-8 font-label-sm font-semibold rounded-md shadow-lg bg-gradient-to-b from-[#078ee4] to-[#0040ad] hover:from-[#0040ad] hover:to-[#002c7d] text-white border-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
                         >
-                          {t("readMore")}
+                          {slide.ctaLabel || t("readMore")}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </div>

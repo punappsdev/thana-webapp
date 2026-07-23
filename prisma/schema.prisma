@@ -198,6 +198,39 @@ model Promotion {
 }
 
 // ---------------------------------------------------------------------------
+// Banner — editable homepage hero slides (and promotion banners) shown in the
+// carousel on the front page. Managed from the admin panel.
+// ---------------------------------------------------------------------------
+
+enum BannerType {
+  HOMEPAGE
+  PROMOTION
+}
+
+model Banner {
+  id            Int        @id @default(autoincrement())
+  titleTh       String
+  titleEn       String
+  subtitleTh    String?
+  subtitleEn    String?
+  descriptionTh String?    @db.Text
+  descriptionEn String?    @db.Text
+  imageUrl      String
+  linkUrl       String?
+  buttonTextTh  String?
+  buttonTextEn  String?
+  sortOrder     Int        @default(0)
+  published     Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  type          BannerType @default(HOMEPAGE)
+  endDate       DateTime?
+  startDate     DateTime?
+
+  @@index([type, published, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
 // Categories — shared by Product and Work (portfolio)
 // ---------------------------------------------------------------------------
 
