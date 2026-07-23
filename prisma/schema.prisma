@@ -193,6 +193,7 @@ model Promotion {
   endDate    DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  banners    Banner[]
 
   @@index([slug])
 }
@@ -226,8 +227,13 @@ model Banner {
   type          BannerType @default(HOMEPAGE)
   endDate       DateTime?
   startDate     DateTime?
+  // For PROMOTION banners: links to the promotion whose detail page the banner
+  // opens when clicked. Null for HOMEPAGE banners (they use linkUrl instead).
+  promotionId   Int?
+  promotion     Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
 
   @@index([type, published, sortOrder])
+  @@index([promotionId])
 }
 
 // ---------------------------------------------------------------------------

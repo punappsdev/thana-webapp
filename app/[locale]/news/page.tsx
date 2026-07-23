@@ -7,6 +7,8 @@ import { Link } from "@/i18n/routing";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { UniversalSlider, SlideItem } from "@/components/ui/universal-slider";
+import { getActivePromotionBanners } from "@/lib/admin/banner-data";
+import { pick } from "@/lib/products";
 import {
   Pagination,
   PaginationContent,
@@ -31,21 +33,9 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   const skip = (pageNumber - 1) * limit;
   const t = await getTranslations("News");
 
-  const now = new Date();
-
-  // Fetch active promotions for the slider (always fetch all active promotions for the slider)
-  const activePromotionsForSlider = await prisma.promotion.findMany({
-    where: {
-      published: true,
-      OR: [
-        { startDate: null, endDate: null },
-        { startDate: { lte: now }, endDate: null },
-        { startDate: null, endDate: { gte: now } },
-        { startDate: { lte: now }, endDate: { gte: now } },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // Promotion banners for the top slider — curated in the admin panel, each
+  // linking to its connected promotion's detail page when clicked.
+  const promotionBanners = await getActivePromotionBanners();
 
   // Fetch items for the grid list based on filters
   let newsList: News[] = [];
@@ -74,14 +64,15 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
 
   const totalItems = allGridItems.length;
   const totalPages = Math.ceil(totalItems / limit);
-  const sliderSlides: SlideItem[] = activePromotionsForSlider.map((promo) => ({
-    id: promo.id,
-    title: locale === "en" ? promo.titleEn : promo.titleTh,
-    excerpt: locale === "en" ? promo.excerptEn : promo.excerptTh,
-    tag: locale === "en" ? "Special Promotion" : "โปรโมชั่นพิเศษ",
-    bgImage: promo.coverImage,
-    link: `/promotions/${promo.slug}`,
-    endDate: promo.endDate,
+  const sliderSlides: SlideItem[] = promotionBanners.map((banner) => ({
+    id: banner.id,
+    title: pick(banner, "title", locale),
+    excerpt: pick(banner, "description", locale) || null,
+    tag: pick(banner, "subtitle", locale) || (locale === "en" ? "Special Promotion" : "โปรโมชั่นพิเศษ"),
+    bgImage: banner.imageUrl,
+    link: banner.promotion ? `/promotions/${banner.promotion.slug}` : banner.linkUrl,
+    ctaLabel: pick(banner, "buttonText", locale) || null,
+    endDate: banner.endDate,
   }));
 
   const gridItems = allGridItems.slice(skip, skip + limit);
@@ -92,7 +83,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
 
       <main className="flex-1 main-content-spacer">
         {/* Top Active Promotions Slider Banner (Only visible if promotions exist) */}
-        {activePromotionsForSlider.length > 0 && (
+        {promotionBanners.length > 0 && (
           <section className="relative w-full overflow-hidden select-none bg-primary mb-14 md:mb-16">
             <UniversalSlider
               slides={sliderSlides}

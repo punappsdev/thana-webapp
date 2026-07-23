@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { label: "ภาพรวม", href: "/admin", icon: LayoutDashboard },
-  { label: "แบนเนอร์หน้าแรก", href: "/admin/banners", icon: GalleryHorizontalEnd },
+  { label: "แบนเนอร์", href: "/admin/banners", icon: GalleryHorizontalEnd },
   { label: "สินค้า", href: "/admin/products", icon: Package },
   { label: "ข้อมูลสินค้า", href: "/admin/catalog", icon: Boxes },
   { label: "ผลงาน", href: "/admin/content/works", icon: BriefcaseBusiness },
