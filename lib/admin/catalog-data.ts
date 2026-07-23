@@ -19,6 +19,21 @@ export async function getCatalogRows(resource: CatalogResource, input: { query?:
   return { items: result[0], total: result[1], page, totalPages: Math.max(1, Math.ceil(result[1] / take)) };
 }
 
+export async function getCatalogCounts(): Promise<Record<CatalogResource, number>> {
+  const prisma = getPrisma();
+  const [categories, subcategories, brands, units, pricingUnits, attributes, attributeValues, articleCategories] = await Promise.all([
+    prisma.category.count(),
+    prisma.subCategory.count(),
+    prisma.brand.count(),
+    prisma.productUnit.count(),
+    prisma.pricingUnit.count(),
+    prisma.attribute.count(),
+    prisma.attributeValue.count(),
+    prisma.articleCategory.count(),
+  ]);
+  return { categories, subcategories, brands, units, "pricing-units": pricingUnits, attributes, "attribute-values": attributeValues, "article-categories": articleCategories };
+}
+
 export async function getCatalogOptions() {
   const prisma = getPrisma();
   const [categories, attributes] = await Promise.all([

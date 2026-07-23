@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Eye, ImagePlus, Save, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Eye, ImagePlus, Info, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveProductAction } from "@/app/admin/(panel)/products/actions";
 import { AdminSelect } from "@/components/admin/admin-select";
@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
 type CategoryOption = { id: number; nameTh: string; nameEn: string; subCategories: { id: number; nameTh: string }[] };
@@ -108,6 +109,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
   const category = options.categories.find((item) => item.id === Number(categoryId));
   const [titleEn, setTitleEn] = useState(record?.nameEn || "");
   const [slug, setSlug] = useState(record?.slug || "");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [images, setImages] = useState<ImageRow[]>(() =>
     (record?.images || []).map((image, index) => ({ ...image, _key: `image-${index}-${image.url}` })),
@@ -224,7 +226,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             {record ? <Badge variant={record.published ? "default" : "secondary"}>{record.published ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
           </div>
           <p className="font-body-sm text-muted-foreground mt-1">
-            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการข้อมูล รูปภาพ คุณลักษณะ และตัวเลือกใน transaction เดียว"}
+            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการชื่อ ราคา รูปภาพ และตัวเลือกของสินค้าได้ในที่เดียว"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -324,24 +326,36 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                 <CardTitle className="font-headline-sm">รหัสและราคา</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Field label="ชื่อในลิงก์ (URL)">
-                  <Input name="slug" value={slug} onChange={(event) => setSlug(event.target.value)} className="font-body-sm" />
-                  <p className="font-body-sm text-muted-foreground mt-1.5">
-                    ใช้กำหนดที่อยู่หน้าเว็บของสินค้านี้ (ภาษาอังกฤษ ตัวเลข และเครื่องหมายขีดกลางเท่านั้น เช่น glass-door-01)
-                  </p>
-                </Field>
-                <Field label="SKU หลัก">
+                <Field label="SKU (รหัสสินค้า)">
                   <Input name="sku" defaultValue={record?.sku} className="font-body-sm" />
+                  <p className="font-body-sm text-muted-foreground mt-1.5">
+                    รหัสอ้างอิงสินค้าในระบบ ห้ามซ้ำกัน เช่น GL-001
+                  </p>
                 </Field>
                 <Field label="ราคา">
                   <Input name="basePrice" type="number" min="0" step="0.01" defaultValue={record?.basePrice ?? ""} className="font-body-sm" />
                 </Field>
-                <Field label="ลำดับ">
-                  <Input name="sortOrder" type="number" defaultValue={record?.sortOrder || 0} className="font-body-sm" />
-                  <p className="font-body-sm text-muted-foreground mt-1.5">
-                    ใช้จัดเรียงลำดับการแสดงผลสินค้าบนหน้าเว็บ (เลขน้อยจะอยู่ก่อน เช่น 1, 2)
-                  </p>
-                </Field>
+                {/* Slug is generated automatically; keep it mounted (only collapsed)
+                    so its value still submits and the on-blur auto-fill keeps working. */}
+                <div className="border-t pt-3">
+                  <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="flex items-center gap-1 font-label-sm text-muted-foreground hover:text-foreground">
+                    {showAdvanced ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}ตัวเลือกขั้นสูง
+                  </button>
+                  <div className={cn("mt-3 space-y-4", !showAdvanced && "hidden")}>
+                    <Field label="ชื่อในลิงก์ (URL)">
+                      <Input name="slug" value={slug} onChange={(event) => setSlug(event.target.value)} className="font-body-sm" />
+                      <p className="font-body-sm text-muted-foreground mt-1.5">
+                        เว้นว่างเพื่อให้ระบบสร้างให้อัตโนมัติจากชื่อภาษาอังกฤษ (ใช้ a-z, 0-9 และขีดกลาง)
+                      </p>
+                    </Field>
+                    <Field label="ลำดับการแสดง">
+                      <Input name="sortOrder" type="number" defaultValue={record?.sortOrder || 0} className="font-body-sm" />
+                      <p className="font-body-sm text-muted-foreground mt-1.5">
+                        ใช้จัดเรียงลำดับการแสดงผลสินค้าบนหน้าเว็บ (เลขน้อยจะอยู่ก่อน เช่น 1, 2)
+                      </p>
+                    </Field>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -363,6 +377,15 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
         </FormTabPanel>
 
         <FormTabPanel value="attributes" className="space-y-6">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="flex gap-3 py-4">
+              <Info className="mt-0.5 size-5 shrink-0 text-primary" />
+              <div className="space-y-1">
+                <p className="font-label-md">“ตัวเลือก” กับ “ข้อมูลจำเพาะ” ต่างกันอย่างไร?</p>
+                <p className="font-body-sm text-muted-foreground"><span className="font-semibold text-foreground">ตัวเลือก</span> = สิ่งที่ลูกค้าเลือกได้ก่อนขอราคา และตั้งราคาแยกแต่ละแบบได้ เช่น ความหนา สี &nbsp;·&nbsp; <span className="font-semibold text-foreground">ข้อมูลจำเพาะ</span> = ข้อมูลที่แสดงบนหน้าสินค้าอย่างเดียว ลูกค้าเลือกไม่ได้ และไม่มีผลกับราคา</p>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="font-headline-sm">ตัวเลือกที่ลูกค้าเลือกได้</CardTitle>

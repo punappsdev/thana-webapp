@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Eye, Save } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Eye, Save } from "lucide-react";
 import { toast } from "sonner";
 import { saveContentAction } from "@/app/admin/(panel)/content/actions";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { ContentConfig } from "@/lib/admin/content-config";
 import type { ContentRecord } from "@/lib/admin/content-data";
+import { cn } from "@/lib/utils";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
 const initialState: ActionResult = { success: false, message: "" };
@@ -33,6 +34,7 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
   const dirtyRef = useRef(false);
   const [titleEn, setTitleEn] = useState(record?.titleEn || "");
   const [slug, setSlug] = useState(record?.slug || "");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => { if (dirtyRef.current) event.preventDefault(); };
@@ -97,12 +99,12 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
               <TabsList><TabsTrigger value="th" className="font-label-md">ไทย</TabsTrigger><TabsTrigger value="en" className="font-label-md">English</TabsTrigger></TabsList>
               <FormTabPanel value="th" className="mt-5 space-y-5">
                 <div className="space-y-2"><Label htmlFor="titleTh" className="font-label-md">ชื่อภาษาไทย</Label><Input id="titleTh" name="titleTh" defaultValue={record?.titleTh} className="font-body-sm" />{fieldError("titleTh") ? <p className="font-body-sm text-destructive">{fieldError("titleTh")}</p> : null}</div>
-                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptTh" className="font-label-md">คำโปรยภาษาไทย</Label><Textarea id="excerptTh" name="excerptTh" defaultValue={record?.excerptTh} rows={3} className="font-body-sm" /></div> : null}
+                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptTh" className="font-label-md">คำโปรยภาษาไทย</Label><Textarea id="excerptTh" name="excerptTh" defaultValue={record?.excerptTh} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">ข้อความสั้น ๆ สรุปเนื้อหา แสดงในหน้ารายการและการ์ดตัวอย่าง</p></div> : null}
                 <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "เนื้อหาภาษาไทย" : "คำอธิบายภาษาไทย"}</Label>{bodyField("Th")}{fieldError("contentTh") ? <p className="font-body-sm text-destructive">{fieldError("contentTh")}</p> : null}</div>
               </FormTabPanel>
               <FormTabPanel value="en" className="mt-5 space-y-5">
                 <div className="space-y-2"><Label htmlFor="titleEn" className="font-label-md">English title</Label><Input id="titleEn" name="titleEn" value={titleEn} onChange={(event) => { setTitleEn(event.target.value); markDirty(); }} onBlur={() => { if (!slug) setSlug(slugifyAdminTitle(titleEn)); }} className="font-body-sm" />{fieldError("titleEn") ? <p className="font-body-sm text-destructive">{fieldError("titleEn")}</p> : null}</div>
-                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptEn" className="font-label-md">English excerpt</Label><Textarea id="excerptEn" name="excerptEn" defaultValue={record?.excerptEn} rows={3} className="font-body-sm" /></div> : null}
+                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptEn" className="font-label-md">English excerpt</Label><Textarea id="excerptEn" name="excerptEn" defaultValue={record?.excerptEn} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">คำโปรยฉบับภาษาอังกฤษ แสดงในหน้าเวอร์ชันอังกฤษ</p></div> : null}
                 <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "English content" : "English description"}</Label>{bodyField("En")}{fieldError("contentEn") ? <p className="font-body-sm text-destructive">{fieldError("contentEn")}</p> : null}</div>
               </FormTabPanel>
             </Tabs>
@@ -111,17 +113,22 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
 
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="slug" className="font-label-md">ชื่อในลิงก์ (URL)</Label>
-              <Input id="slug" name="slug" value={slug} onChange={(event) => { setSlug(event.target.value); markDirty(); }} className="font-body-sm" />
-              <p className="font-body-sm text-muted-foreground mt-1.5">
-                ใช้กำหนดที่อยู่หน้าเว็บของเนื้อหานี้ (ภาษาอังกฤษ ตัวเลข และเครื่องหมายขีดกลางเท่านั้น เช่น news-title-01)
-              </p>
-              {fieldError("slug") ? <p className="font-body-sm text-destructive">{fieldError("slug")}</p> : null}
-            </div>
             <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} />
             {config.categoryKind ? <div className="space-y-2"><Label className="font-label-md">หมวดหมู่</Label><Select name="categoryId" defaultValue={record?.categoryId ? String(record.categoryId) : "none"}><SelectTrigger className="font-body-sm"><SelectValue placeholder="ไม่ระบุหมวดหมู่" /></SelectTrigger><SelectContent><SelectItem value="none">ไม่ระบุหมวดหมู่</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.nameTh} / {category.nameEn}</SelectItem>)}</SelectContent></Select></div> : null}
             {config.hasPromotionDates ? <><div className="space-y-2"><Label htmlFor="startDate" className="font-label-md">วันเริ่มต้น</Label><Input id="startDate" name="startDate" type="datetime-local" defaultValue={formatDateTime(record?.startDate || null)} className="font-body-sm" /></div><div className="space-y-2"><Label htmlFor="endDate" className="font-label-md">วันสิ้นสุด</Label><Input id="endDate" name="endDate" type="datetime-local" defaultValue={formatDateTime(record?.endDate || null)} className="font-body-sm" /></div></> : null}
+            {/* Slug is generated automatically; keep the input mounted so its value
+                still submits and the title's on-blur auto-fill keeps working. */}
+            <div className="border-t pt-3">
+              <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="flex items-center gap-1 font-label-sm text-muted-foreground hover:text-foreground">
+                {showAdvanced ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}ตัวเลือกขั้นสูง
+              </button>
+              <div className={cn("mt-3 space-y-2", !showAdvanced && "hidden")}>
+                <Label htmlFor="slug" className="font-label-md">ชื่อในลิงก์ (URL)</Label>
+                <Input id="slug" name="slug" value={slug} onChange={(event) => { setSlug(event.target.value); markDirty(); }} className="font-body-sm" />
+                <p className="font-body-sm text-muted-foreground">เว้นว่างเพื่อให้ระบบสร้างให้อัตโนมัติจากชื่อภาษาอังกฤษ (ใช้ a-z, 0-9 และขีดกลาง)</p>
+                {fieldError("slug") ? <p className="font-body-sm text-destructive">{fieldError("slug")}</p> : null}
+              </div>
+            </div>
           </CardContent></Card>
         </div>
       </div>

@@ -7,13 +7,16 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { contentConfigs, isContentResource } from "@/lib/admin/content-config";
 import { sanitizeRichHtml } from "@/lib/admin/security";
+import { fallbackToken, isUniqueConstraintError } from "@/lib/admin/slug";
 import { isStaleVersion, slugifyAdminTitle, validateBilingualPublish, type ActionResult } from "@/lib/admin/validation";
 
 const formSchema = z.object({
   resource: z.string(),
   id: z.coerce.number().int().positive().optional().or(z.literal("")),
   updatedAt: z.string().optional(),
-  slug: z.string().trim().min(1, "กรุณากรอก Slug").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug ใช้ได้เฉพาะ a-z, 0-9 และขีดกลาง"),
+  // Hidden from non-technical admins and generated from the English title; a
+  // typed value (from the advanced section) is still honoured, just sanitized.
+  slug: z.string().trim().optional().default(""),
   titleTh: z.string().trim(),
   titleEn: z.string().trim(),
   bodyTh: z.string(),
@@ -66,33 +69,48 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
     if (isStaleVersion(parsed.data.updatedAt, existing.updatedAt)) return { success: false, conflict: true, message: "ข้อมูลถูกแก้ไขจากอีกหน้าต่าง กรุณาโหลดหน้าใหม่" };
   }
 
-  const common = { slug: parsed.data.slug || slugifyAdminTitle(parsed.data.titleEn), titleTh: parsed.data.titleTh, titleEn: parsed.data.titleEn, coverImage: parsed.data.coverImage || null, published };
+  // Generate the URL slug from the (optional) typed value or the English title,
+  // falling back to a token for Thai-only drafts. Auto-dedupe on collision so a
+  // hidden field never blocks the admin with a duplicate error.
+  const baseSlug = slugifyAdminTitle(parsed.data.slug || parsed.data.titleEn) || fallbackToken(resource);
   try {
-    const saved = await prisma.$transaction(async (tx) => {
-      switch (resource) {
-        case "works": {
-          const data = { ...common, descriptionTh: parsed.data.bodyTh || null, descriptionEn: parsed.data.bodyEn || null, categoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
-          return id ? tx.work.update({ where: { id }, data }) : tx.work.create({ data });
-        }
-        case "articles": {
-          const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, articleCategoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
-          return id ? tx.article.update({ where: { id }, data }) : tx.article.create({ data });
-        }
-        case "news": {
-          const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null };
-          return id ? tx.news.update({ where: { id }, data }) : tx.news.create({ data });
-        }
-        case "promotions": {
-          const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null, endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null };
-          return id ? tx.promotion.update({ where: { id }, data }) : tx.promotion.create({ data });
-        }
+    let slug = baseSlug;
+    let saved: { id: number; slug: string } | undefined;
+    for (let attempt = 1; ; attempt++) {
+      const common = { slug, titleTh: parsed.data.titleTh, titleEn: parsed.data.titleEn, coverImage: parsed.data.coverImage || null, published };
+      try {
+        saved = await prisma.$transaction(async (tx) => {
+          switch (resource) {
+            case "works": {
+              const data = { ...common, descriptionTh: parsed.data.bodyTh || null, descriptionEn: parsed.data.bodyEn || null, categoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
+              return id ? tx.work.update({ where: { id }, data }) : tx.work.create({ data });
+            }
+            case "articles": {
+              const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, articleCategoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
+              return id ? tx.article.update({ where: { id }, data }) : tx.article.create({ data });
+            }
+            case "news": {
+              const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null };
+              return id ? tx.news.update({ where: { id }, data }) : tx.news.create({ data });
+            }
+            case "promotions": {
+              const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null, endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null };
+              return id ? tx.promotion.update({ where: { id }, data }) : tx.promotion.create({ data });
+            }
+          }
+        });
+        break;
+      } catch (error) {
+        if (isUniqueConstraintError(error) && attempt <= 5) { slug = `${baseSlug}-${attempt + 1}`; continue; }
+        throw error;
       }
-    });
+    }
+    if (!saved) return { success: false, message: "บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
     await recordActivity({ adminId: admin.id, action: id ? (published ? "PUBLISH" : "UPDATE") : "CREATE", entityType: resource, entityId: saved.id, label: parsed.data.titleTh, metadata: { published } });
     refreshResource(resource, saved.slug);
     return { success: true, message: `บันทึก${config.singular}สำเร็จ` };
   } catch (error) {
-    if (error instanceof Error && error.message.includes("Unique constraint")) return { success: false, fieldErrors: { slug: ["Slug นี้ถูกใช้งานแล้ว"] }, message: "Slug นี้ถูกใช้งานแล้ว" };
+    if (isUniqueConstraintError(error)) return { success: false, message: "ลิงก์ของรายการนี้ซ้ำกับที่มีอยู่ กรุณาลองใหม่" };
     return { success: false, message: "บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
   }
 }
@@ -101,7 +119,6 @@ export async function deleteContentAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const resource = String(formData.get("resource") || "");
   const id = Number(formData.get("id"));
-  const confirmation = String(formData.get("confirmation") || "");
   if (!isContentResource(resource) || !Number.isInteger(id)) throw new Error("Invalid content request");
   const prisma = getPrisma();
   const existing = await (async () => {
@@ -113,9 +130,6 @@ export async function deleteContentAction(formData: FormData): Promise<void> {
     }
   })();
   if (!existing) throw new Error("Content item not found");
-  const normConf = confirmation.trim().toUpperCase();
-  const isMatch = normConf === "DELETE" || (existing.titleTh && normConf === existing.titleTh.trim().toUpperCase());
-  if (!isMatch) throw new Error("Delete confirmation does not match");
   if (existing.published) throw new Error("Unpublish content before permanent deletion");
   switch (resource) {
     case "works": await prisma.work.delete({ where: { id } }); break;

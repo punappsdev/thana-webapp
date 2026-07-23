@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import type { Prisma } from "@/generated/prisma/client";
+import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import {
   isStaleVersion,
@@ -54,7 +55,9 @@ const optionalId = z.preprocess((value) => (value === "none" || value === "" ? u
 const formSchema = z.object({
   id: z.coerce.number().int().positive().optional().or(z.literal("")),
   updatedAt: z.string().optional(),
-  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  // Hidden from non-technical admins and generated from the English name; a typed
+  // value (from the advanced section) is still honoured, just sanitized/deduped.
+  slug: z.string().trim().optional().default(""),
   sku: z.string().trim().min(1),
   nameTh: z.string().trim(),
   nameEn: z.string().trim(),
@@ -93,6 +96,19 @@ function uniqueSlug(base: string, taken: Set<string>, fallback: string): string 
   let suffix = 2;
   while (taken.has(candidate)) candidate = `${seed}-${suffix++}`;
   taken.add(candidate);
+  return candidate;
+}
+
+/**
+ * The product slug is hidden from admins now, so make it collision-proof before
+ * the write: an occupied slug just gets a "-2", "-3"… suffix. Deduping here means
+ * any unique-constraint error that still surfaces is the (visible) SKU, not slug.
+ */
+async function ensureUniqueProductSlug(prisma: ReturnType<typeof getPrisma>, base: string, excludeId?: number): Promise<string> {
+  let candidate = base;
+  for (let suffix = 2; await prisma.product.findFirst({ where: { slug: candidate, ...(excludeId ? { NOT: { id: excludeId } } : {}) }, select: { id: true } }); suffix++) {
+    candidate = `${base}-${suffix}`;
+  }
   return candidate;
 }
 
@@ -174,8 +190,9 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
   if (duplicateCombination) variantErrors.push("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
   if (variantErrors.length) return { success: false, message: variantErrors.join(" · ") };
 
+  const slug = await ensureUniqueProductSlug(prisma, slugifyAdminTitle(d.slug || d.nameEn) || fallbackToken("product"), id);
   const core = {
-    slug: d.slug,
+    slug,
     sku: d.sku,
     nameTh: d.nameTh,
     nameEn: d.nameEn,
@@ -310,7 +327,7 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     if (error instanceof Error && error.message === "VARIANT_TOKEN_UNRESOLVED") {
       return { success: false, message: "ตัวเลือกอ้างถึงค่าคุณลักษณะที่ถูกลบไปแล้ว กรุณากดสร้างตัวเลือกใหม่" };
     }
-    return { success: false, message: error instanceof Error && error.message.includes("Unique constraint") ? "Slug หรือ SKU ถูกใช้งานแล้ว" : "บันทึกสินค้าไม่สำเร็จ" };
+    return { success: false, message: error instanceof Error && error.message.includes("Unique constraint") ? "รหัสสินค้า (SKU) นี้ถูกใช้แล้ว กรุณาเปลี่ยนใหม่" : "บันทึกสินค้าไม่สำเร็จ" };
   }
 }
 
@@ -327,14 +344,13 @@ async function createAttribute(tx: Prisma.TransactionClient, attribute: Attribut
 }
 
 export async function deleteProductAction(formData: FormData): Promise<void> {
+  // Auth + the unpublished guard are the real safety net; a typed "DELETE"
+  // confirmation only added friction, so the dialog now just asks yes/no.
   const admin = await requireAdmin();
   const id = Number(formData.get("id"));
-  const confirmation = String(formData.get("confirmation") || "");
   const prisma = getPrisma();
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
-  const normConf = confirmation.trim().toUpperCase();
-  const isMatch = normConf === "DELETE" || (product.nameTh && normConf === product.nameTh.trim().toUpperCase());
-  if (product.published || !isMatch) throw new Error("Unpublish and confirm product deletion before proceeding");
+  if (product.published) throw new Error("Unpublish product before permanent deletion");
   await prisma.product.delete({ where: { id } });
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: "products", entityId: id, label: product.nameTh });
   revalidatePath("/admin/products");

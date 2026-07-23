@@ -1,13 +1,47 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { Mail, Phone, Clock, MapPin } from "lucide-react";
 import { Link } from "../../i18n/routing";
+import { pick } from "@/lib/products";
 
-export function Footer() {
+export interface CategoryItem {
+  id?: number;
+  slug: string;
+  nameTh: string;
+  nameEn: string;
+}
+
+const DEFAULT_CATEGORIES: CategoryItem[] = [
+  { id: 1, slug: "general-glass", nameTh: "กระจกทั่วไป", nameEn: "General Glass" },
+  { id: 2, slug: "decorative-glass", nameTh: "กระจกตกแต่ง", nameEn: "Decorative Glass" },
+  { id: 3, slug: "safety-glass", nameTh: "กระจกนิรภัย", nameEn: "Safety Glass" },
+  { id: 4, slug: "gypsum", nameTh: "ยิปซั่ม", nameEn: "Gypsum" },
+  { id: 5, slug: "aluminum", nameTh: "อลูมิเนียม", nameEn: "Aluminum" },
+  { id: 6, slug: "hardware-store", nameTh: "คลังอุปกรณ์", nameEn: "Hardware Store" },
+];
+
+export function Footer({ initialCategories }: { initialCategories?: CategoryItem[] }) {
   const t = useTranslations("Footer");
-  const tCat = useTranslations("CategoryGrid");
+  const locale = useLocale();
+  const [categories, setCategories] = useState<CategoryItem[]>(initialCategories || DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/categories")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setCategories(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <footer className="bg-white border-t border-border/80 py-12">
@@ -50,10 +84,16 @@ export function Footer() {
           <div>
             <h4 className="font-headline-sm font-semibold text-primary mb-6">{t("headingCategories")}</h4>
             <ul className="flex flex-col gap-4 text-muted-foreground font-body-sm">
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.aluminum.title")}</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.glass.title")}</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.ceiling.title")}</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{tCat("items.hardware.title")}</Link></li>
+              {categories.map((cat) => (
+                <li key={cat.id || cat.slug}>
+                  <Link
+                    href={`/products?category=${cat.slug}`}
+                    className="hover:text-primary transition-all hover:underline"
+                  >
+                    {pick(cat as unknown as Record<string, unknown>, "name", locale)}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -100,3 +140,4 @@ export function Footer() {
     </footer>
   );
 }
+

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, BriefcaseBusiness, FilePenLine, Package, Tags } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, FilePenLine, Newspaper, Package, Tags } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { activityActionLabel, activityActionVariant, entityTypeLabel } from "@/lib/admin/activity-labels";
 import { getPrisma } from "@/lib/prisma";
 
 export default async function AdminDashboardPage() {
@@ -23,9 +24,9 @@ export default async function AdminDashboardPage() {
   ]);
 
   const metrics = [
-    { label: "สินค้าทั้งหมด", value: products, detail: `${productDrafts} ฉบับร่าง`, icon: Package },
-    { label: "เนื้อหาฉบับร่าง", value: contentDrafts, detail: "ผลงาน, บทความ, ข่าว, โปรโมชั่น", icon: FilePenLine },
-    { label: "โปรโมชั่นใช้งาน", value: activePromotions, detail: "เผยแพร่และยังไม่หมดอายุ", icon: Tags },
+    { label: "สินค้าทั้งหมด", value: products, detail: `มี ${productDrafts} รายการที่ยังไม่เผยแพร่ (ฉบับร่าง)`, icon: Package },
+    { label: "เนื้อหาที่ยังไม่เผยแพร่", value: contentDrafts, detail: "ฉบับร่างของผลงาน บทความ ข่าว และโปรโมชั่น", icon: FilePenLine },
+    { label: "โปรโมชั่นที่กำลังแสดง", value: activePromotions, detail: "เผยแพร่อยู่และยังไม่หมดอายุ", icon: Tags },
   ];
 
   return (
@@ -56,7 +57,7 @@ export default async function AdminDashboardPage() {
           <CardContent className="overflow-x-auto">
             {activities.length ? (
               <Table><TableHeader><TableRow><TableHead>รายการ</TableHead><TableHead>การทำงาน</TableHead><TableHead>ผู้ดูแล</TableHead><TableHead>เวลา</TableHead></TableRow></TableHeader>
-                <TableBody>{activities.map((activity) => <TableRow key={activity.id}><TableCell className="font-label-md">{activity.label || activity.entityType}</TableCell><TableCell><Badge variant="secondary">{activity.action}</Badge></TableCell><TableCell>{activity.admin?.name || "ระบบ"}</TableCell><TableCell>{activity.createdAt.toLocaleString("th-TH")}</TableCell></TableRow>)}</TableBody>
+                <TableBody>{activities.map((activity) => <TableRow key={activity.id}><TableCell className="font-label-md">{activity.label || entityTypeLabel(activity.entityType)}</TableCell><TableCell><Badge variant={activityActionVariant(activity.action)}>{activityActionLabel(activity.action)}</Badge></TableCell><TableCell>{activity.admin?.name || "ระบบ"}</TableCell><TableCell>{activity.createdAt.toLocaleString("th-TH")}</TableCell></TableRow>)}</TableBody>
               </Table>
             ) : <p className="py-12 text-center font-body-sm text-muted-foreground">ยังไม่มีกิจกรรมในระบบ</p>}
           </CardContent>
@@ -67,6 +68,7 @@ export default async function AdminDashboardPage() {
             {[
               ["บทความ", "/admin/content/articles/new", BookOpen],
               ["ผลงาน", "/admin/content/works/new", BriefcaseBusiness],
+              ["ข่าว", "/admin/content/news/new", Newspaper],
               ["โปรโมชั่น", "/admin/content/promotions/new", Tags],
             ].map(([label, href, Icon]) => (
               <Button key={String(href)} asChild variant="outline" className="w-full justify-between"><Link href={String(href)}><span className="flex items-center gap-2"><Icon className="size-4" />{String(label)}</span><ArrowRight className="size-4" /></Link></Button>
