@@ -9,15 +9,19 @@ export async function ProductList({ locale }: { locale: string }) {
   const tProducts = await getTranslations("Products");
 
   const products = await prisma.product.findMany({
-    where: { published: true },
+    where: { published: true, featured: true },
     include: {
       category: true,
       pricingUnit: true,
       variants: { select: { price: true } },
     },
-    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
-    take: 4,
+    orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
+    take: 8,
   });
+
+  // The section is curated from /admin/featured — with nothing selected there is
+  // nothing to feature, so hide the whole block instead of showing an empty box.
+  if (products.length === 0) return null;
 
   return (
     <section className="py-12 bg-white">
@@ -37,23 +41,17 @@ export async function ProductList({ locale }: { locale: string }) {
           </Link>
         </div>
 
-        {products.length === 0 ? (
-          <div className="text-center py-12 border border-[#c4e2f5] rounded-xl">
-            <p className="font-body-md text-muted-foreground">{t("empty")}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                locale={locale}
-                priceOnRequestLabel={tProducts("priceOnRequest")}
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
-              />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              locale={locale}
+              priceOnRequestLabel={tProducts("priceOnRequest")}
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -75,7 +75,6 @@ const formSchema = z.object({
   brandId: optionalId,
   unitId: optionalId,
   pricingUnitId: optionalId,
-  featured: z.string().optional(),
   sortOrder: z.coerce.number().int().default(0),
   intent: z.enum(["draft", "publish"]),
   imagesJson: z.string(),
@@ -208,7 +207,8 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     catalogPdf: d.catalogPdf || null,
     basePrice: d.basePrice === "" ? null : d.basePrice,
     currency: d.currency,
-    featured: d.featured === "on",
+    // `featured` / `featuredOrder` are curated on /admin/featured — deliberately
+    // not written here so editing a product never resets its featured status.
     published,
     sortOrder: d.sortOrder,
     categoryId,

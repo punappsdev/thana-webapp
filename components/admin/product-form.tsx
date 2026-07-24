@@ -72,7 +72,6 @@ type ProductRecord = {
   catalogPdf: string | null;
   basePrice: number | null;
   currency: string;
-  featured: boolean;
   published: boolean;
   sortOrder: number;
   categoryId: number | null;

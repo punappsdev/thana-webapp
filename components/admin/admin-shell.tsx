@@ -16,6 +16,7 @@ import {
   Newspaper,
   Package,
   Settings,
+  Star,
   Tags,
   UserRound,
 } from "lucide-react";
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { label: "ภาพรวม", href: "/admin", icon: LayoutDashboard },
   { label: "แบนเนอร์", href: "/admin/banners", icon: GalleryHorizontalEnd },
+  { label: "สินค้าแนะนำ", href: "/admin/featured", icon: Star },
   { label: "สินค้า", href: "/admin/products", icon: Package },
   { label: "ข้อมูลสินค้า", href: "/admin/catalog", icon: Boxes },
   { label: "ผลงาน", href: "/admin/content/works", icon: BriefcaseBusiness },
