@@ -1,8 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import { MediaField } from "@/components/admin/media-field";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DictionaryAttribute, ProductAttributeDraft } from "@/components/admin/product-attributes-editor";
@@ -170,7 +168,6 @@ export function ProductVariantsTable({
               <TableHead className="font-label-md">รูป</TableHead>
               <TableHead className="text-center font-label-md">ขายอยู่</TableHead>
               <TableHead className="text-center font-label-md">ค่าเริ่มต้น</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -206,11 +203,6 @@ export function ProductVariantsTable({
                 </TableCell>
                 <TableCell className="text-center">
                   <input type="radio" name="variant-default" aria-label="ค่าเริ่มต้น" checked={row.isDefault} onChange={() => setDefault(row._key)} />
-                </TableCell>
-                <TableCell>
-                  <Button type="button" variant="ghost" size="icon-sm" aria-label="ลบรายการนี้" onClick={() => onChange(variants.filter((item) => item._key !== row._key))}>
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}
