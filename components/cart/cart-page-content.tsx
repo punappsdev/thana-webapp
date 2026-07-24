@@ -37,15 +37,7 @@ export function CartPageContent() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <div className="rounded-lg border border-[#c4e2f5] bg-white px-5">
-          <div className="divide-y divide-[#e2e2eb]">
-            {items.map((item) => (
-              <CartLineRow key={lineKey(item)} item={item} layout="page" />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/products"
             className="inline-flex items-center gap-2 font-label-md font-medium text-primary transition-colors hover:text-secondary"
@@ -62,6 +54,14 @@ export function CartPageContent() {
             <Trash2 className="h-4 w-4" />
             {t("clear")}
           </button>
+        </div>
+
+        <div className="rounded-lg border border-[#c4e2f5] bg-white px-4 sm:px-5">
+          <div className="divide-y divide-[#e2e2eb]">
+            {items.map((item) => (
+              <CartLineRow key={lineKey(item)} item={item} layout="page" />
+            ))}
+          </div>
         </div>
       </div>
 

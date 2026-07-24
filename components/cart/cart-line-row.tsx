@@ -22,7 +22,7 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
   const { setQty, remove } = useCart();
 
   const key = lineKey(item);
-  const thumbSize = layout === "page" ? "h-24 w-24" : "h-20 w-20";
+  const thumbSize = layout === "page" ? "h-20 w-20 sm:h-24 sm:w-24" : "h-20 w-20";
   // Resolved per render, so switching locale relabels the cart in place
   const name = pick(item, "name", locale);
   const pricingUnitName = pick(item, "pricingUnitName", locale);
@@ -49,7 +49,7 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
         )}
       </Link>
 
-      <div className={`flex min-w-0 flex-1 gap-4 ${layout === "page" ? "sm:items-start" : "flex-col"}`}>
+      <div className={`flex min-w-0 flex-1 gap-4 ${layout === "page" ? "flex-col sm:flex-row sm:items-start" : "flex-col"}`}>
         <div className="min-w-0 flex-1 space-y-1">
           <Link
             href={`/products/${item.slug}`}
@@ -71,7 +71,7 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
 
         <div
           className={`flex items-center gap-3 ${
-            layout === "page" ? "sm:flex-col sm:items-end sm:gap-2" : "justify-between"
+            layout === "page" ? "w-full justify-between sm:w-auto sm:flex-col sm:items-end sm:gap-2" : "justify-between"
           }`}
         >
           <div className="inline-flex items-center rounded-md border border-[#c4e2f5] bg-white">
@@ -107,20 +107,22 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
             </button>
           </div>
 
-          {layout === "page" && (
-            <span className="font-label-lg font-semibold text-secondary">
-              {formatPrice(item.unitPrice * item.qty, locale)}
-            </span>
-          )}
+          <div className="flex items-center gap-4">
+            {layout === "page" && (
+              <span className="font-label-lg font-semibold text-secondary whitespace-nowrap">
+                {formatPrice(item.unitPrice * item.qty, locale)}
+              </span>
+            )}
 
-          <button
-            type="button"
-            onClick={() => remove(key)}
-            aria-label={t("remove")}
-            className="p-2 rounded-md text-[#747684] transition-colors hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            <button
+              type="button"
+              onClick={() => remove(key)}
+              aria-label={t("remove")}
+              className="p-2 rounded-md text-[#747684] transition-colors hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer shrink-0"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
