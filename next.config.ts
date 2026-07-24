@@ -4,6 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["sharp"],
   allowedDevOrigins: [
     '*.ngrok-free.app',
     '*.ngrok-free.dev',

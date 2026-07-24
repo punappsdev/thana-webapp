@@ -2,30 +2,99 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Trash2, Upload } from "lucide-react";
+import { Copy, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_PDF_BYTES = 25 * 1024 * 1024;
+
+/**
+ * Drop-zone uploader for the media library. Mirrors the MediaField dropzone
+ * style used across the admin panel, but adds the whole batch to the library
+ * (refreshing the grid) instead of holding a single value.
+ */
 export function MediaUpload() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
-  const upload = async () => {
-    const file = inputRef.current?.files?.[0];
-    if (!file) return toast.error("กรุณาเลือกไฟล์");
+  const [dragging, setDragging] = useState(false);
+
+  const uploadFiles = async (files: File[]) => {
+    if (!files.length) return;
     setPending(true);
-    const formData = new FormData(); formData.set("file", file);
-    const response = await fetch("/api/admin/media", { method: "POST", body: formData });
-    const data = await response.json();
+    let uploaded = 0;
+    for (const file of files) {
+      const limit = file.type.startsWith("image/") ? MAX_IMAGE_BYTES : MAX_PDF_BYTES;
+      if (file.size > limit) {
+        toast.error(`${file.name} ใหญ่เกินไป`);
+        continue;
+      }
+      try {
+        const body = new FormData();
+        body.set("file", file);
+        const response = await fetch("/api/admin/media", { method: "POST", body });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          toast.error(`${file.name}: ${data.message || "อัปโหลดไม่สำเร็จ"}`);
+          continue;
+        }
+        uploaded += 1;
+      } catch {
+        toast.error(`${file.name}: อัปโหลดไม่สำเร็จ`);
+      }
+    }
     setPending(false);
-    if (!response.ok) return toast.error(data.message || "อัปโหลดไม่สำเร็จ");
-    toast.success("อัปโหลดไฟล์สำเร็จ");
     if (inputRef.current) inputRef.current.value = "";
-    router.refresh();
+    if (uploaded) {
+      toast.success(`อัปโหลด ${uploaded} ไฟล์สำเร็จ`);
+      router.refresh();
+    }
   };
-  return <div className="flex flex-col gap-3 md:flex-row"><Input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="font-body-sm" /><Button type="button" onClick={upload} disabled={pending}><Upload className="size-4" />{pending ? "กำลังอัปโหลด..." : "อัปโหลด"}</Button></div>;
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="sr-only"
+        onChange={(event) => void uploadFiles(Array.from(event.target.files ?? []))}
+      />
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          void uploadFiles(Array.from(event.dataTransfer.files ?? []));
+        }}
+        onClick={() => inputRef.current?.click()}
+        className={cn(
+          "flex flex-col items-center justify-center text-center gap-3 rounded-lg border border-dashed p-6 transition-all cursor-pointer select-none",
+          dragging
+            ? "border-primary bg-primary/5 shadow-blue-sm"
+            : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
+        )}
+      >
+        <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
+          {pending ? <Loader2 className="size-5 animate-spin text-primary" /> : <Upload className="size-5 text-muted-foreground" />}
+        </div>
+        <div className="space-y-1">
+          <p className="font-label-sm text-foreground font-medium">
+            {pending ? "กำลังอัปโหลด..." : "คลิกเพื่อเลือกไฟล์ หรือลากมาวาง"}
+          </p>
+          <p className="font-label-sm text-muted-foreground/80">JPG, PNG, WebP ไม่เกิน 10 MB หรือ PDF ไม่เกิน 25 MB</p>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export function MediaActions({ id, url }: { id: string; url: string }) {
