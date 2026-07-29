@@ -154,7 +154,22 @@
   }
   html {
     @apply font-sans;
-    font-size: 100%; 
+    font-size: 100%;
+    /* Reserve the scrollbar gutter permanently. Radix (Select, Dialog, Sheet)
+       locks scrolling while an overlay is open, which would otherwise remove
+       the scrollbar and resize the page. `overflow-y` keeps <html> the element
+       the viewport takes its scrolling from, so the gutter above always wins
+       over the `overflow: hidden` Radix puts on <body>. */
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  /* Radix compensates for the scrollbar it hides by pushing <body> in from the
+     right. With the gutter reserved above nothing was removed, so that
+     compensation only shifts the page sideways — cancel it. The `html` prefix
+     out-specifies the rule react-remove-scroll injects at runtime. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-prompt), sans-serif;
