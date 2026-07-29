@@ -11,11 +11,19 @@ import type { Banner } from "@/generated/prisma/client";
 
 function BannerTable({ items, emptyLabel }: { items: Banner[]; emptyLabel: string }) {
   if (!items.length) return <p className="py-12 text-center font-body-sm text-muted-foreground">{emptyLabel}</p>;
-  return <Table>
-    <TableHeader><TableRow><TableHead>รูป</TableHead><TableHead>หัวข้อ</TableHead><TableHead>สถานะ</TableHead><TableHead>ลำดับ</TableHead><TableHead className="text-right">จัดการ</TableHead></TableRow></TableHeader>
+  return <Table className="w-full table-fixed min-w-[800px]">
+    <TableHeader>
+      <TableRow>
+        <TableHead className="w-[110px]">รูป</TableHead>
+        <TableHead className="w-auto">หัวข้อ</TableHead>
+        <TableHead className="w-[120px]">สถานะ</TableHead>
+        <TableHead className="w-[90px]">ลำดับ</TableHead>
+        <TableHead className="w-[100px] text-right">จัดการ</TableHead>
+      </TableRow>
+    </TableHeader>
     <TableBody>{items.map((item) => <TableRow key={item.id}>
       <TableCell><div className="relative h-11 w-20 overflow-hidden rounded-md border bg-muted">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill sizes="80px" className="object-cover" unoptimized /> : <div className="flex h-full items-center justify-center"><ImageOff className="size-4 text-muted-foreground" /></div>}</div></TableCell>
-      <TableCell><p className="font-label-md font-semibold">{item.titleTh || "ยังไม่มีหัวข้อภาษาไทย"}</p><p className="font-body-sm text-muted-foreground">{item.titleEn || "ยังไม่มีหัวข้ออังกฤษ"}</p></TableCell>
+      <TableCell className="whitespace-normal"><p className="font-label-md font-semibold">{item.titleTh || "ยังไม่มีหัวข้อภาษาไทย"}</p><p className="font-body-sm text-muted-foreground">{item.titleEn || "ยังไม่มีหัวข้ออังกฤษ"}</p></TableCell>
       <TableCell><Badge variant={item.published ? "default" : "secondary"}>{item.published ? "เผยแพร่" : "ฉบับร่าง"}</Badge></TableCell>
       <TableCell className="font-body-sm">{item.sortOrder}</TableCell>
       <TableCell><div className="flex justify-end gap-1"><Button asChild variant="ghost" size="icon-sm"><Link href={`/admin/banners/${item.id}`} aria-label="แก้ไข"><Edit3 className="size-4" /></Link></Button><DeleteBannerButton id={item.id} title={item.titleTh} published={item.published} /></div></TableCell>
