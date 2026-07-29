@@ -287,3 +287,22 @@
     padding-bottom: 56px;
   }
 }
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+@utility marquee-pause {
+  &:hover {
+    animation-play-state: paused;
+  }
+}

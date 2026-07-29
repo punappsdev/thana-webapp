@@ -4,6 +4,7 @@ import { CategoryGrid } from "@/components/homepage/category-grid";
 import { ProductList } from "@/components/homepage/product-list";
 import { QuotationSteps } from "@/components/homepage/quotation-steps";
 import { AboutUs } from "@/components/homepage/about-us";
+import { Partners } from "@/components/homepage/partners";
 import { CtaSection } from "@/components/homepage/cta-section";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
@@ -22,6 +23,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <ProductList locale={locale} />
         <QuotationSteps />
         <AboutUs />
+        <Partners />
         <CtaSection />
       </main>
 

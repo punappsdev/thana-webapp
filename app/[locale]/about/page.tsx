@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
+import { Partners } from "@/components/homepage/partners";
 import Image from "next/image";
 import { Building2, Sparkles, ShieldCheck, Layers, Trophy, Eye } from "lucide-react";
 
@@ -203,75 +204,7 @@ export default function AboutPage() {
         </section>
 
         {/* Partners Section */}
-        <section className="max-w-[1280px] mx-auto px-4 md:px-10 pb-20 md:pb-32">
-          <div className="flex flex-col items-center text-center gap-3 mb-8 md:mb-12">
-            <span className="font-label-md font-semibold uppercase tracking-[0.18em] text-secondary">
-              {t("partnersEyebrow")}
-            </span>
-            <h2 className="font-headline-lg md:font-display-md font-bold text-primary mt-2">
-              {t("partnersTitle")}
-            </h2>
-            <div className="w-16 h-1 bg-primary-container rounded-full mt-1" />
-          </div>
-
-          <div className="bg-sky-100/35 border border-[#c4e2f5]/60 rounded-2xl p-8 md:p-10">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-items-center">
-              {/* Logo 1: Muangthong */}
-              <div className="bg-white/80 border border-[#c4e2f5]/50 px-6 py-4 rounded-xl shadow-xs flex items-center justify-center h-20 w-full max-w-[200px] hover:scale-105 transition-transform">
-                <div className="flex items-center justify-center gap-2">
-                  <svg className="w-7 h-7 text-rose-600 shrink-0" viewBox="0 0 100 100" fill="currentColor">
-                    <ellipse cx="50" cy="50" rx="45" ry="30" fill="none" stroke="currentColor" strokeWidth="6"/>
-                    <path d="M25 42h50M20 50h60M25 58h50" stroke="currentColor" strokeWidth="4"/>
-                  </svg>
-                  <span className="font-prompt text-[10px] leading-tight font-extrabold tracking-tighter text-[#1e1e1e]">
-                    MUANGTHONG<br/>
-                    <span className="text-[9px] text-rose-600 font-normal tracking-widest block">ALUMINIUM</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Logo 2: Knauf */}
-              <div className="bg-white/80 border border-[#c4e2f5]/50 px-6 py-4 rounded-xl shadow-xs flex items-center justify-center h-20 w-full max-w-[200px] hover:scale-105 transition-transform">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="bg-[#0091ff] text-white font-prompt font-extrabold px-2.5 py-0.5 text-xs tracking-tight rounded-sm">
-                    KNAUF
-                  </div>
-                  <div className="h-5 w-[1px] bg-slate-300 mx-0.5" />
-                  <span className="text-[8px] text-slate-500 leading-tight font-semibold">
-                    ยิปซัม<br/>ตราตราช้าง
-                  </span>
-                </div>
-              </div>
-
-              {/* Logo 3: BGF */}
-              <div className="bg-white/80 border border-[#c4e2f5]/50 px-6 py-4 rounded-xl shadow-xs flex items-center justify-center h-20 w-full max-w-[200px] hover:scale-105 transition-transform">
-                <div className="bg-[#002f9f] text-white font-prompt font-black text-lg px-5 py-1 tracking-widest rounded-sm">
-                  BGF
-                </div>
-              </div>
-
-              {/* Logo 4: Guardian */}
-              <div className="bg-white/80 border border-[#c4e2f5]/50 px-6 py-4 rounded-xl shadow-xs flex items-center justify-center h-20 w-full max-w-[200px] hover:scale-105 transition-transform">
-                <div className="flex items-center justify-center gap-1.5">
-                  <svg className="w-5 h-5 text-sky-700 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                  </svg>
-                  <div className="font-prompt text-[10px] leading-tight font-extrabold text-[#111] tracking-tight">
-                    GUARDIAN<br/>
-                    <span className="text-[8px] font-medium tracking-[0.15em] text-sky-700 block -mt-0.5">GLASS</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center gap-1.5 mt-6 md:mt-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/20" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/20" />
-            </div>
-          </div>
-        </section>
+        <Partners />
       </main>
 
       <Footer />
