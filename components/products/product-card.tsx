@@ -58,7 +58,7 @@ export function ProductCard({
   const price = range ? range.min : basePrice;
 
   // Resolve labels fallback
-  const resolvedSkuLabel = skuLabel || (locale === "en" ? "Product code" : "รหัสสินค้า");
+  const resolvedSkuLabel = skuLabel || (locale === "en" ? "SKU" : "รหัสสินค้า");
   const resolvedOptionsLabel = optionsLabel || (locale === "en" ? "Options" : "ตัวเลือก");
 
   // Group variant values by attribute to display a clean summary of options
@@ -118,9 +118,12 @@ export function ProductCard({
         </h3>
 
         {product.sku && (
-          <div className="font-label-sm text-[#747684] mb-2 flex items-baseline gap-1">
-            <span>{resolvedSkuLabel}:</span>
-            <span className="font-semibold">{product.sku}</span>
+          <div className="font-label-sm text-[#747684] mb-2 flex flex-wrap items-baseline gap-x-1">
+            <span className="inline md:hidden">
+              {locale === "th" ? "รหัส:" : "SKU:"}
+            </span>
+            <span className="hidden md:inline">{resolvedSkuLabel}:</span>
+            <span className="font-semibold break-all">{product.sku}</span>
           </div>
         )}
 
