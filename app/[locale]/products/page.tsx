@@ -21,18 +21,35 @@ import {
 } from "@/components/ui/pagination";
 import { CategorySidebar, MobileCategoryChips } from "@/components/products/category-sidebar";
 import { ProductCard } from "@/components/products/product-card";
+import { ProductSortAndFilter } from "@/components/products/product-filters";
 import type { Prisma } from "../../../generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string; sub?: string; page?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    sub?: string;
+    page?: string;
+    sort?: string;
+    brand?: string;
+    minPrice?: string;
+    maxPrice?: string;
+  }>;
 }
 
 const PAGE_SIZE = 9;
 
 export default async function ProductsPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
-  const { category, sub, page = "1" } = await searchParams;
+  const {
+    category,
+    sub,
+    page = "1",
+    sort,
+    brand,
+    minPrice,
+    maxPrice,
+  } = await searchParams;
   const pageNumber = Math.max(1, parseInt(page, 10) || 1);
 
   const t = await getTranslations("Products");
@@ -59,10 +76,34 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       ? activeCategory.subCategories.find((s) => s.slug === sub)
       : undefined;
 
+  // Fetch active brands dynamically to show in the filters
+  const brands = await prisma.brand.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  const activeBrands = typeof brand === "string" ? brand.split(",") : [];
+  const minPriceNum = minPrice ? parseFloat(minPrice) : undefined;
+  const maxPriceNum = maxPrice ? parseFloat(maxPrice) : undefined;
+
   const where: Prisma.ProductWhereInput = {
     published: true,
     ...(activeCategory ? { categoryId: activeCategory.id } : {}),
     ...(activeSub ? { subCategoryId: activeSub.id } : {}),
+    ...(activeBrands.length > 0
+      ? {
+          brand: {
+            slug: { in: activeBrands },
+          },
+        }
+      : {}),
+    ...(minPriceNum !== undefined || maxPriceNum !== undefined
+      ? {
+          basePrice: {
+            ...(minPriceNum !== undefined ? { gte: minPriceNum } : {}),
+            ...(maxPriceNum !== undefined ? { lte: maxPriceNum } : {}),
+          },
+        }
+      : {}),
   };
 
   const [totalItems, catalogTotal] = await Promise.all([
@@ -74,6 +115,19 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
   // instead of an empty grid that contradicts the result count beside it
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const currentPage = Math.min(pageNumber, totalPages);
+
+  let orderBy: Prisma.ProductOrderByWithRelationInput[] = [];
+  if (sort === "price-asc") {
+    orderBy = [{ basePrice: "asc" }, { sortOrder: "asc" }];
+  } else if (sort === "price-desc") {
+    orderBy = [{ basePrice: "desc" }, { sortOrder: "asc" }];
+  } else if (sort === "name-asc") {
+    orderBy = [{ [locale === "th" ? "nameTh" : "nameEn"]: "asc" }];
+  } else if (sort === "name-desc") {
+    orderBy = [{ [locale === "th" ? "nameTh" : "nameEn"]: "desc" }];
+  } else {
+    orderBy = [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }];
+  }
 
   // Count and page at the database level rather than slicing in memory
   const products = await prisma.product.findMany({
@@ -97,7 +151,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
         },
       },
     },
-    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
+    orderBy,
     skip: (currentPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -106,6 +160,10 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     const qs = new URLSearchParams();
     if (activeCategory) qs.set("category", activeCategory.slug);
     if (activeSub) qs.set("sub", activeSub.slug);
+    if (sort) qs.set("sort", sort);
+    if (brand) qs.set("brand", brand);
+    if (minPrice) qs.set("minPrice", minPrice);
+    if (maxPrice) qs.set("maxPrice", maxPrice);
     if (p > 1) qs.set("page", String(p));
     const q = qs.toString();
     return q ? `/products?${q}` : "/products";
@@ -167,10 +225,30 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
             <section>
               {/* Result bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-8 border-b border-[#ededf7]">
+              <div className="flex items-center justify-between gap-3 pb-5 mb-8 border-b border-[#ededf7]">
                 <p className="font-label-md text-[#434653]">
                   {t("resultCount", { count: totalItems })}
                 </p>
+                <ProductSortAndFilter
+                  brands={brands.map((b) => ({ slug: b.slug, name: b.name }))}
+                  currentParams={{ sort, brand, minPrice, maxPrice }}
+                  locale={locale}
+                  labels={{
+                    sortBy: t("sortBy"),
+                    filterButton: t("filterButton"),
+                    sortFeatured: t("sortFeatured"),
+                    sortPriceAsc: t("sortPriceAsc"),
+                    sortPriceDesc: t("sortPriceDesc"),
+                    sortNameAsc: t("sortNameAsc"),
+                    sortNameDesc: t("sortNameDesc"),
+                    priceRange: t("priceRange"),
+                    minPrice: t("minPrice"),
+                    maxPrice: t("maxPrice"),
+                    apply: t("apply"),
+                    clearFilters: t("clearFilters"),
+                    brandHeading: t("brandHeading"),
+                  }}
+                />
               </div>
 
               {products.length === 0 ? (

@@ -116,7 +116,20 @@
     "downloadCatalog": "Download catalog (PDF)",
     "backToProducts": "Back to products",
     "requestQuote": "Request a quote",
-    "notFound": "Product not found"
+    "notFound": "Product not found",
+    "sortBy": "Sort By",
+    "filterButton": "Filters",
+    "sortFeatured": "Featured",
+    "sortPriceAsc": "Price: Low to High",
+    "sortPriceDesc": "Price: High to Low",
+    "sortNameAsc": "Name: A to Z",
+    "sortNameDesc": "Name: Z to A",
+    "priceRange": "Price Range",
+    "minPrice": "Min Price",
+    "maxPrice": "Max Price",
+    "apply": "Apply",
+    "clearFilters": "Clear Filters",
+    "brandHeading": "Brands"
   },
   "AboutUs": {
     "tag": "ABOUT THANA GLASS GROUP",

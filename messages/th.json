@@ -116,7 +116,20 @@
     "downloadCatalog": "ดาวน์โหลดแคตตาล็อก (PDF)",
     "backToProducts": "กลับไปหน้าสินค้า",
     "requestQuote": "ขอใบเสนอราคา",
-    "notFound": "ไม่พบสินค้าที่ต้องการ"
+    "notFound": "ไม่พบสินค้าที่ต้องการ",
+    "sortBy": "เรียงตาม",
+    "filterButton": "ตัวกรอง",
+    "sortFeatured": "แนะนำ",
+    "sortPriceAsc": "ราคา: ต่ำ - สูง",
+    "sortPriceDesc": "ราคา: สูง - ต่ำ",
+    "sortNameAsc": "ชื่อ: ก - ฮ",
+    "sortNameDesc": "ชื่อ: ฮ - ก",
+    "priceRange": "ช่วงราคา",
+    "minPrice": "ราคาต่ำสุด",
+    "maxPrice": "ราคาสูงสุด",
+    "apply": "ตกลง",
+    "clearFilters": "ล้างตัวกรอง",
+    "brandHeading": "แบรนด์"
   },
   "AboutUs": {
     "tag": "ABOUT THANA GLASS GROUP",
