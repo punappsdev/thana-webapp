@@ -277,7 +277,7 @@ export function ProductSortAndFilter({
       </Popover>
 
       <Select value={activeSort} onValueChange={handleSortChange}>
-        <SelectTrigger className="h-8 !font-label-sm !font-semibold !px-3 border-[#c4e2f5] hover:bg-[#f3f3fc] bg-white rounded-md text-[#434653] cursor-pointer flex items-center gap-1.5">
+        <SelectTrigger className="w-fit h-8 !font-label-sm !font-semibold !px-3 border-[#c4e2f5] hover:bg-[#f3f3fc] bg-white rounded-md text-[#434653] cursor-pointer flex items-center gap-1.5">
           <SelectValue placeholder={labels.sortBy} />
         </SelectTrigger>
         <SelectContent align="end" className="bg-white border border-[#c4e2f5] rounded-lg shadow-md">
