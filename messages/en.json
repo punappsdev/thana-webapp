@@ -299,7 +299,12 @@
     "title": "Project Showcase",
     "description": "A collection of our glass and aluminum installation works, by category.",
     "all": "All",
-    "noWorks": "No works found in this category."
+    "noWorks": "No works found in this category.",
+    "viewGallery": "View project photos",
+    "photoCount": "{count} photos",
+    "prevImage": "Previous image",
+    "nextImage": "Next image",
+    "close": "Close"
   },
   "Articles": {
     "eyebrow": "Knowledge Base",

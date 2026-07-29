@@ -27,6 +27,12 @@ export default async function AdminContentPreview({ params, searchParams }: { pa
       <h2 className="font-display-md font-semibold text-primary">{title || "ยังไม่มีชื่อในภาษานี้"}</h2>
       {excerpt ? <p className="mt-5 border-l-4 border-primary pl-4 font-body-lg text-muted-foreground">{excerpt}</p> : null}
       {config.bodyKind === "rich" ? <div className="mt-8 space-y-4 font-body-md [&_h2]:font-headline-md [&_h3]:font-headline-sm [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(body) }} /> : <p className="mt-8 whitespace-pre-line font-body-md text-muted-foreground">{body || "ยังไม่มีคำอธิบายในภาษานี้"}</p>}
+      {record.images.length ? <div className="mt-10 border-t pt-6">
+        <h3 className="font-headline-sm">แกลเลอรี ({record.images.length} รูป)</h3>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {record.images.map((image, index) => <div key={`${image.url}-${index}`} className="relative aspect-video overflow-hidden rounded-md border bg-muted"><Image src={image.url} alt={(locale === "en" ? image.altEn : image.altTh) || title} fill className="object-cover" sizes="240px" /></div>)}
+        </div>
+      </div> : null}
     </CardContent></Card>
   </div>;
 }

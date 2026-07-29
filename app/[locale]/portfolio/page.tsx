@@ -4,7 +4,7 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
+import { PortfolioGrid, type PortfolioItem } from "@/components/portfolio/portfolio-grid";
 import {
   Pagination,
   PaginationContent,
@@ -48,13 +48,35 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
   // Fetch all works matching condition (slice in memory)
   const allWorks = await prisma.work.findMany({
     where,
-    include: { category: true },
+    include: { category: true, images: { orderBy: { sortOrder: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
 
   const totalItems = allWorks.length;
   const totalPages = Math.ceil(totalItems / limit);
-  const works = allWorks.slice(skip, skip + limit);
+
+  // The cover doubles as the first slide, so viewers always open on the image
+  // they just clicked — same treatment as the product page gallery.
+  const works: PortfolioItem[] = allWorks.slice(skip, skip + limit).map((work) => {
+    const title = locale === "en" ? work.titleEn : work.titleTh;
+    const ordered = [
+      ...(work.coverImage ? [{ url: work.coverImage, alt: title }] : []),
+      ...work.images.map((image) => ({ url: image.url, alt: (locale === "en" ? image.altEn : image.altTh) || title })),
+    ];
+    // An admin may also add the cover to the gallery; show it once.
+    const images = ordered.filter((image, index) => ordered.findIndex((other) => other.url === image.url) === index);
+
+    return {
+      id: work.id,
+      title,
+      description: locale === "en" ? work.descriptionEn : work.descriptionTh,
+      categoryName: work.category ? (locale === "en" ? work.category.nameEn : work.category.nameTh) : null,
+      // Falls back to the first gallery photo so a work without a cover still
+      // shows something on the card instead of a text-only tile.
+      coverImage: images[0]?.url ?? null,
+      images,
+    };
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -113,64 +135,7 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {works.map((work) => {
-                  const title = locale === "en" ? work.titleEn : work.titleTh;
-                  const description = locale === "en" ? work.descriptionEn : work.descriptionTh;
-                  const catName = work.category
-                    ? locale === "en"
-                      ? work.category.nameEn
-                      : work.category.nameTh
-                    : null;
-
-                  return (
-                    <article
-                      key={work.id}
-                      className="group relative flex flex-col bg-white rounded-2xl border border-[#c4e2f5] shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                    >
-                      {/* Top accent bar */}
-                      <span className="absolute top-0 left-0 h-1 w-0 bg-linear-to-r from-[#078ee4] to-primary group-hover:w-full transition-all duration-500" />
-
-                      {/* Cover Image */}
-                      {work.coverImage && (
-                        <div className="relative aspect-video w-full overflow-hidden bg-[#e2e2eb]">
-                          <Image
-                            src={work.coverImage}
-                            alt={title}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        </div>
-                      )}
-
-                      {/* Content Area */}
-                      <div className="flex-1 p-6 flex flex-col justify-between">
-                        <div className="space-y-3">
-                          {/* Category Badge */}
-                          {catName && (
-                            <span className="inline-block bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-label-sm font-medium">
-                              {catName}
-                            </span>
-                          )}
-
-                          {/* Title */}
-                          <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
-                            {title}
-                          </h2>
-
-                          {/* Description */}
-                          {description && (
-                            <p className="text-[#434653] font-body-sm line-clamp-3">
-                              {description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+              <PortfolioGrid works={works} />
 
               {/* Pagination Controls */}
               {totalPages > 1 && (

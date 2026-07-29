@@ -8,6 +8,7 @@ import { ChevronDown, ChevronRight, ExternalLink, Eye, Save } from "lucide-react
 import { toast } from "sonner";
 import { saveContentAction } from "@/app/admin/(panel)/content/actions";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
+import { GalleryField, type GalleryRow } from "@/components/admin/gallery-field";
 import { MediaField } from "@/components/admin/media-field";
 import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
@@ -19,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type { ContentConfig } from "@/lib/admin/content-config";
+import { WORK_GALLERY_MAX, type ContentConfig } from "@/lib/admin/content-config";
 import type { ContentRecord } from "@/lib/admin/content-data";
 import { cn } from "@/lib/utils";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
@@ -35,6 +36,9 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
   const [titleEn, setTitleEn] = useState(record?.titleEn || "");
   const [slug, setSlug] = useState(record?.slug || "");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [images, setImages] = useState<GalleryRow[]>(() =>
+    (record?.images || []).map((image, index) => ({ _key: `image-${index}-${image.url}`, url: image.url, altTh: image.altTh, altEn: image.altEn })),
+  );
 
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => { if (dirtyRef.current) event.preventDefault(); };
@@ -74,6 +78,7 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
       <input type="hidden" name="resource" value={config.resource} />
       <input type="hidden" name="id" value={record?.id || ""} />
       <input type="hidden" name="updatedAt" value={record?.updatedAt.toISOString() || ""} />
+      {config.hasGallery ? <input type="hidden" name="imagesJson" value={JSON.stringify(images.filter((image) => image.url))} readOnly /> : null}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="flex items-center gap-2.5">
@@ -102,24 +107,43 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
 
       {state.conflict ? <p className="rounded-md border border-destructive bg-error-container p-3 font-body-sm text-on-error-container">{state.message}</p> : null}
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-        <Card>
-          <CardHeader><CardTitle className="font-headline-sm">เนื้อหาสองภาษา</CardTitle><CardDescription className="font-body-sm">สลับแท็บเพื่อกรอกภาษาไทยและอังกฤษ</CardDescription></CardHeader>
-          <CardContent>
-            <Tabs defaultValue="th">
-              <TabsList><TabsTrigger value="th" className="font-label-md">ไทย</TabsTrigger><TabsTrigger value="en" className="font-label-md">English</TabsTrigger></TabsList>
-              <FormTabPanel value="th" className="mt-5 space-y-5">
-                <div className="space-y-2"><Label htmlFor="titleTh" className="font-label-md">ชื่อภาษาไทย</Label><Input id="titleTh" name="titleTh" defaultValue={record?.titleTh} className="font-body-sm" />{fieldError("titleTh") ? <p className="font-body-sm text-destructive">{fieldError("titleTh")}</p> : null}</div>
-                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptTh" className="font-label-md">คำโปรยภาษาไทย</Label><Textarea id="excerptTh" name="excerptTh" defaultValue={record?.excerptTh} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">ข้อความสั้น ๆ สรุปเนื้อหา แสดงในหน้ารายการและการ์ดตัวอย่าง</p></div> : null}
-                <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "เนื้อหาภาษาไทย" : "คำอธิบายภาษาไทย"}</Label>{bodyField("Th")}{fieldError("contentTh") ? <p className="font-body-sm text-destructive">{fieldError("contentTh")}</p> : null}</div>
-              </FormTabPanel>
-              <FormTabPanel value="en" className="mt-5 space-y-5">
-                <div className="space-y-2"><Label htmlFor="titleEn" className="font-label-md">English title</Label><Input id="titleEn" name="titleEn" value={titleEn} onChange={(event) => { setTitleEn(event.target.value); markDirty(); }} onBlur={() => { if (!slug) setSlug(slugifyAdminTitle(titleEn)); }} className="font-body-sm" />{fieldError("titleEn") ? <p className="font-body-sm text-destructive">{fieldError("titleEn")}</p> : null}</div>
-                {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptEn" className="font-label-md">English excerpt</Label><Textarea id="excerptEn" name="excerptEn" defaultValue={record?.excerptEn} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">คำโปรยฉบับภาษาอังกฤษ แสดงในหน้าเวอร์ชันอังกฤษ</p></div> : null}
-                <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "English content" : "English description"}</Label>{bodyField("En")}{fieldError("contentEn") ? <p className="font-body-sm text-destructive">{fieldError("contentEn")}</p> : null}</div>
-              </FormTabPanel>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle className="font-headline-sm">เนื้อหาสองภาษา</CardTitle><CardDescription className="font-body-sm">สลับแท็บเพื่อกรอกภาษาไทยและอังกฤษ</CardDescription></CardHeader>
+            <CardContent>
+              <Tabs defaultValue="th">
+                <TabsList><TabsTrigger value="th" className="font-label-md">ไทย</TabsTrigger><TabsTrigger value="en" className="font-label-md">English</TabsTrigger></TabsList>
+                <FormTabPanel value="th" className="mt-5 space-y-5">
+                  <div className="space-y-2"><Label htmlFor="titleTh" className="font-label-md">ชื่อภาษาไทย</Label><Input id="titleTh" name="titleTh" defaultValue={record?.titleTh} className="font-body-sm" />{fieldError("titleTh") ? <p className="font-body-sm text-destructive">{fieldError("titleTh")}</p> : null}</div>
+                  {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptTh" className="font-label-md">คำโปรยภาษาไทย</Label><Textarea id="excerptTh" name="excerptTh" defaultValue={record?.excerptTh} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">ข้อความสั้น ๆ สรุปเนื้อหา แสดงในหน้ารายการและการ์ดตัวอย่าง</p></div> : null}
+                  <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "เนื้อหาภาษาไทย" : "คำอธิบายภาษาไทย"}</Label>{bodyField("Th")}{fieldError("contentTh") ? <p className="font-body-sm text-destructive">{fieldError("contentTh")}</p> : null}</div>
+                </FormTabPanel>
+                <FormTabPanel value="en" className="mt-5 space-y-5">
+                  <div className="space-y-2"><Label htmlFor="titleEn" className="font-label-md">English title</Label><Input id="titleEn" name="titleEn" value={titleEn} onChange={(event) => { setTitleEn(event.target.value); markDirty(); }} onBlur={() => { if (!slug) setSlug(slugifyAdminTitle(titleEn)); }} className="font-body-sm" />{fieldError("titleEn") ? <p className="font-body-sm text-destructive">{fieldError("titleEn")}</p> : null}</div>
+                  {config.hasExcerpt ? <div className="space-y-2"><Label htmlFor="excerptEn" className="font-label-md">English excerpt</Label><Textarea id="excerptEn" name="excerptEn" defaultValue={record?.excerptEn} rows={3} className="font-body-sm" /><p className="font-body-sm text-muted-foreground">คำโปรยฉบับภาษาอังกฤษ แสดงในหน้าเวอร์ชันอังกฤษ</p></div> : null}
+                  <div className="space-y-2"><Label className="font-label-md">{config.bodyKind === "rich" ? "English content" : "English description"}</Label>{bodyField("En")}{fieldError("contentEn") ? <p className="font-body-sm text-destructive">{fieldError("contentEn")}</p> : null}</div>
+                </FormTabPanel>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {config.hasGallery ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline-sm">แกลเลอรีรูปภาพ</CardTitle>
+                <CardDescription className="font-body-sm">อัปโหลดได้หลายรูปต่อหนึ่งผลงาน แล้วจัดลำดับด้วยปุ่มเลื่อนซ้าย/ขวา</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GalleryField
+                  value={images}
+                  onChange={(rows) => { setImages(rows); markDirty(); }}
+                  max={WORK_GALLERY_MAX}
+                  description={recommendedSize}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
 
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">

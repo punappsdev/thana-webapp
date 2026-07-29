@@ -173,7 +173,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   {product.category && (
-                    <span className="inline-block bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-label-sm font-medium">
+                    <span className="inline-block bg-[#c4e2f5] text-[#002c7d] px-2.5 py-1 rounded-md font-label-sm font-medium">
                       {pick(product.category, "name", locale)}
                     </span>
                   )}

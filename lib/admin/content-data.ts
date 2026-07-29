@@ -13,6 +13,13 @@ export type ContentListItem = {
   updatedAt: Date;
 };
 
+export type ContentImage = {
+  url: string;
+  altTh: string;
+  altEn: string;
+  sortOrder: number;
+};
+
 export type ContentRecord = ContentListItem & {
   bodyTh: string;
   bodyEn: string;
@@ -21,6 +28,8 @@ export type ContentRecord = ContentListItem & {
   categoryId: number | null;
   startDate: Date | null;
   endDate: Date | null;
+  /** Gallery rows — only resources with `hasGallery` ever return a non-empty list. */
+  images: ContentImage[];
 };
 
 export async function getContentList(resource: ContentResource, input: { query?: string; status?: string; page?: number }) {
@@ -57,20 +66,22 @@ export async function getContentRecord(resource: ContentResource, id: number): P
   const prisma = getPrisma();
   switch (resource) {
     case "works": {
-      const row = await prisma.work.findUnique({ where: { id } });
-      return row ? { ...row, bodyTh: row.descriptionTh || "", bodyEn: row.descriptionEn || "", excerptTh: "", excerptEn: "", categoryId: row.categoryId, startDate: null, endDate: null } : null;
+      const row = await prisma.work.findUnique({ where: { id }, include: { images: { orderBy: { sortOrder: "asc" } } } });
+      if (!row) return null;
+      const { images, ...work } = row;
+      return { ...work, bodyTh: row.descriptionTh || "", bodyEn: row.descriptionEn || "", excerptTh: "", excerptEn: "", categoryId: row.categoryId, startDate: null, endDate: null, images: images.map((image) => ({ url: image.url, altTh: image.altTh || "", altEn: image.altEn || "", sortOrder: image.sortOrder })) };
     }
     case "articles": {
       const row = await prisma.article.findUnique({ where: { id } });
-      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: row.articleCategoryId, startDate: null, endDate: null } : null;
+      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: row.articleCategoryId, startDate: null, endDate: null, images: [] } : null;
     }
     case "news": {
       const row = await prisma.news.findUnique({ where: { id } });
-      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: null, startDate: null, endDate: null } : null;
+      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: null, startDate: null, endDate: null, images: [] } : null;
     }
     case "promotions": {
       const row = await prisma.promotion.findUnique({ where: { id } });
-      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: null, startDate: row.startDate, endDate: row.endDate } : null;
+      return row ? { ...row, bodyTh: row.contentTh, bodyEn: row.contentEn, excerptTh: row.excerptTh || "", excerptEn: row.excerptEn || "", categoryId: null, startDate: row.startDate, endDate: row.endDate, images: [] } : null;
     }
   }
 }

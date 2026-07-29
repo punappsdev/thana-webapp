@@ -152,13 +152,29 @@ model Work {
 
   // Relations — shares the Category table with Product
   categoryId Int?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images     WorkImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([categoryId])
+}
+
+/// รูปเพิ่มเติมของผลงาน แสดงเป็นแกลเลอรีให้ผู้ชมเลื่อนดูในหน้า /portfolio
+model WorkImage {
+  id        Int     @id @default(autoincrement())
+  url       String
+  altTh     String?
+  altEn     String?
+  sortOrder Int     @default(0)
+
+  // Relations
+  workId Int
+  work   Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@index([workId])
 }
 
 model News {

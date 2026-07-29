@@ -175,7 +175,7 @@ export default async function ArticlesPage({
                           {/* Meta Tags */}
                           <div className="flex items-center gap-3 font-label-sm text-[#747684]">
                             {catName && (
-                              <span className="bg-[#c4e2f5] text-[#002c7d] px-2.5 py-0.5 rounded-md font-medium">
+                              <span className="bg-[#c4e2f5] text-[#002c7d] px-2.5 py-1 rounded-md font-medium">
                                 {catName}
                               </span>
                             )}
