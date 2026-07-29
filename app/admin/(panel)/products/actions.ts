@@ -8,6 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
+import { reindexProducts } from "@/lib/search-index";
 import {
   isStaleVersion,
   slugifyAdminTitle,
@@ -315,6 +316,10 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
 
       return row;
     });
+
+    // The search text is derived from rows the transaction just rewrote —
+    // attributes and variants included — so it can only be rebuilt after commit.
+    await reindexProducts([product.id]);
 
     await recordActivity({
       adminId: admin.id,

@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
+  Search,
+  X,
 } from "lucide-react";
 import {
   Pagination,
@@ -22,11 +24,14 @@ import {
 import { CategorySidebar, MobileCategoryChips } from "@/components/products/category-sidebar";
 import { ProductCard } from "@/components/products/product-card";
 import { ProductSortAndFilter } from "@/components/products/product-filters";
+import { findCatalogPage } from "@/lib/product-search";
+import { searchTextWhere } from "@/lib/search";
 import type { Prisma } from "../../../generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{
+    q?: string;
     category?: string;
     sub?: string;
     page?: string;
@@ -42,6 +47,7 @@ const PAGE_SIZE = 9;
 export default async function ProductsPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const {
+    q,
     category,
     sub,
     page = "1",
@@ -51,6 +57,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     maxPrice,
   } = await searchParams;
   const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+  const searchQuery = (q ?? "").trim();
 
   const t = await getTranslations("Products");
   const tNews = await getTranslations("News");
@@ -87,6 +94,9 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   const where: Prisma.ProductWhereInput = {
     published: true,
+    // Spreads to nothing when there is no query, so search composes with every
+    // other filter instead of replacing them.
+    ...(searchTextWhere(searchQuery) ?? {}),
     ...(activeCategory ? { categoryId: activeCategory.id } : {}),
     ...(activeSub ? { subCategoryId: activeSub.id } : {}),
     ...(activeBrands.length > 0
@@ -106,68 +116,40 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       : {}),
   };
 
-  const [totalItems, catalogTotal] = await Promise.all([
-    prisma.product.count({ where }),
+  // Counts, ordering and paging all live in findCatalogPage — with a search term
+  // in play the page is assembled from two relevance buckets, which the grid
+  // below does not need to know about.
+  const [{ products, totalItems, totalPages, currentPage }, catalogTotal] = await Promise.all([
+    findCatalogPage({
+      where,
+      query: searchQuery,
+      sort,
+      locale,
+      page: pageNumber,
+      pageSize: PAGE_SIZE,
+    }),
     prisma.product.count({ where: { published: true } }),
   ]);
 
-  // Clamp before querying, so an out-of-range ?page= lands on the last real page
-  // instead of an empty grid that contradicts the result count beside it
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const currentPage = Math.min(pageNumber, totalPages);
-
-  let orderBy: Prisma.ProductOrderByWithRelationInput[] = [];
-  if (sort === "price-asc") {
-    orderBy = [{ basePrice: "asc" }, { sortOrder: "asc" }];
-  } else if (sort === "price-desc") {
-    orderBy = [{ basePrice: "desc" }, { sortOrder: "asc" }];
-  } else if (sort === "name-asc") {
-    orderBy = [{ [locale === "th" ? "nameTh" : "nameEn"]: "asc" }];
-  } else if (sort === "name-desc") {
-    orderBy = [{ [locale === "th" ? "nameTh" : "nameEn"]: "desc" }];
-  } else {
-    orderBy = [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }];
-  }
-
-  // Count and page at the database level rather than slicing in memory
-  const products = await prisma.product.findMany({
-    where,
-    include: {
-      category: true,
-      subCategory: true,
-      brand: true,
-      pricingUnit: true,
-      variants: {
-        include: {
-          attributeValues: {
-            include: {
-              attributeValue: {
-                include: {
-                  attribute: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy,
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-  });
-
-  const pageHref = (p: number) => {
+  /** Rebuilds the current URL with one value replaced — used by paging and the search chip. */
+  const buildHref = (overrides: Record<string, string | null> = {}) => {
     const qs = new URLSearchParams();
+    if (searchQuery) qs.set("q", searchQuery);
     if (activeCategory) qs.set("category", activeCategory.slug);
     if (activeSub) qs.set("sub", activeSub.slug);
     if (sort) qs.set("sort", sort);
     if (brand) qs.set("brand", brand);
     if (minPrice) qs.set("minPrice", minPrice);
     if (maxPrice) qs.set("maxPrice", maxPrice);
-    if (p > 1) qs.set("page", String(p));
-    const q = qs.toString();
-    return q ? `/products?${q}` : "/products";
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value === null) qs.delete(key);
+      else qs.set(key, value);
+    }
+    const query = qs.toString();
+    return query ? `/products?${query}` : "/products";
   };
+
+  const pageHref = (p: number) => buildHref({ page: p > 1 ? String(p) : null });
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -191,6 +173,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
           }))}
           activeCategory={activeCategory?.slug ?? null}
           activeSub={activeSub?.slug ?? null}
+          query={searchQuery || undefined}
           totalCount={catalogTotal}
           labels={{
             heading: t("categoriesHeading"),
@@ -215,6 +198,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
               }))}
               activeCategory={activeCategory?.slug ?? null}
               activeSub={activeSub?.slug ?? null}
+              query={searchQuery || undefined}
               totalCount={catalogTotal}
               labels={{
                 heading: t("categoriesHeading"),
@@ -225,17 +209,35 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
             <section>
               {/* Result bar */}
-              <div className="flex items-center justify-between gap-3 pb-5 mb-8 border-b border-[#ededf7]">
-                <p className="font-label-md text-[#434653]">
-                  {t("resultCount", { count: totalItems })}
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-8 border-b border-[#ededf7]">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="font-label-md text-[#434653]">
+                    {t("resultCount", { count: totalItems })}
+                  </p>
+                  {searchQuery && (
+                    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#c4e2f5] bg-[#f3f3fc] py-1 pl-2.5 pr-1 font-label-sm text-[#434653]">
+                      <Search className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="truncate font-semibold">{searchQuery}</span>
+                      <Link
+                        href={buildHref({ q: null, page: null })}
+                        aria-label={t("clearSearch")}
+                        title={t("clearSearch")}
+                        className="ml-0.5 rounded-full p-1 text-[#747684] transition-colors hover:bg-white hover:text-error"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    </span>
+                  )}
+                </div>
                 <ProductSortAndFilter
                   brands={brands.map((b) => ({ slug: b.slug, name: b.name }))}
                   currentParams={{ sort, brand, minPrice, maxPrice }}
                   locale={locale}
+                  hasQuery={!!searchQuery}
                   labels={{
                     sortBy: t("sortBy"),
                     filterButton: t("filterButton"),
+                    sortRelevance: t("sortRelevance"),
                     sortFeatured: t("sortFeatured"),
                     sortPriceAsc: t("sortPriceAsc"),
                     sortPriceDesc: t("sortPriceDesc"),
@@ -260,16 +262,25 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                   />
                   <div className="relative">
                     <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f3fc] border border-[#c4e2f5]">
-                      <Package className="h-8 w-8 text-[#747684]" aria-hidden="true" />
+                      {searchQuery ? (
+                        <Search className="h-8 w-8 text-[#747684]" aria-hidden="true" />
+                      ) : (
+                        <Package className="h-8 w-8 text-[#747684]" aria-hidden="true" />
+                      )}
                     </div>
                     <p className="mt-5 font-headline-sm font-semibold text-on-surface">
-                      {t("noProducts")}
+                      {searchQuery
+                        ? t("noResultsFor", { query: searchQuery })
+                        : t("noProducts")}
                     </p>
+                    {searchQuery && (
+                      <p className="mt-2 font-body-sm text-[#747684]">{t("noResultsHint")}</p>
+                    )}
                     <Link
-                      href="/products"
+                      href={searchQuery ? buildHref({ q: null, page: null }) : "/products"}
                       className="mt-6 inline-flex items-center gap-1.5 rounded-md px-5 py-2.5 font-label-md font-semibold text-white bg-linear-to-b from-[#078ee4] to-primary-container shadow-blue-sm transition-all hover:brightness-110"
                     >
-                      {t("all")}
+                      {searchQuery ? t("clearSearch") : t("all")}
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </Link>
                   </div>

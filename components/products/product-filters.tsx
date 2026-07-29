@@ -30,9 +30,12 @@ interface ProductSortAndFilterProps {
     maxPrice?: string;
   };
   locale: string;
+  /** A search term is active, so relevance becomes an option — and the default. */
+  hasQuery?: boolean;
   labels: {
     sortBy: string;
     filterButton: string;
+    sortRelevance: string;
     sortFeatured: string;
     sortPriceAsc: string;
     sortPriceDesc: string;
@@ -51,6 +54,7 @@ export function ProductSortAndFilter({
   brands,
   currentParams,
   locale,
+  hasQuery = false,
   labels,
 }: ProductSortAndFilterProps) {
   const router = useRouter();
@@ -58,8 +62,10 @@ export function ProductSortAndFilter({
 
   const [isOpen, setIsOpen] = React.useState(false);
 
-  // Parse initial state from props
-  const activeSort = currentParams.sort || "featured";
+  // Parse initial state from props. While searching, an absent `sort` means
+  // relevance — the server orders by match quality unless told otherwise.
+  const defaultSort = hasQuery ? "relevance" : "featured";
+  const activeSort = currentParams.sort || defaultSort;
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>(
     typeof currentParams.brand === "string" ? currentParams.brand.split(",") : []
   );
@@ -75,7 +81,7 @@ export function ProductSortAndFilter({
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(window.location.search);
-    if (newSort && newSort !== "featured") {
+    if (newSort && newSort !== defaultSort) {
       params.set("sort", newSort);
     } else {
       params.delete("sort");
@@ -275,6 +281,11 @@ export function ProductSortAndFilter({
           <SelectValue placeholder={labels.sortBy} />
         </SelectTrigger>
         <SelectContent align="end" className="bg-white border border-[#c4e2f5] rounded-lg shadow-md">
+          {hasQuery && (
+            <SelectItem value="relevance" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
+              {labels.sortRelevance}
+            </SelectItem>
+          )}
           <SelectItem value="featured" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
             {labels.sortFeatured}
           </SelectItem>

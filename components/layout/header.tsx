@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, Link } from "../../i18n/routing";
 import { useCart } from "@/components/cart/use-cart";
+import { ProductSearchBox } from "@/components/search/product-search-box";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -86,21 +87,14 @@ export function Header() {
           {/* Right Actions */}
           <div className="flex items-center gap-3 xl:gap-4">
             {/* Search Input (desktop) */}
-            <div className="relative hidden lg:block">
-              <input
-                id="header-search-input"
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                className={`bg-muted border border-border rounded-full pl-4 pr-10 py-2 font-label-md xl:font-body-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300 ${
-                  searchFocused
-                    ? "w-64 lg:w-64 xl:w-80"
-                    : "w-24 lg:w-24 xl:w-52"
-                }`}
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 xl:h-6 xl:w-6 text-primary" />
-            </div>
+            <ProductSearchBox
+              variant="desktop"
+              className="hidden lg:block"
+              inputClassName={
+                searchFocused ? "w-64 lg:w-64 xl:w-80" : "w-24 lg:w-24 xl:w-52"
+              }
+              onFocusChange={setSearchFocused}
+            />
 
             {/* Quotation Cart — badge is absolute so it never widens the
                 right-actions cluster, which runs tight in EN at 1024–1280px */}
@@ -158,15 +152,12 @@ export function Header() {
           }`}
       >
         {/* Search (mobile) */}
-        <div className="relative w-full">
-          <input
-            id="header-search-mobile"
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            className="w-full bg-muted border border-border rounded-full px-4 py-2 font-body-sm text-foreground"
-          />
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-        </div>
+        <ProductSearchBox
+          variant="mobile"
+          className="w-full"
+          inputClassName="w-full font-body-sm"
+          onNavigate={() => setMobileMenuOpen(false)}
+        />
         <nav className="flex flex-col gap-3">
           {navLinks.map((link, idx) => (
             <Link

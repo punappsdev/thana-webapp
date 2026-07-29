@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "admin:create": "tsx scripts/create-admin.ts",
-    "media:import": "tsx scripts/import-media.ts"
+    "media:import": "tsx scripts/import-media.ts",
+    "search:reindex": "tsx scripts/reindex-search.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.8.0",

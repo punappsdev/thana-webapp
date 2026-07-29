@@ -21,7 +21,22 @@ interface CategorySidebarProps {
   activeCategory: string | null;
   activeSub: string | null;
   totalCount: number;
+  /** Active search term, carried into every link so filtering never drops it. */
+  query?: string;
   labels: { heading: string; all: string; allSubCategories: string };
+}
+
+/**
+ * Catalog link that keeps the active search term. Without this, narrowing a set
+ * of search results by category would silently drop the search itself.
+ */
+function catalogHref(query: string | undefined, category?: string, sub?: string): string {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (category) params.set("category", category);
+  if (category && sub) params.set("sub", sub);
+  const search = params.toString();
+  return search ? `/products?${search}` : "/products";
 }
 
 // Shared pill style — mirrors `CategoryFilter` so the sidebar reads as the
@@ -58,6 +73,7 @@ export function MobileCategoryChips({
   categories,
   activeCategory,
   activeSub,
+  query,
   labels,
 }: CategorySidebarProps) {
   const activeParent = categories.find((c) => c.slug === activeCategory);
@@ -109,7 +125,7 @@ export function MobileCategoryChips({
     <div className="md:hidden sticky top-[72px] z-30 bg-background/95 backdrop-blur-md border-b border-[#c4e2f5] px-4 pt-3 pb-3">
       <div ref={mainScrollRef} className={scrollRowClass} aria-label={labels.heading} role="tablist">
         <Link
-          href="/products"
+          href={catalogHref(query)}
           aria-current={!activeCategory ? "page" : undefined}
           className={chipClass(!activeCategory)}
           ref={!activeCategory ? activeMainRef : undefined}
@@ -121,7 +137,7 @@ export function MobileCategoryChips({
           return (
             <Link
               key={c.slug}
-              href={`/products?category=${c.slug}`}
+              href={catalogHref(query, c.slug)}
               aria-current={isActive ? "page" : undefined}
               className={chipClass(isActive)}
               ref={isActive ? activeMainRef : undefined}
@@ -140,7 +156,7 @@ export function MobileCategoryChips({
           role="tablist"
         >
           <Link
-            href={`/products?category=${activeParent!.slug}`}
+            href={catalogHref(query, activeParent!.slug)}
             aria-current={!activeSub ? "page" : undefined}
             className={chipClass(!activeSub)}
             ref={!activeSub ? activeSubRef : undefined}
@@ -152,7 +168,7 @@ export function MobileCategoryChips({
             return (
               <Link
                 key={s.slug}
-                href={`/products?category=${activeParent!.slug}&sub=${s.slug}`}
+                href={catalogHref(query, activeParent!.slug, s.slug)}
                 aria-current={isActive ? "page" : undefined}
                 className={chipClass(isActive)}
                 ref={isActive ? activeSubRef : undefined}
@@ -176,6 +192,7 @@ export function CategorySidebar({
   activeCategory,
   activeSub,
   totalCount,
+  query,
   labels,
 }: CategorySidebarProps) {
   return (
@@ -191,7 +208,7 @@ export function CategorySidebar({
         <ul className="space-y-0.5">
           <li>
             <Link
-              href="/products"
+              href={catalogHref(query)}
               aria-current={!activeCategory ? "page" : undefined}
               className={`${rowBase} ${!activeCategory ? rowActive : rowInactive}`}
             >
@@ -212,7 +229,7 @@ export function CategorySidebar({
             return (
               <li key={cat.slug}>
                 <Link
-                  href={`/products?category=${cat.slug}`}
+                  href={catalogHref(query, cat.slug)}
                   aria-current={isActive && !activeSub ? "page" : undefined}
                   className={`${rowBase} ${
                     isActive && !activeSub ? rowActive : rowInactive
@@ -237,7 +254,7 @@ export function CategorySidebar({
                       return (
                         <li key={sub.slug}>
                           <Link
-                            href={`/products?category=${cat.slug}&sub=${sub.slug}`}
+                            href={catalogHref(query, cat.slug, sub.slug)}
                             aria-current={subActive ? "page" : undefined}
                             className={`${rowBase} py-1.5 ${
                               subActive ? rowActive : rowInactive

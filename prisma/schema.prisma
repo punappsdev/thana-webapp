@@ -333,6 +333,11 @@ model Product {
   coverImage String?
   catalogPdf String?
 
+  /// ข้อความรวมสำหรับค้นหา (ชื่อ + SKU + แบรนด์ + หมวดหมู่ + คุณสมบัติ) ที่ normalize แล้ว
+  /// เขียนใหม่ทุกครั้งที่บันทึกสินค้าหรือแก้ข้อมูลแคตตาล็อกที่เกี่ยวข้อง
+  /// ดู lib/search.ts, lib/search-index.ts และ scripts/reindex-search.ts
+  searchText String? @db.Text
+
   basePrice Decimal? @db.Decimal(12, 2)
   currency  String   @default("THB")
 

@@ -1,6 +1,8 @@
 {
   "Header": {
     "searchPlaceholder": "Search products...",
+    "searchAriaLabel": "Search products",
+    "searchClear": "Clear search term",
     "nav": {
       "home": "Home",
       "products": "Products",
@@ -129,7 +131,20 @@
     "maxPrice": "Max Price",
     "apply": "Apply",
     "clearFilters": "Clear Filters",
-    "brandHeading": "Brands"
+    "brandHeading": "Brands",
+    "sortRelevance": "Best match",
+    "searchResultsFor": "Results for “{query}”",
+    "noResultsFor": "No products match “{query}”",
+    "noResultsHint": "Try a shorter term, or search by SKU, brand or category",
+    "clearSearch": "Clear search",
+    "searchGroupProducts": "Products",
+    "searchGroupCategories": "Categories",
+    "searchGroupBrands": "Brands",
+    "searchViewAll": "View all {count} results",
+    "searchRecent": "Recent searches",
+    "searchClearRecent": "Clear",
+    "searchEmpty": "No products found",
+    "searchLoading": "Searching..."
   },
   "AboutUs": {
     "tag": "ABOUT THANA GLASS GROUP",

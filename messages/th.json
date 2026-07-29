@@ -1,6 +1,8 @@
 {
   "Header": {
     "searchPlaceholder": "ค้นหาสินค้า...",
+    "searchAriaLabel": "ค้นหาสินค้า",
+    "searchClear": "ล้างคำค้นหา",
     "nav": {
       "home": "หน้าแรก",
       "products": "สินค้า",
@@ -129,7 +131,20 @@
     "maxPrice": "ราคาสูงสุด",
     "apply": "ตกลง",
     "clearFilters": "ล้างตัวกรอง",
-    "brandHeading": "แบรนด์"
+    "brandHeading": "แบรนด์",
+    "sortRelevance": "ตรงกับคำค้นหา",
+    "searchResultsFor": "ผลการค้นหา “{query}”",
+    "noResultsFor": "ไม่พบสินค้าที่ตรงกับ “{query}”",
+    "noResultsHint": "ลองใช้คำที่สั้นลง หรือค้นด้วยรหัสสินค้า ชื่อแบรนด์ หรือหมวดหมู่",
+    "clearSearch": "ล้างการค้นหา",
+    "searchGroupProducts": "สินค้า",
+    "searchGroupCategories": "หมวดหมู่",
+    "searchGroupBrands": "แบรนด์",
+    "searchViewAll": "ดูผลลัพธ์ทั้งหมด {count} รายการ",
+    "searchRecent": "ค้นหาล่าสุด",
+    "searchClearRecent": "ล้าง",
+    "searchEmpty": "ไม่พบสินค้าที่ค้นหา",
+    "searchLoading": "กำลังค้นหา..."
   },
   "AboutUs": {
     "tag": "ABOUT THANA GLASS GROUP",

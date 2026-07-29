@@ -8,7 +8,9 @@ import { isCatalogResource } from "@/lib/admin/catalog-config";
 import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { codeFromName, fallbackToken, isUniqueConstraintError } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
+import { reindexProductsWhere } from "@/lib/search-index";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
+import type { Prisma } from "@/generated/prisma/client";
 
 const schema = z.object({ resource: z.string(), id: z.coerce.number().int().positive().optional().or(z.literal("")), slug: z.string().trim().optional().default(""), code: z.string().trim().optional().default(""), name: z.string().trim().optional().default(""), nameTh: z.string().trim().optional().default(""), nameEn: z.string().trim().optional().default(""), descriptionTh: z.string().optional().default(""), descriptionEn: z.string().optional().default(""), coverImage: z.string().optional().default(""), logo: z.string().optional().default(""), websiteUrl: z.string().optional().default(""), unit: z.string().optional().default(""), inputType: z.enum(["SELECT", "COLOR", "NUMBER", "TEXT"]).optional().default("SELECT"), valueTh: z.string().optional().default(""), valueEn: z.string().optional().default(""), colorHex: z.string().optional().default(""), numericValue: z.string().optional().default(""), sortOrder: z.coerce.number().int().optional().default(0), categoryId: z.coerce.number().int().positive().optional().or(z.literal("")), attributeId: z.coerce.number().int().positive().optional().or(z.literal("")), published: z.string().optional() });
 
@@ -62,12 +64,30 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
       }
     }
     if (!saved) return { success: false, message: "ประเภทข้อมูลไม่ถูกต้อง" };
+    // Product.searchText carries copies of these names, so an edit has to refresh
+    // every product pointing at the record. A create has no products yet.
+    if (id) { const where = productsAffectedBy(d.resource, saved.id); if (where) await reindexProductsWhere(where); }
     await recordActivity({ adminId: admin.id, action: id ? "UPDATE" : "CREATE", entityType: d.resource, entityId: saved.id, label: d.nameTh || d.name || d.valueTh || d.code || d.slug });
     revalidatePath(`/admin/catalog/${d.resource}`); revalidatePath("/products"); revalidatePath("/en/products");
     const newMediaUrl = d.resource === "brands" ? d.logo : d.coverImage;
     if (oldMediaUrl && oldMediaUrl !== newMediaUrl) await deleteOrphanedMedia([oldMediaUrl]);
     return { success: true, message: "บันทึกข้อมูลสำเร็จ" };
   } catch (error) { return { success: false, message: error instanceof Error && error.message.startsWith("กรุณา") ? error.message : "บันทึกไม่สำเร็จ อาจมี Slug หรือรหัสซ้ำ" }; }
+}
+
+/** Which products embed a catalog record's name in their search text. */
+function productsAffectedBy(resource: string, id: number): Prisma.ProductWhereInput | null {
+  switch (resource) {
+    case "categories": return { categoryId: id };
+    case "subcategories": return { subCategoryId: id };
+    case "brands": return { brandId: id };
+    case "units": return { unitId: id };
+    case "pricing-units": return { pricingUnitId: id };
+    case "attributes": return { attributeLinks: { some: { attributeValue: { attributeId: id } } } };
+    case "attribute-values": return { attributeLinks: { some: { attributeValueId: id } } };
+    // Article categories never appear on a product.
+    default: return null;
+  }
 }
 
 export async function deleteCatalogAction(formData: FormData): Promise<void> {
