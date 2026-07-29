@@ -30,25 +30,7 @@
     "btnConsult": "Free Consultation"
   },
   "CategoryGrid": {
-    "title": "Our Product Categories",
-    "items": {
-      "aluminum": {
-        "title": "Aluminum Profiles",
-        "desc": "Various colors and standard sizes"
-      },
-      "glass": {
-        "title": "Safety Glass",
-        "desc": "Tempered and laminated TIS standards"
-      },
-      "ceiling": {
-        "title": "Ceilings",
-        "desc": "Comprehensive T-bar and smooth ceilings"
-      },
-      "hardware": {
-        "title": "Installation Hardware",
-        "desc": "Grade-A hardware and fittings"
-      }
-    }
+    "title": "Our Product Categories"
   },
   "ProductList": {
     "title": "Recommended Products",

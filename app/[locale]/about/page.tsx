@@ -1,6 +1,4 @@
-"use client";
-
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
@@ -13,8 +11,8 @@ interface Branch {
   desc: string;
 }
 
-export default function AboutPage() {
-  const t = useTranslations("AboutPage");
+export default async function AboutPage() {
+  const t = await getTranslations("AboutPage");
   const branches = t.raw("branches") as Branch[];
 
   const values = [

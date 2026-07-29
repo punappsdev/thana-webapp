@@ -24,7 +24,9 @@ export async function CategoryGrid({ locale }: CategoryGridProps) {
         <div className="w-24 h-1 bg-[#3ca6fe] mx-auto rounded-full" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      {/* auto-fit collapses the empty tracks, so the row stays full whether the
+          catalog has five categories or eight — no column count to keep in sync. */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 lg:justify-center lg:[grid-template-columns:repeat(auto-fit,minmax(180px,220px))]">
         {dbCategories.map((cat) => {
           const title = pick(cat as unknown as Record<string, unknown>, "name", locale);
           const desc = pick(cat as unknown as Record<string, unknown>, "description", locale);
