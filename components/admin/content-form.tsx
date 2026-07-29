@@ -59,6 +59,16 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
 
   const isPublished = record?.published ?? false;
 
+  const recommendedSize = config.resource === "works"
+    ? "แนะนำสัดส่วน 16:9 (เช่น 1280 x 720 หรือ 1920 x 1080 px)"
+    : config.resource === "articles"
+    ? "แนะนำสัดส่วน 16:9 (เช่น 1280 x 720 px)"
+    : config.resource === "news"
+    ? "แนะนำสัดส่วน 16:9 (เช่น 1280 x 720 px)"
+    : config.resource === "promotions"
+    ? "แนะนำสัดส่วน 16:9 (เช่น 1280 x 720 px)"
+    : "แนะนำสัดส่วน 16:9 แนวนอน (เช่น 1280 x 720 px)";
+
   return (
     <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="resource" value={config.resource} />
@@ -113,7 +123,7 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
 
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">
-            <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} />
+            <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} description={recommendedSize} />
             {config.categoryKind ? <div className="space-y-2"><Label className="font-label-md">หมวดหมู่</Label><Select name="categoryId" defaultValue={record?.categoryId ? String(record.categoryId) : "none"}><SelectTrigger className="font-body-sm"><SelectValue placeholder="ไม่ระบุหมวดหมู่" /></SelectTrigger><SelectContent><SelectItem value="none">ไม่ระบุหมวดหมู่</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.nameTh} / {category.nameEn}</SelectItem>)}</SelectContent></Select></div> : null}
             {config.hasPromotionDates ? <><div className="space-y-2"><Label htmlFor="startDate" className="font-label-md">วันเริ่มต้น</Label><Input id="startDate" name="startDate" type="datetime-local" defaultValue={formatDateTime(record?.startDate || null)} className="font-body-sm" /></div><div className="space-y-2"><Label htmlFor="endDate" className="font-label-md">วันสิ้นสุด</Label><Input id="endDate" name="endDate" type="datetime-local" defaultValue={formatDateTime(record?.endDate || null)} className="font-body-sm" /></div></> : null}
             {/* Slug is generated automatically; keep the input mounted so its value

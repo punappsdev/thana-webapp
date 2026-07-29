@@ -86,8 +86,35 @@ export function CatalogEditor({ resource, edit, categories, attributes, onSaved 
             </>
           ) : null}
 
-          {resource === "brands" ? <><div className="sm:col-span-2"><MediaField name="logo" label="โลโก้ (ถ้ามี)" accept="image" defaultValue={value("logo")} /></div>{field("websiteUrl", "เว็บไซต์ (ถ้ามี)", false, "url", undefined, "sm:col-span-2")}</> : null}
-          {["categories", "subcategories"].includes(resource) ? <div className="sm:col-span-2"><MediaField name="coverImage" label="รูปปก (ถ้ามี)" accept="image" defaultValue={value("coverImage")} /></div> : null}
+          {resource === "brands" ? (
+            <>
+              <div className="sm:col-span-2">
+                <MediaField
+                  name="logo"
+                  label="โลโก้ (ถ้ามี)"
+                  accept="image"
+                  defaultValue={value("logo")}
+                  description="แนะนำสัดส่วน 1:1 (เช่น 400 x 400 px) พื้นหลังโปร่งใส"
+                />
+              </div>
+              {field("websiteUrl", "เว็บไซต์ (ถ้ามี)", false, "url", undefined, "sm:col-span-2")}
+            </>
+          ) : null}
+          {["categories", "subcategories"].includes(resource) ? (
+            <div className="sm:col-span-2">
+              <MediaField
+                name="coverImage"
+                label="รูปปก (ถ้ามี)"
+                accept="image"
+                defaultValue={value("coverImage")}
+                description={
+                  resource === "categories"
+                    ? "แนะนำสัดส่วนแนวตั้ง 4:5 (เช่น 800 x 1000 px) หรือสี่เหลี่ยมจัตุรัส 1:1"
+                    : "แนะนำสัดส่วนสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 x 800 px) หรือสัดส่วนแนวตั้ง 4:5"
+                }
+              />
+            </div>
+          ) : null}
 
           {resource === "categories" ? (
             <>

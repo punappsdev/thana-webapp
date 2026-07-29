@@ -107,7 +107,17 @@ export function BannerForm({ type, record, promotions }: { type: BannerType; rec
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="font-headline-sm">การตั้งค่า</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="space-y-2">
-              <MediaField name="imageUrl" label="รูปแบนเนอร์ (พื้นหลัง)" accept="image" defaultValue={record?.imageUrl} />
+              <MediaField
+                name="imageUrl"
+                label="รูปแบนเนอร์ (พื้นหลัง)"
+                accept="image"
+                defaultValue={record?.imageUrl}
+                description={
+                  isPromotion
+                    ? "แนะนำสัดส่วน 16:9 แนวนอน (เช่น 1920 x 1080 หรือ 1280 x 720 px)"
+                    : "แนะนำสัดส่วน 16:9 ถึง 21:9 แนวนอน (เช่น 1920 x 700 หรือ 1920 x 800 px)"
+                }
+              />
               {fieldError("imageUrl") ? <p className="font-body-sm text-destructive">{fieldError("imageUrl")}</p> : null}
             </div>
 

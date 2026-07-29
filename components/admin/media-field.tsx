@@ -33,6 +33,7 @@ export function MediaField({
   onChange,
   compact = false,
   className,
+  description,
 }: {
   name?: string;
   label?: string;
@@ -42,6 +43,7 @@ export function MediaField({
   onChange?: (url: string) => void;
   compact?: boolean;
   className?: string;
+  description?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
@@ -116,33 +118,37 @@ export function MediaField({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {label ? <Label htmlFor={inputId} className="font-label-md">{label}</Label> : null}
+    <div className={cn("space-y-2 flex flex-col h-full", className)}>
+      {label ? (
+        <div className="space-y-1">
+          <Label htmlFor={inputId} className="font-label-md">{label}</Label>
+        </div>
+      ) : null}
       {hiddenInput}
       {filePicker}
       
       {!url ? (
-        <div className="space-y-2">
-          <div
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              const file = event.dataTransfer.files?.[0];
-              if (file) void upload(file);
-            }}
-            onClick={() => inputRef.current?.click()}
-            className={cn(
-              "flex flex-col items-center justify-center text-center gap-3 rounded-lg border border-dashed p-6 transition-all cursor-pointer select-none",
-              dragging
-                ? "border-primary bg-primary/5 shadow-blue-sm"
-                : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
-            )}
-          >
+        <div
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragging(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file) void upload(file);
+          }}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-between text-center gap-4 rounded-lg border border-dashed p-4 transition-all cursor-pointer select-none min-h-[140px]",
+            dragging
+              ? "border-primary bg-primary/5 shadow-blue-sm"
+              : "border-border bg-muted/10 hover:bg-muted/30 hover:border-input",
+          )}
+        >
+          <div className="flex flex-col items-center gap-2 my-auto">
             <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
               {pending ? (
                 <Loader2 className="size-5 animate-spin text-primary" />
@@ -157,13 +163,16 @@ export function MediaField({
               <p className="font-label-sm text-muted-foreground/80">{rules.hint}</p>
             </div>
           </div>
-          <div className="flex justify-center">
+          <div
+            className="w-full flex justify-center pt-2.5 border-t border-dashed border-border/50"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MediaLibraryPicker accept={accept} onSelect={setUrl} />
           </div>
         </div>
       ) : (
         <div
-          className="flex flex-col gap-3 rounded-lg border border-solid p-3 bg-card shadow-blue-sm"
+          className="flex-1 flex flex-col justify-between gap-3 rounded-lg border border-solid p-3 bg-card shadow-blue-sm"
         >
           {/* Line 1: Preview & Info */}
           <div className="flex items-center gap-3 min-w-0">
@@ -209,6 +218,10 @@ export function MediaField({
           </div>
         </div>
       )}
+
+      {description ? (
+        <p className="font-label-sm text-secondary font-medium mt-1">{description}</p>
+      ) : null}
     </div>
   );
 }

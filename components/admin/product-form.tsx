@@ -456,13 +456,25 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <MediaField name="coverImage" label="รูปปก" accept="image" defaultValue={record?.coverImage} />
-                <MediaField name="catalogPdf" label="Catalog PDF" accept="pdf" defaultValue={record?.catalogPdf} />
+                <MediaField
+                  name="coverImage"
+                  label="รูปปก"
+                  accept="image"
+                  defaultValue={record?.coverImage}
+                  description="แนะนำรูปทรงสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 x 800 px)"
+                />
+                <MediaField
+                  name="catalogPdf"
+                  label="Catalog PDF"
+                  accept="pdf"
+                  defaultValue={record?.catalogPdf}
+                  description="รองรับไฟล์เอกสาร PDF ขนาดไม่เกิน 25 MB"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-headline-sm">รูปเพิ่มเติม ({images.length}/4)</h3>
-                  <p className="font-body-sm text-muted-foreground">แสดงเป็นแกลเลอรีให้ลูกค้าคลิกดูภาพใหญ่ในหน้าสินค้า (สูงสุด 4 รูป)</p>
+                  <p className="font-body-sm text-muted-foreground">แสดงเป็นแกลเลอรีให้ลูกค้าคลิกดูภาพใหญ่ในหน้าสินค้า (สูงสุด 4 รูป - แนะนำสัดส่วน 4:3 เช่น 1000 x 750 px)</p>
                 </div>
                 <Button
                   type="button"
@@ -480,6 +492,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                     accept="image"
                     value={image.url}
                     onChange={(url) => setImages((current) => current.map((row, i) => (i === index ? { ...row, url } : row)))}
+                    description="แนะนำสัดส่วน 4:3 (เช่น 1000 x 750 px)"
                   />
                   <Input
                     value={image.altTh}
