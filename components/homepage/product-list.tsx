@@ -13,7 +13,19 @@ export async function ProductList({ locale }: { locale: string }) {
     include: {
       category: true,
       pricingUnit: true,
-      variants: { select: { price: true } },
+      variants: {
+        include: {
+          attributeValues: {
+            include: {
+              attributeValue: {
+                include: {
+                  attribute: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
     take: 8,
@@ -48,6 +60,8 @@ export async function ProductList({ locale }: { locale: string }) {
               product={product}
               locale={locale}
               priceOnRequestLabel={tProducts("priceOnRequest")}
+              skuLabel={tProducts("sku")}
+              optionsLabel={tProducts("options")}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
             />
           ))}

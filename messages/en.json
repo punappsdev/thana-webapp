@@ -101,6 +101,7 @@
     "from": "From",
     "priceOnRequest": "Request a price",
     "sku": "Product code",
+    "options": "Options",
     "brand": "Brand",
     "unit": "Unit",
     "pricingUnit": "Sold by",

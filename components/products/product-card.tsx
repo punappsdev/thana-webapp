@@ -12,7 +12,19 @@ import type { Prisma } from "../../generated/prisma/client";
 export type ProductCardProduct = Prisma.ProductGetPayload<{
   include: {
     pricingUnit: true;
-    variants: { select: { price: true } };
+    variants: {
+      include: {
+        attributeValues: {
+          include: {
+            attributeValue: {
+              include: {
+                attribute: true;
+              };
+            };
+          };
+        };
+      };
+    };
   };
 }>;
 
@@ -20,6 +32,8 @@ interface ProductCardProps {
   product: ProductCardProduct;
   locale: string;
   priceOnRequestLabel: string;
+  skuLabel?: string;
+  optionsLabel?: string;
   /** Next/Image `sizes` hint — defaults to the 3-column catalog layout. */
   sizes?: string;
 }
@@ -34,13 +48,45 @@ export function ProductCard({
   product,
   locale,
   priceOnRequestLabel,
+  skuLabel,
+  optionsLabel,
   sizes = "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw",
 }: ProductCardProps) {
   const name = pick(product, "name", locale);
-  const description = pick(product, "description", locale);
   const range = priceRange(product.variants);
   const basePrice = product.basePrice ? Number(product.basePrice) : null;
   const price = range ? range.min : basePrice;
+
+  // Resolve labels fallback
+  const resolvedSkuLabel = skuLabel || (locale === "en" ? "Product code" : "รหัสสินค้า");
+  const resolvedOptionsLabel = optionsLabel || (locale === "en" ? "Options" : "ตัวเลือก");
+
+  // Group variant values by attribute to display a clean summary of options
+  const groupMap = new Map<number, { name: string; values: Set<string> }>();
+  if (product.variants) {
+    for (const v of product.variants) {
+      if (!v.attributeValues) continue;
+      for (const av of v.attributeValues) {
+        const val = av.attributeValue;
+        if (!val) continue;
+        const attr = val.attribute;
+        if (!attr) continue;
+
+        const attrId = attr.id;
+        const attrName = pick(attr, "name", locale);
+        const valLabel = pick(val, "value", locale);
+
+        if (!groupMap.has(attrId)) {
+          groupMap.set(attrId, {
+            name: attrName,
+            values: new Set<string>(),
+          });
+        }
+        groupMap.get(attrId)!.values.add(valLabel);
+      }
+    }
+  }
+  const optionGroups = Array.from(groupMap.values());
 
   return (
     <Link
@@ -67,16 +113,38 @@ export function ProductCard({
       </div>
 
       <div className="p-3 md:p-6 flex flex-col flex-1">
-        <h3 className="font-label-md md:font-headline-sm text-primary mb-2 font-semibold line-clamp-2">
+        <h3 className="font-label-md md:font-headline-sm text-primary mb-1 font-semibold line-clamp-2">
           {name}
         </h3>
-        {description && (
-          <p className="font-body-sm text-muted-foreground line-clamp-2 mb-4 hidden md:block">
-            {description}
-          </p>
+
+        {product.sku && (
+          <div className="font-label-sm text-[#747684] mb-2 flex items-baseline gap-1">
+            <span>{resolvedSkuLabel}:</span>
+            <span className="font-semibold">{product.sku}</span>
+          </div>
         )}
 
-        <div className="mt-auto flex justify-between items-center gap-2">
+
+
+        {optionGroups.length > 0 && (
+          <div className="flex flex-col gap-1 mb-3 pt-2 border-t border-[#ededf7]">
+            <div className="font-label-sm text-[#747684] font-semibold">
+              <span>{resolvedOptionsLabel}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {optionGroups.map((group) => (
+                <div key={group.name} className="font-label-sm flex flex-wrap gap-x-1.5 items-baseline">
+                  <span className="font-medium text-primary">{group.name}:</span>
+                  <span className="text-[#434653]">
+                    {Array.from(group.values).join(", ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-auto flex justify-between items-end gap-2 pt-2 border-t border-[#ededf7]/50">
           <div className="min-w-0">
             {price !== null ? (
               <>
@@ -97,7 +165,7 @@ export function ProductCard({
           </div>
           {/* Circular CTA accent — echoes the logo's outer ring */}
           <span
-            className="shrink-0 p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all"
+            className="shrink-0 p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all mb-1"
             aria-hidden="true"
           >
             <ArrowRight className="h-4 w-4" />

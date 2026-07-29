@@ -83,7 +83,19 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       subCategory: true,
       brand: true,
       pricingUnit: true,
-      variants: { select: { price: true } },
+      variants: {
+        include: {
+          attributeValues: {
+            include: {
+              attributeValue: {
+                include: {
+                  attribute: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     skip: (currentPage - 1) * PAGE_SIZE,
@@ -193,6 +205,8 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                         product={product}
                         locale={locale}
                         priceOnRequestLabel={t("priceOnRequest")}
+                        skuLabel={t("sku")}
+                        optionsLabel={t("options")}
                         sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 33vw"
                       />
                     ))}
