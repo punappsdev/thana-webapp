@@ -6,7 +6,7 @@ import { pick } from "@/lib/products";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, Lightbulb, MessageSquareQuote } from "lucide-react";
+import { ArrowLeft, FileText, Lightbulb } from "lucide-react";
 import { ProductGallery } from "@/components/products/product-gallery";
 import {
   VariantSelector,
@@ -220,17 +220,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 }}
               />
 
-              <div className="flex flex-wrap gap-3">
-                {/* Secondary now that adding to the cart is the primary action */}
-                <Link
-                  href="/cart"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-label-md font-semibold text-primary border border-primary hover:bg-[#f3f3fc] transition-all"
-                >
-                  <MessageSquareQuote className="h-4 w-4" />
-                  {t("requestQuote")}
-                </Link>
-
-                {product.catalogPdf && (
+              {product.catalogPdf && (
+                <div className="flex flex-wrap gap-3">
                   <a
                     href={product.catalogPdf}
                     target="_blank"
@@ -240,8 +231,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                     <FileText className="h-4 w-4" />
                     {t("downloadCatalog")}
                   </a>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
