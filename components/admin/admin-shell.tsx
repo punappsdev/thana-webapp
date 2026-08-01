@@ -15,6 +15,7 @@ import {
   Menu,
   Newspaper,
   Package,
+  ReceiptText,
   Settings,
   Star,
   Tags,
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { label: "ภาพรวม", href: "/admin", icon: LayoutDashboard },
+  { label: "ใบเสนอราคา", href: "/admin/quotations", icon: ReceiptText },
   { label: "แบนเนอร์", href: "/admin/banners", icon: GalleryHorizontalEnd },
   { label: "สินค้าแนะนำ", href: "/admin/featured", icon: Star },
   { label: "สินค้า", href: "/admin/products", icon: Package },

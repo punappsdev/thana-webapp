@@ -10,7 +10,7 @@ import { saveContentAction } from "@/app/admin/(panel)/content/actions";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
 import { GalleryField, type GalleryRow } from "@/components/admin/gallery-field";
 import { MediaField } from "@/components/admin/media-field";
-import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
+import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

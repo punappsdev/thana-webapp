@@ -24,7 +24,7 @@ import {
 } from "@/components/admin/product-variants-table";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
 import { MediaField } from "@/components/admin/media-field";
-import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
+import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

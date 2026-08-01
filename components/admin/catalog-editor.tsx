@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { saveCatalogAction } from "@/app/admin/(panel)/catalog/actions";
 import { AdminSelect } from "@/components/admin/admin-select";
 import { MediaField } from "@/components/admin/media-field";
-import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
+import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

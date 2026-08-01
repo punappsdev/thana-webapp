@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { saveBannerAction } from "@/app/admin/(panel)/banners/actions";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
 import { MediaField } from "@/components/admin/media-field";
-import { useNoResetSubmit } from "@/components/admin/use-no-reset-submit";
+import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

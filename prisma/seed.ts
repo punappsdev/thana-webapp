@@ -7,6 +7,11 @@ async function main() {
   // Admin-owned tables (AdminUser, AdminSession, MediaAsset, ActivityLog) are
   // deliberately left alone — they belong to `npm run admin:create` and the
   // admin panel, and wiping them would log the developer out on every seed.
+  //
+  // QuotationRequest / QuotationItem are left alone for the same reason: they are
+  // real customer submissions, not fixtures. QuotationItem points at Product with
+  // ON DELETE SET NULL, so the product wipe below nulls the link but keeps the
+  // snapshotted name and quantity on every past request.
   await prisma.article.deleteMany({});
   await prisma.articleCategory.deleteMany({});
   await prisma.workImage.deleteMany({});

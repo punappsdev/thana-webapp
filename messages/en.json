@@ -312,5 +312,91 @@
     "filterPromotions": "Promotions",
     "prevPage": "Previous",
     "nextPage": "Next"
+  },
+  "QuoteForm": {
+    "eyebrow": "Request a quotation",
+    "title": "Tell us how to reach you",
+    "description": "Fill in your contact details and our team will prepare your quotation and get back to you as soon as possible.",
+    "metaTitle": "Request a quotation",
+    "summaryTitle": "Items in this request",
+    "editCart": "Edit items",
+    "contactSection": "Contact details",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone number",
+    "phoneHint": "We will use this to follow up on your quotation.",
+    "companySection": "Company tax invoice",
+    "needTaxInvoice": "I need the invoice issued to a company",
+    "companyName": "Company name",
+    "taxId": "Tax ID",
+    "taxIdHint": "13 digits",
+    "addressLine": "Company address",
+    "subDistrict": "Sub-district",
+    "district": "District",
+    "province": "Province",
+    "provincePlaceholder": "Select a province",
+    "postalCode": "Postal code",
+    "deliveryNote": "Deliveries outside Phuket carry a shipping fee, except for tempered and laminated glass. The exact amount will be confirmed in your quotation.",
+    "channelSection": "How should we send the quotation?",
+    "channelHint": "Give us at least one of these so we can send your quotation back.",
+    "email": "Email",
+    "lineId": "LINE ID",
+    "optional": "optional",
+    "consentSection": "Consent",
+    "consentBefore": "I consent to Thana Glass Group collecting and using the personal data above in order to contact me, share quotation details, and provide the services I requested, in accordance with the",
+    "consentPolicyLink": "Privacy Policy",
+    "submit": "Request a quotation",
+    "submitting": "Sending your request...",
+    "successTitle": "Your request has been sent",
+    "successBody": "We have received your request and will send the quotation to the email or LINE ID you provided as soon as possible.",
+    "successCodeLabel": "Reference number",
+    "successHint": "Please keep this reference number so you can check the status with our team.",
+    "backToProducts": "Browse more products",
+    "backToHome": "Back to home",
+    "errorRequired": "This field is required",
+    "errorPhone": "Please enter a valid phone number (9-10 digits)",
+    "errorEmail": "That email address is not valid",
+    "errorChannel": "Please provide either an email address or a LINE ID",
+    "errorTaxId": "The tax ID must be exactly 13 digits",
+    "errorPostalCode": "The postal code must be exactly 5 digits",
+    "errorProvince": "Please select a province",
+    "errorConsent": "Please accept the privacy policy before sending your request",
+    "errorEmptyCart": "There are no items in your list. Please choose products before requesting a quotation.",
+    "errorItems": "The item data is not valid. Please try again.",
+    "errorUnavailable": "The products in your list are no longer available. Please review your list.",
+    "errorTooMany": "You have sent too many requests. Please wait a moment and try again.",
+    "errorGeneric": "We could not send your request. Please try again.",
+    "errorCheckFields": "Please review the details you entered",
+    "policy": {
+      "title": "Privacy Policy",
+      "intro": "Thana Glass Group takes the protection of your personal data seriously and handles it in accordance with Thailand's Personal Data Protection Act B.E. 2562 (PDPA).",
+      "close": "Close",
+      "sections": [
+        {
+          "heading": "What we collect",
+          "body": "Your first and last name, phone number, email address and LINE ID. If you request a company tax invoice we also collect your company name, tax ID and company address, along with the list of products you selected."
+        },
+        {
+          "heading": "Why we use it",
+          "body": "Solely to prepare and deliver your quotation, contact you about further details, issue tax documents, and provide the services you requested. We do not use your data for marketing without your consent."
+        },
+        {
+          "heading": "How long we keep it",
+          "body": "We retain quotation requests for as long as our business needs and Thai accounting and tax law require. After that period the data is deleted or anonymised."
+        },
+        {
+          "heading": "Sharing with third parties",
+          "body": "We never sell or trade your personal data. It may be disclosed only as necessary to affiliated companies, delivery providers, or government agencies where required by law."
+        },
+        {
+          "heading": "Your rights",
+          "body": "You may request access to, a copy of, correction of, deletion of, or suspension of the use of your data, object to its processing, and withdraw your consent at any time. Withdrawing consent does not affect processing already carried out."
+        },
+        {
+          "heading": "Contact us",
+          "body": "To exercise these rights or ask about data protection, please reach our team through any of the channels listed on our contact page."
+        }
+      ]
+    }
   }
 }

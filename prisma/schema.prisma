@@ -378,6 +378,7 @@ model Product {
   variants       ProductVariant[]
   attributes     ProductAttribute[]
   attributeLinks ProductAttributeValue[]
+  quotationItems QuotationItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -500,6 +501,7 @@ model ProductVariant {
   productId       Int
   product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
   attributeValues VariantAttributeValue[]
+  quotationItems  QuotationItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -516,4 +518,87 @@ model VariantAttributeValue {
 
   @@unique([variantId, attributeValueId])
   @@index([attributeValueId])
+}
+
+// ---------------------------------------------------------------------------
+// Quotation requests
+// ---------------------------------------------------------------------------
+
+/// คำขอใบเสนอราคาที่ลูกค้ากรอกส่งเข้ามาจากหน้า /quote
+/// เว็บนี้ไม่แสดงราคาและไม่มีระบบชำระเงิน คำขอจึงเป็นแค่รายการที่ลูกค้าอยากให้เสนอราคา
+/// ทีมงานจะเห็นในหน้า /admin/quotations แล้วติดต่อกลับเอง
+model QuotationRequest {
+  id   Int    @id @default(autoincrement())
+  /// รหัสอ้างอิงที่แจ้งลูกค้าและใช้ค้นหาในหลังบ้าน เช่น QT-20260801-0042
+  code String @unique @db.VarChar(32)
+
+  firstName String @db.VarChar(120)
+  lastName  String @db.VarChar(120)
+  phone     String @db.VarChar(32)
+
+  /// ช่องทางรับใบเสนอราคา ต้องมีอย่างน้อยหนึ่งช่อง
+  /// บังคับใน server action ไม่ใช่ที่ระดับ DB เพราะเป็นเงื่อนไขข้ามคอลัมน์
+  email  String? @db.VarChar(191)
+  lineId String? @db.VarChar(120)
+
+  /// ติ๊กเมื่อต้องการใบเสร็จในนามบริษัท ทำให้ฟิลด์ด้านล่างทั้งชุดถูกกรอก
+  needTaxInvoice Boolean @default(false)
+  companyName    String? @db.VarChar(255)
+  taxId          String? @db.VarChar(20)
+  addressLine    String? @db.VarChar(255)
+  subDistrict    String? @db.VarChar(120)
+  district       String? @db.VarChar(120)
+  /// รหัสจังหวัดจาก lib/provinces.ts (เช่น "phuket") ไม่ใช่ชื่อที่แสดงผล
+  /// จังหวัดที่ไม่ใช่ภูเก็ตมีค่าบริการจัดส่ง ยกเว้นกระจกเทมเปอร์และกระจกลามิเนต
+  province       String? @db.VarChar(64)
+  postalCode     String? @db.VarChar(10)
+
+  /// เวลาที่ลูกค้าติ๊กยินยอมตามนโยบายความเป็นส่วนตัว เก็บไว้เป็นหลักฐาน PDPA
+  consentAt DateTime
+
+  /// ภาษาที่ลูกค้าใช้ตอนส่ง เผื่อทีมงานตอบกลับให้ตรงภาษา
+  locale    String  @db.VarChar(5)
+  ipAddress String? @db.VarChar(64)
+  userAgent String? @db.VarChar(255)
+
+  /// บันทึกภายในของทีมงาน ลูกค้าไม่เห็น
+  adminNote String? @db.Text
+
+  items QuotationItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([phone])
+  @@index([email])
+}
+
+/// สินค้าหนึ่งบรรทัดในคำขอ เก็บ snapshot ชื่อไว้ทั้งสองภาษาแบบเดียวกับ CartItem ใน lib/cart.ts
+/// เพื่อให้คำขอเก่ายังอ่านออกแม้สินค้าจะถูกลบหรือเปลี่ยนชื่อไปแล้ว
+model QuotationItem {
+  id        Int              @id @default(autoincrement())
+  requestId Int
+  request   QuotationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  /// SetNull ไม่ใช่ Cascade โดยตั้งใจ — prisma/seed.ts ลบ Product ทั้งตารางทุกครั้งที่ seed
+  /// ถ้าเป็น Cascade คำขอที่ลูกค้าส่งมาจริงจะหายไปด้วย
+  productId Int?
+  product   Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId Int?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  productNameTh String  @db.VarChar(255)
+  productNameEn String  @db.VarChar(255)
+  slug          String  @db.VarChar(191)
+  sku           String? @db.VarChar(64)
+  /// คุณสมบัติที่ลูกค้าเลือก แสดงเป็นข้อความเดียว เช่น "ความหนา: 6 มม. · สี: ใส"
+  optionsTh     String? @db.VarChar(500)
+  optionsEn     String? @db.VarChar(500)
+  qty           Int
+  sortOrder     Int     @default(0)
+
+  @@index([requestId])
+  @@index([productId])
+  @@index([variantId])
 }

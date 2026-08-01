@@ -71,10 +71,8 @@ export function CartPageContent() {
             <span className="font-body-sm text-[#434653]">{t("itemCount", { count })}</span>
           </div>
 
-          {/* TODO: point at the quotation request form once it exists — it will
-              persist the cart server side instead of handing off to /contact */}
           <Link
-            href="/contact"
+            href="/quote"
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-linear-to-b from-[#078ee4] to-primary-container px-6 py-3 font-label-md font-semibold text-white shadow-blue-sm transition-all hover:brightness-110"
           >
             <MessageSquareQuote className="h-4 w-4" />
