@@ -61,6 +61,30 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
           {item.sku && (
             <p className="font-label-sm text-[#747684]">{item.sku}</p>
           )}
+
+          {item.attributes && item.attributes.length > 0 && (
+            <div className="flex flex-wrap gap-x-2 gap-y-1.5 pt-1">
+              {item.attributes.map((attr, idx) => {
+                const label = locale === "th" ? attr.nameTh : attr.nameEn;
+                const value = locale === "th" ? attr.valueTh : attr.valueEn;
+                return (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 bg-[#f3f3fc] text-[#434653] border border-[#c4e2f5] px-2 py-0.5 rounded-md font-label-sm shadow-blue-sm"
+                  >
+                    {attr.colorHex && (
+                      <span
+                        className="h-2 w-2 rounded-full border border-black/10 shrink-0"
+                        style={{ backgroundColor: attr.colorHex }}
+                      />
+                    )}
+                    <span className="text-[#747684]">{label}:</span>
+                    <span className="font-semibold text-on-surface">{value}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div

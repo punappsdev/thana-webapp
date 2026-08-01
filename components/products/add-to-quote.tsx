@@ -31,9 +31,16 @@ interface AddToQuoteProps {
   product: CartProductInfo;
   /** Null while the customer has not landed on something orderable */
   line: QuoteLine | null;
+  attributes?: {
+    nameTh: string;
+    nameEn: string;
+    valueTh: string;
+    valueEn: string;
+    colorHex?: string | null;
+  }[];
 }
 
-export function AddToQuote({ product, line }: AddToQuoteProps) {
+export function AddToQuote({ product, line, attributes }: AddToQuoteProps) {
   const t = useTranslations("Cart");
   const { add, openCart } = useCart();
   const [qty, setQty] = useState(1);
@@ -56,6 +63,7 @@ export function AddToQuote({ product, line }: AddToQuoteProps) {
       variantId: line.variantId,
       sku: line.sku,
       qty,
+      attributes,
     });
 
     openCart();

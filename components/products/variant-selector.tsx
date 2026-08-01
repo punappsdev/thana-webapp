@@ -17,9 +17,17 @@ export interface VariantOption {
 export interface AttributeGroup {
   id: number;
   name: string;
+  nameTh: string;
+  nameEn: string;
   unit: string | null;
   inputType: "SELECT" | "COLOR" | "NUMBER" | "TEXT";
-  values: { id: number; label: string; colorHex: string | null }[];
+  values: {
+    id: number;
+    label: string;
+    valueTh: string;
+    valueEn: string;
+    colorHex: string | null;
+  }[];
 }
 
 interface VariantSelectorProps {
@@ -148,6 +156,21 @@ export function VariantSelector({
       ? { variantId: matchedVariant.id, sku: matchedVariant.sku }
       : null;
 
+  const selectedAttributes = useMemo(() => {
+    if (!isComplete) return [];
+    return groups.map((group) => {
+      const selectedValueId = selected[group.id];
+      const val = group.values.find((v) => v.id === selectedValueId);
+      return {
+        nameTh: group.nameTh,
+        nameEn: group.nameEn,
+        valueTh: val?.valueTh ?? "",
+        valueEn: val?.valueEn ?? "",
+        colorHex: group.inputType === "COLOR" ? val?.colorHex : null,
+      };
+    });
+  }, [isComplete, groups, selected]);
+
   return (
     <div className="space-y-6">
       {groups.length > 0 && (
@@ -247,7 +270,13 @@ export function VariantSelector({
         )
       )}
 
-      {cartProduct && <AddToQuote product={cartProduct} line={quoteLine} />}
+      {cartProduct && (
+        <AddToQuote
+          product={cartProduct}
+          line={quoteLine}
+          attributes={selectedAttributes}
+        />
+      )}
     </div>
   );
 }

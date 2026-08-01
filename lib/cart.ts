@@ -26,6 +26,13 @@ export type CartItem = {
   image: string | null;
   sku: string | null;
   qty: number;
+  attributes?: {
+    nameTh: string;
+    nameEn: string;
+    valueTh: string;
+    valueEn: string;
+    colorHex?: string | null;
+  }[];
 };
 
 /** Bumped to v2 when lines gained per-locale names; v1 carts are simply dropped. */
@@ -57,6 +64,29 @@ function parseItem(raw: unknown): CartItem | null {
   if (typeof it.nameTh !== "string" || typeof it.nameEn !== "string") return null;
   if (typeof it.qty !== "number") return null;
 
+  let attributes: CartItem["attributes"] = undefined;
+  if (Array.isArray(it.attributes)) {
+    attributes = [];
+    for (const attr of it.attributes) {
+      if (
+        typeof attr === "object" &&
+        attr !== null &&
+        typeof attr.nameTh === "string" &&
+        typeof attr.nameEn === "string" &&
+        typeof attr.valueTh === "string" &&
+        typeof attr.valueEn === "string"
+      ) {
+        attributes.push({
+          nameTh: attr.nameTh,
+          nameEn: attr.nameEn,
+          valueTh: attr.valueTh,
+          valueEn: attr.valueEn,
+          colorHex: typeof attr.colorHex === "string" ? attr.colorHex : null,
+        });
+      }
+    }
+  }
+
   return {
     productId: it.productId,
     variantId: it.variantId as number | null,
@@ -66,6 +96,7 @@ function parseItem(raw: unknown): CartItem | null {
     image: typeof it.image === "string" ? it.image : null,
     sku: typeof it.sku === "string" ? it.sku : null,
     qty: clampQty(it.qty),
+    attributes,
   };
 }
 

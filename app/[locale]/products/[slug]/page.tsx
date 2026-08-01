@@ -82,6 +82,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
         groupMap.set(attr.id, {
           id: attr.id,
           name: pick(attr, "name", locale),
+          nameTh: attr.nameTh,
+          nameEn: attr.nameEn,
           unit: attr.unit,
           inputType: attr.inputType,
           values: [],
@@ -92,6 +94,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
         group.values.push({
           id: attributeValue.id,
           label: pick(attributeValue, "value", locale),
+          valueTh: attributeValue.valueTh,
+          valueEn: attributeValue.valueEn,
           colorHex: attributeValue.colorHex,
         });
       }
