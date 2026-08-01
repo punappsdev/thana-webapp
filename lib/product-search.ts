@@ -19,7 +19,6 @@ export const CATALOG_INCLUDE = {
   category: true,
   subCategory: true,
   brand: true,
-  pricingUnit: true,
   variants: {
     include: {
       attributeValues: {
@@ -40,7 +39,7 @@ export interface CatalogPage {
 }
 
 interface CatalogPageInput {
-  /** Filters already applied — published, category, brand, price, and the q match. */
+  /** Filters already applied — published, category, brand, and the q match. */
   where: Prisma.ProductWhereInput;
   /** The raw search term, or an empty string outside search. */
   query: string;
@@ -63,10 +62,6 @@ export function catalogOrderBy(
   locale: string
 ): Prisma.ProductOrderByWithRelationInput[] {
   switch (sort) {
-    case "price-asc":
-      return [{ basePrice: "asc" }, { sortOrder: "asc" }];
-    case "price-desc":
-      return [{ basePrice: "desc" }, { sortOrder: "asc" }];
     case "name-asc":
       return [{ [locale === "th" ? "nameTh" : "nameEn"]: "asc" }];
     case "name-desc":
@@ -78,8 +73,8 @@ export function catalogOrderBy(
 
 /**
  * True when the grid should be ordered by how well each product matches the
- * search term. Relevance is the default while searching, but an explicit price
- * or name sort wins — the visitor asked for that order specifically.
+ * search term. Relevance is the default while searching, but an explicit name
+ * sort wins — the visitor asked for that order specifically.
  */
 export function usesRelevanceOrder(query: string, sort: string | undefined): boolean {
   if (!query.trim()) return false;

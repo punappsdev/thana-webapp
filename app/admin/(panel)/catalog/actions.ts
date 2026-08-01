@@ -24,7 +24,7 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
   // English name (falling back to a short token for Thai-only input). Only fill
   // when empty so an edit keeps its existing slug and power users can still
   // override via the "advanced" fields.
-  const usesCode = d.resource === "units" || d.resource === "pricing-units";
+  const usesCode = d.resource === "units";
   const slugSource = d.resource === "brands" ? d.name : d.resource === "attribute-values" ? d.valueEn : d.nameEn;
   if (usesCode) { if (!d.code) d.code = codeFromName(d.nameEn) || fallbackToken("U").toUpperCase().replace(/[^A-Z0-9]+/g, ""); }
   else if (!d.slug) { d.slug = slugifyAdminTitle(slugSource) || fallbackToken(d.resource); }
@@ -46,7 +46,6 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
         case "subcategories": { if (typeof d.categoryId !== "number") throw new Error("กรุณาเลือกหมวดหมู่"); const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on", categoryId: d.categoryId }; return id ? prisma.subCategory.update({ where: { id }, data }) : prisma.subCategory.create({ data }); }
         case "brands": { const data = { slug: d.slug, name: d.name, logo: d.logo || null, websiteUrl: d.websiteUrl || null }; return id ? prisma.brand.update({ where: { id }, data }) : prisma.brand.create({ data }); }
         case "units": { const data = { code: d.code, nameTh: d.nameTh, nameEn: d.nameEn }; return id ? prisma.productUnit.update({ where: { id }, data }) : prisma.productUnit.create({ data }); }
-        case "pricing-units": { const data = { code: d.code, nameTh: d.nameTh, nameEn: d.nameEn }; return id ? prisma.pricingUnit.update({ where: { id }, data }) : prisma.pricingUnit.create({ data }); }
         case "attributes": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, unit: d.unit || null, inputType: d.inputType, sortOrder: d.sortOrder }; return id ? prisma.attribute.update({ where: { id }, data }) : prisma.attribute.create({ data }); }
         case "attribute-values": { if (typeof d.attributeId !== "number") throw new Error("กรุณาเลือกคุณลักษณะ"); const data = { slug: d.slug, valueTh: d.valueTh, valueEn: d.valueEn, colorHex: d.colorHex || null, numericValue: d.numericValue || null, sortOrder: d.sortOrder, attributeId: d.attributeId }; return id ? prisma.attributeValue.update({ where: { id }, data }) : prisma.attributeValue.create({ data }); }
         case "article-categories": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn }; return id ? prisma.articleCategory.update({ where: { id }, data }) : prisma.articleCategory.create({ data }); }
@@ -82,7 +81,6 @@ function productsAffectedBy(resource: string, id: number): Prisma.ProductWhereIn
     case "subcategories": return { subCategoryId: id };
     case "brands": return { brandId: id };
     case "units": return { unitId: id };
-    case "pricing-units": return { pricingUnitId: id };
     case "attributes": return { attributeLinks: { some: { attributeValue: { attributeId: id } } } };
     case "attribute-values": return { attributeLinks: { some: { attributeValueId: id } } };
     // Article categories never appear on a product.
@@ -96,7 +94,7 @@ export async function deleteCatalogAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin(); const resource = String(formData.get("resource")); const id = Number(formData.get("id"));
   if (!isCatalogResource(resource) || !Number.isInteger(id)) throw new Error("Invalid delete request");
   const prisma = getPrisma();
-  const blocked = await (async () => { switch (resource) { case "categories": { const x = await prisma.category.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, subCategories: true, works: true } } } }); return x._count.products + x._count.subCategories + x._count.works; } case "subcategories": return (await prisma.subCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "brands": return (await prisma.brand.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "units": return (await prisma.productUnit.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "pricing-units": return (await prisma.pricingUnit.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "attributes": { const x = await prisma.attribute.findUniqueOrThrow({ where: { id }, include: { _count: { select: { values: true, products: true } } } }); return x._count.values + x._count.products; } case "attribute-values": { const x = await prisma.attributeValue.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, variants: true } } } }); return x._count.products + x._count.variants; } case "article-categories": return (await prisma.articleCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { articles: true } } } }))._count.articles; } })();
+  const blocked = await (async () => { switch (resource) { case "categories": { const x = await prisma.category.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, subCategories: true, works: true } } } }); return x._count.products + x._count.subCategories + x._count.works; } case "subcategories": return (await prisma.subCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "brands": return (await prisma.brand.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "units": return (await prisma.productUnit.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true } } } }))._count.products; case "attributes": { const x = await prisma.attribute.findUniqueOrThrow({ where: { id }, include: { _count: { select: { values: true, products: true } } } }); return x._count.values + x._count.products; } case "attribute-values": { const x = await prisma.attributeValue.findUniqueOrThrow({ where: { id }, include: { _count: { select: { products: true, variants: true } } } }); return x._count.products + x._count.variants; } case "article-categories": return (await prisma.articleCategory.findUniqueOrThrow({ where: { id }, include: { _count: { select: { articles: true } } } }))._count.articles; } })();
   if (blocked > 0) throw new Error("ข้อมูลนี้ถูกอ้างอิงอยู่และไม่สามารถลบได้");
   const mediaUrl = await (async () => {
     switch (resource) {
@@ -106,7 +104,7 @@ export async function deleteCatalogAction(formData: FormData): Promise<void> {
       default: return null;
     }
   })();
-  switch (resource) { case "categories": await prisma.category.delete({ where: { id } }); break; case "subcategories": await prisma.subCategory.delete({ where: { id } }); break; case "brands": await prisma.brand.delete({ where: { id } }); break; case "units": await prisma.productUnit.delete({ where: { id } }); break; case "pricing-units": await prisma.pricingUnit.delete({ where: { id } }); break; case "attributes": await prisma.attribute.delete({ where: { id } }); break; case "attribute-values": await prisma.attributeValue.delete({ where: { id } }); break; case "article-categories": await prisma.articleCategory.delete({ where: { id } }); break; }
+  switch (resource) { case "categories": await prisma.category.delete({ where: { id } }); break; case "subcategories": await prisma.subCategory.delete({ where: { id } }); break; case "brands": await prisma.brand.delete({ where: { id } }); break; case "units": await prisma.productUnit.delete({ where: { id } }); break; case "attributes": await prisma.attribute.delete({ where: { id } }); break; case "attribute-values": await prisma.attributeValue.delete({ where: { id } }); break; case "article-categories": await prisma.articleCategory.delete({ where: { id } }); break; }
   await recordActivity({ adminId: admin.id, action: "DELETE", entityType: resource, entityId: id });
   await deleteOrphanedMedia([mediaUrl]);
   revalidatePath(`/admin/catalog/${resource}`);

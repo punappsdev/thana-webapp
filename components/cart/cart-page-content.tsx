@@ -1,9 +1,8 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, MessageSquareQuote, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import { formatPrice } from "@/lib/products";
 import { lineKey } from "@/lib/cart";
 import { useCart } from "./use-cart";
 import { CartLineRow } from "./cart-line-row";
@@ -11,8 +10,7 @@ import { CartEmptyState } from "./cart-empty-state";
 
 export function CartPageContent() {
   const t = useTranslations("Cart");
-  const locale = useLocale();
-  const { items, count, subtotal, hydrated, clear } = useCart();
+  const { items, count, hydrated, clear } = useCart();
 
   // The cart only exists in the browser, so the server renders nothing here and
   // the first client paint fills it in. A skeleton avoids an empty-state flash.
@@ -69,18 +67,9 @@ export function CartPageContent() {
         <div className="space-y-4 rounded-lg border border-[#c4e2f5] bg-[#f3f3fc] p-6">
           <h2 className="font-headline-sm font-semibold text-on-surface">{t("title")}</h2>
 
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between border-b border-[#c4e2f5] pb-4">
             <span className="font-body-sm text-[#434653]">{t("itemCount", { count })}</span>
           </div>
-
-          <div className="flex items-baseline justify-between border-t border-[#c4e2f5] pt-4">
-            <span className="font-label-md text-[#434653]">{t("subtotal")}</span>
-            <span className="font-headline-md font-bold text-secondary">
-              {formatPrice(subtotal, locale)}
-            </span>
-          </div>
-
-          <p className="font-label-sm text-[#747684]">{t("estimateNote")}</p>
 
           {/* TODO: point at the quotation request form once it exists — it will
               persist the cart server side instead of handing off to /contact */}

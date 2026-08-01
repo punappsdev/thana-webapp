@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { formatPrice, pick, priceRange, toNumber } from "@/lib/products";
+import { pick } from "@/lib/products";
 import {
   MAX_QUERY_LENGTH,
   compareByRelevance,
@@ -14,8 +14,7 @@ import {
  *
  * Optimised for latency over completeness: a narrow `select` (never the catalog
  * page's nested variant include), a small candidate pool ranked in memory, and
- * everything a client component cannot handle — Prisma `Decimal`s, Th/En column
- * pairs — resolved here before serialising.
+ * the Th/En column pairs resolved here before serialising.
  */
 
 /** How many matches we pull before ranking. Wide enough that the best result is in it. */
@@ -32,7 +31,6 @@ export interface SearchSuggestion {
   name: string;
   sku: string;
   coverImage: string | null;
-  price: string | null;
   categoryName: string | null;
 }
 
@@ -77,11 +75,9 @@ export async function GET(request: NextRequest) {
           nameEn: true,
           sku: true,
           coverImage: true,
-          basePrice: true,
           featured: true,
           sortOrder: true,
           category: { select: { nameTh: true, nameEn: true } },
-          variants: { select: { price: true } },
         },
         orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
         take: CANDIDATE_POOL,
@@ -119,19 +115,14 @@ export async function GET(request: NextRequest) {
       .map((product) => ({ ...product, score: scoreProduct(product, query) }))
       .sort(compareByRelevance)
       .slice(0, PRODUCT_LIMIT)
-      .map((product) => {
-        const range = priceRange(product.variants);
-        const price = range ? range.min : toNumber(product.basePrice);
-        return {
-          id: product.id,
-          slug: product.slug,
-          name: pick(product, "name", locale),
-          sku: product.sku,
-          coverImage: product.coverImage,
-          price: formatPrice(price, locale),
-          categoryName: product.category ? pick(product.category, "name", locale) : null,
-        };
-      });
+      .map((product) => ({
+        id: product.id,
+        slug: product.slug,
+        name: pick(product, "name", locale),
+        sku: product.sku,
+        coverImage: product.coverImage,
+        categoryName: product.category ? pick(product.category, "name", locale) : null,
+      }));
 
     return NextResponse.json(
       {

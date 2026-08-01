@@ -12,7 +12,6 @@ export async function ProductList({ locale }: { locale: string }) {
     where: { published: true, featured: true },
     include: {
       category: true,
-      pricingUnit: true,
       variants: {
         include: {
           attributeValues: {
@@ -59,7 +58,7 @@ export async function ProductList({ locale }: { locale: string }) {
               key={product.id}
               product={product}
               locale={locale}
-              priceOnRequestLabel={tProducts("priceOnRequest")}
+              viewDetailLabel={tProducts("viewDetail")}
               skuLabel={tProducts("sku")}
               optionsLabel={tProducts("options")}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"

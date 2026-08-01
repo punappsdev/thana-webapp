@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { cartCount, cartSubtotal, type CartItem } from "@/lib/cart";
+import { cartCount, type CartItem } from "@/lib/cart";
 import {
   addToCart,
   clearCart,
@@ -19,7 +19,6 @@ import {
 export interface UseCartResult {
   items: CartItem[];
   count: number;
-  subtotal: number;
   /**
    * False during the server render and the hydration pass. Anything whose output
    * depends on the stored cart must wait for this, or the markup React hydrates
@@ -56,7 +55,6 @@ export function useCart(): UseCartResult {
     () => ({
       items,
       count: cartCount(items),
-      subtotal: cartSubtotal(items),
       hydrated,
       add: addToCart,
       setQty: setCartQty,

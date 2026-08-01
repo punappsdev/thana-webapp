@@ -12,15 +12,20 @@ export async function getAdminProducts(input: { query?: string; status?: string;
       : {}),
   };
   const [items, total] = await Promise.all([
-    getPrisma().product.findMany({ where, skip: (page - 1) * take, take, orderBy: { updatedAt: "desc" }, include: { category: { select: { nameTh: true } }, _count: { select: { variants: true } } } }),
+    // basePrice is omitted rather than converted: nothing reads it any more, and
+    // a Prisma Decimal cannot be serialised past the server boundary.
+    getPrisma().product.findMany({ where, skip: (page - 1) * take, take, orderBy: { updatedAt: "desc" }, omit: { basePrice: true }, include: { category: { select: { nameTh: true } }, _count: { select: { variants: true } } } }),
     getPrisma().product.count({ where }),
   ]);
-  return { items: items.map((item) => ({ ...item, basePrice: item.basePrice === null ? null : Number(item.basePrice) })), total, page, totalPages: Math.max(1, Math.ceil(total / take)) };
+  return { items, total, page, totalPages: Math.max(1, Math.ceil(total / take)) };
 }
 
 export async function getProductEditorRecord(id: number) {
   const product = await getPrisma().product.findUnique({
     where: { id },
+    // The editor no longer shows a price, and this record is handed to a client
+    // component — a Prisma Decimal cannot cross that boundary.
+    omit: { basePrice: true },
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       attributes: { orderBy: { sortOrder: "asc" }, include: { attribute: { include: { values: { orderBy: { sortOrder: "asc" } } } } } },
@@ -43,7 +48,6 @@ export async function getProductEditorRecord(id: number) {
   return {
     ...product,
     valueLabels,
-    basePrice: product.basePrice === null ? null : Number(product.basePrice),
     images: product.images.map((image) => ({ url: image.url, altTh: image.altTh || "", altEn: image.altEn || "", sortOrder: image.sortOrder })),
     attributes: product.attributes.map((link) => ({
       attributeId: link.attributeId,
@@ -57,6 +61,7 @@ export async function getProductEditorRecord(id: number) {
     })),
     variants: product.variants.map((variant) => ({
       sku: variant.sku || "",
+      // Not editable any more, but the form submits it back so a save preserves it.
       price: Number(variant.price),
       image: variant.image || "",
       isAvailable: variant.isAvailable,
@@ -69,14 +74,13 @@ export async function getProductEditorRecord(id: number) {
 
 export async function getProductEditorOptions() {
   const prisma = getPrisma();
-  const [categories, attributes, brands, units, pricingUnits] = await Promise.all([
+  const [categories, attributes, brands, units] = await Promise.all([
     prisma.category.findMany({ orderBy: { sortOrder: "asc" }, include: { subCategories: { orderBy: { sortOrder: "asc" } } } }),
     // The whole dictionary, not just one category's slice — a product may use any
     // attribute, and the editor's combobox searches across all of them.
     prisma.attribute.findMany({ orderBy: { sortOrder: "asc" }, include: { values: { orderBy: { sortOrder: "asc" } } } }),
     prisma.brand.findMany({ orderBy: { name: "asc" } }),
     prisma.productUnit.findMany({ orderBy: { nameTh: "asc" } }),
-    prisma.pricingUnit.findMany({ orderBy: { nameTh: "asc" } }),
   ]);
   return {
     categories: categories.map((category) => ({ id: category.id, nameTh: category.nameTh, nameEn: category.nameEn, subCategories: category.subCategories.map((sub) => ({ id: sub.id, nameTh: sub.nameTh })) })),
@@ -90,6 +94,5 @@ export async function getProductEditorOptions() {
     })),
     brands: brands.map((x) => ({ id: x.id, name: x.name })),
     units: units.map((x) => ({ id: x.id, nameTh: x.nameTh })),
-    pricingUnits: pricingUnits.map((x) => ({ id: x.id, nameTh: x.nameTh })),
   };
 }

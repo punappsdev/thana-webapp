@@ -39,7 +39,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
       subCategory: true,
       brand: true,
       unit: true,
-      pricingUnit: true,
       images: { orderBy: { sortOrder: "asc" } },
       variants: {
         orderBy: { sortOrder: "asc" },
@@ -62,11 +61,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const description = pick(product, "description", locale);
   const usageGuide = pick(product, "usageGuide", locale);
 
-  // Prisma Decimal cannot cross into a client component — convert to numbers first
   const variants: VariantOption[] = product.variants.map((v) => ({
     id: v.id,
     sku: v.sku,
-    price: Number(v.price),
     isAvailable: v.isAvailable,
     isDefault: v.isDefault,
     valueIds: v.attributeValues.map((av) => av.attributeValueId),
@@ -202,10 +199,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               <VariantSelector
                 groups={groups}
                 variants={variants}
-                locale={locale}
-                basePrice={product.basePrice !== null ? Number(product.basePrice) : null}
                 baseSku={product.sku}
-                pricingUnitName={product.pricingUnit ? pick(product.pricingUnit, "name", locale) : null}
                 labels={{
                   selectOptions: t("selectOptions"),
                   selectAllPrompt: t("selectAllPrompt"),
@@ -219,12 +213,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   nameTh: product.nameTh,
                   nameEn: product.nameEn,
                   image: gallery[0]?.url ?? null,
-                  pricingUnitNameTh: product.pricingUnit?.nameTh ?? null,
-                  pricingUnitNameEn: product.pricingUnit?.nameEn ?? null,
                 }}
               />
-
-              <p className="font-label-sm text-[#747684]">{t("priceNote")}</p>
 
               <div className="flex flex-wrap gap-3">
                 {/* Secondary now that adding to the cart is the primary action */}
@@ -290,14 +280,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
                       <dd className="font-body-sm text-on-surface">{spec.values.join(", ")}</dd>
                     </div>
                   ))}
-                  {product.pricingUnit && (
-                    <div className="py-3 last:pb-0">
-                      <dt className="font-label-sm text-[#747684] mb-1">{t("pricingUnit")}</dt>
-                      <dd className="font-body-sm text-on-surface">
-                        {pick(product.pricingUnit, "name", locale)}
-                      </dd>
-                    </div>
-                  )}
                 </dl>
               </aside>
             )}

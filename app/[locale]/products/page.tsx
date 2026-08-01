@@ -37,8 +37,6 @@ interface PageProps {
     page?: string;
     sort?: string;
     brand?: string;
-    minPrice?: string;
-    maxPrice?: string;
   }>;
 }
 
@@ -53,8 +51,6 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     page = "1",
     sort,
     brand,
-    minPrice,
-    maxPrice,
   } = await searchParams;
   const pageNumber = Math.max(1, parseInt(page, 10) || 1);
   const searchQuery = (q ?? "").trim();
@@ -89,8 +85,6 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
   });
 
   const activeBrands = typeof brand === "string" ? brand.split(",") : [];
-  const minPriceNum = minPrice ? parseFloat(minPrice) : undefined;
-  const maxPriceNum = maxPrice ? parseFloat(maxPrice) : undefined;
 
   const where: Prisma.ProductWhereInput = {
     published: true,
@@ -103,14 +97,6 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       ? {
           brand: {
             slug: { in: activeBrands },
-          },
-        }
-      : {}),
-    ...(minPriceNum !== undefined || maxPriceNum !== undefined
-      ? {
-          basePrice: {
-            ...(minPriceNum !== undefined ? { gte: minPriceNum } : {}),
-            ...(maxPriceNum !== undefined ? { lte: maxPriceNum } : {}),
           },
         }
       : {}),
@@ -139,8 +125,6 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     if (activeSub) qs.set("sub", activeSub.slug);
     if (sort) qs.set("sort", sort);
     if (brand) qs.set("brand", brand);
-    if (minPrice) qs.set("minPrice", minPrice);
-    if (maxPrice) qs.set("maxPrice", maxPrice);
     for (const [key, value] of Object.entries(overrides)) {
       if (value === null) qs.delete(key);
       else qs.set(key, value);
@@ -231,7 +215,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                 </div>
                 <ProductSortAndFilter
                   brands={brands.map((b) => ({ slug: b.slug, name: b.name }))}
-                  currentParams={{ sort, brand, minPrice, maxPrice }}
+                  currentParams={{ sort, brand }}
                   locale={locale}
                   hasQuery={!!searchQuery}
                   labels={{
@@ -239,13 +223,8 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                     filterButton: t("filterButton"),
                     sortRelevance: t("sortRelevance"),
                     sortFeatured: t("sortFeatured"),
-                    sortPriceAsc: t("sortPriceAsc"),
-                    sortPriceDesc: t("sortPriceDesc"),
                     sortNameAsc: t("sortNameAsc"),
                     sortNameDesc: t("sortNameDesc"),
-                    priceRange: t("priceRange"),
-                    minPrice: t("minPrice"),
-                    maxPrice: t("maxPrice"),
                     apply: t("apply"),
                     clearFilters: t("clearFilters"),
                     brandHeading: t("brandHeading"),
@@ -293,7 +272,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                         key={product.id}
                         product={product}
                         locale={locale}
-                        priceOnRequestLabel={t("priceOnRequest")}
+                        viewDetailLabel={t("viewDetail")}
                         skuLabel={t("sku")}
                         optionsLabel={t("options")}
                         sizes="(max-width: 640px) 50vw, (max-width: 1280px) 50vw, 33vw"

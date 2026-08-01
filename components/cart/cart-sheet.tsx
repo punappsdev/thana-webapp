@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
   Sheet,
@@ -10,7 +10,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { formatPrice } from "@/lib/products";
 import { lineKey } from "@/lib/cart";
 import { useCart } from "./use-cart";
 import { CartLineRow } from "./cart-line-row";
@@ -22,8 +21,7 @@ import { CartEmptyState } from "./cart-empty-state";
  */
 export function CartSheet() {
   const t = useTranslations("Cart");
-  const locale = useLocale();
-  const { items, count, subtotal, isOpen, closeCart, clear } = useCart();
+  const { items, count, isOpen, closeCart, clear } = useCart();
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -49,15 +47,6 @@ export function CartSheet() {
             </div>
 
             <SheetFooter className="gap-3 border-t border-[#c4e2f5] px-5 py-4">
-              <div className="flex items-baseline justify-between">
-                <span className="font-label-md text-[#434653]">{t("subtotal")}</span>
-                <span className="font-headline-sm font-bold text-secondary">
-                  {formatPrice(subtotal, locale)}
-                </span>
-              </div>
-
-              <p className="font-label-sm text-[#747684]">{t("estimateNote")}</p>
-
               <Link
                 href="/cart"
                 onClick={closeCart}

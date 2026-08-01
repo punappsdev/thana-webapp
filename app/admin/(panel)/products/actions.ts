@@ -42,8 +42,9 @@ const attributeSchema = z.array(
 const variantSchema = z.array(
   z.object({
     sku: z.string().optional().default(""),
-    // literal first: z.coerce.number() would turn "" into 0 and swallow the blank
-    price: z.union([z.literal(""), z.coerce.number().min(0)]),
+    // No longer editable in the form, but still submitted so a save preserves the
+    // stored value. Literal first: z.coerce.number() would turn "" into 0.
+    price: z.union([z.literal(""), z.coerce.number().min(0)]).optional().default(""),
     image: z.string().optional().default(""),
     isAvailable: z.boolean().default(true),
     isDefault: z.boolean().default(false),
@@ -69,13 +70,10 @@ const formSchema = z.object({
   usageGuideEn: z.string().optional().default(""),
   coverImage: z.string().optional().default(""),
   catalogPdf: z.string().optional().default(""),
-  basePrice: z.union([z.coerce.number().min(0), z.literal("")]).optional().default(""),
-  currency: z.string().trim().default("THB"),
   categoryId: optionalId,
   subCategoryId: optionalId,
   brandId: optionalId,
   unitId: optionalId,
-  pricingUnitId: optionalId,
   sortOrder: z.coerce.number().int().default(0),
   intent: z.enum(["draft", "publish"]),
   imagesJson: z.string(),
@@ -180,12 +178,12 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     }
   }
 
-  // A blank price is a half-finished row, not a free product — say so instead of
-  // quietly storing 0.
-  if (variants.some((variant) => variant.price === "")) {
-    return { success: false, message: "กรุณากรอกราคาให้ครบทุกรายการในตารางราคา" };
-  }
-  const pricedVariants = variants.map((variant) => ({ ...variant, price: Number(variant.price) }));
+  // Price is no longer collected anywhere. Rows the form carried over keep their
+  // stored value; a brand new combination simply starts at 0.
+  const pricedVariants = variants.map((variant) => ({
+    ...variant,
+    price: variant.price === "" ? 0 : Number(variant.price),
+  }));
 
   const variantErrors = validateProductVariants(
     pricedVariants.map((variant) => ({ sku: variant.sku, price: variant.price, isDefault: variant.isDefault, attributeValueIds: [] })),
@@ -206,8 +204,8 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     usageGuideEn: d.usageGuideEn || null,
     coverImage: d.coverImage || null,
     catalogPdf: d.catalogPdf || null,
-    basePrice: d.basePrice === "" ? null : d.basePrice,
-    currency: d.currency,
+    // `basePrice`, `currency` and `pricingUnitId` are deliberately absent: the site
+    // quotes on request, so nothing edits them and a save must leave them as-is.
     // `featured` / `featuredOrder` are curated on /admin/featured — deliberately
     // not written here so editing a product never resets its featured status.
     published,
@@ -216,7 +214,6 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     subCategoryId,
     brandId: typeof d.brandId === "number" ? d.brandId : null,
     unitId: typeof d.unitId === "number" ? d.unitId : null,
-    pricingUnitId: typeof d.pricingUnitId === "number" ? d.pricingUnitId : null,
   };
 
   try {

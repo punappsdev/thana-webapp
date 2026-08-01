@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Minus, Package, Plus, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import { formatPrice, pick } from "@/lib/products";
+import { pick } from "@/lib/products";
 import { MAX_QTY, lineKey, type CartItem } from "@/lib/cart";
 import { useCart } from "./use-cart";
 
@@ -25,7 +25,6 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
   const thumbSize = layout === "page" ? "h-20 w-20 sm:h-24 sm:w-24" : "h-20 w-20";
   // Resolved per render, so switching locale relabels the cart in place
   const name = pick(item, "name", locale);
-  const pricingUnitName = pick(item, "pricingUnitName", locale);
 
   return (
     <div className="flex gap-4 py-4">
@@ -62,16 +61,11 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
           {item.sku && (
             <p className="font-label-sm text-[#747684]">{item.sku}</p>
           )}
-
-          <p className="font-label-sm text-[#434653]">
-            {formatPrice(item.unitPrice, locale)}
-            {pricingUnitName ? ` / ${pricingUnitName}` : ""}
-          </p>
         </div>
 
         <div
           className={`flex items-center gap-3 ${
-            layout === "page" ? "w-full justify-between sm:w-auto sm:flex-col sm:items-end sm:gap-2" : "justify-between"
+            layout === "page" ? "w-full justify-between sm:w-auto sm:justify-end" : "justify-between"
           }`}
         >
           <div className="inline-flex items-center rounded-md border border-[#c4e2f5] bg-white">
@@ -108,12 +102,6 @@ export function CartLineRow({ item, layout, onNavigate }: CartLineRowProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            {layout === "page" && (
-              <span className="font-label-lg font-semibold text-secondary whitespace-nowrap">
-                {formatPrice(item.unitPrice * item.qty, locale)}
-              </span>
-            )}
-
             <button
               type="button"
               onClick={() => remove(key)}

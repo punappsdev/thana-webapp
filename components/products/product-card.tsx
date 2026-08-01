@@ -1,7 +1,7 @@
 import { ArrowRight, Package } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import { formatPrice, pick, priceRange } from "@/lib/products";
+import { pick } from "@/lib/products";
 import type { Prisma } from "../../generated/prisma/client";
 
 /**
@@ -11,7 +11,6 @@ import type { Prisma } from "../../generated/prisma/client";
  */
 export type ProductCardProduct = Prisma.ProductGetPayload<{
   include: {
-    pricingUnit: true;
     variants: {
       include: {
         attributeValues: {
@@ -31,7 +30,7 @@ export type ProductCardProduct = Prisma.ProductGetPayload<{
 interface ProductCardProps {
   product: ProductCardProduct;
   locale: string;
-  priceOnRequestLabel: string;
+  viewDetailLabel: string;
   skuLabel?: string;
   optionsLabel?: string;
   /** Next/Image `sizes` hint — defaults to the 3-column catalog layout. */
@@ -41,21 +40,18 @@ interface ProductCardProps {
 /**
  * Shared product card used on the homepage and the product catalog.
  * Style: full-bleed square image with a 5% blue overlay, primary-coloured
- * title, optional description, price block, and a circular arrow CTA that
- * fills on hover. Featured badges are intentionally omitted for now.
+ * title, optional description, and a circular arrow CTA that fills on hover.
+ * Featured badges are intentionally omitted for now.
  */
 export function ProductCard({
   product,
   locale,
-  priceOnRequestLabel,
+  viewDetailLabel,
   skuLabel,
   optionsLabel,
   sizes = "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw",
 }: ProductCardProps) {
   const name = pick(product, "name", locale);
-  const range = priceRange(product.variants);
-  const basePrice = product.basePrice ? Number(product.basePrice) : null;
-  const price = range ? range.min : basePrice;
 
   // Resolve labels fallback
   const resolvedSkuLabel = skuLabel || (locale === "en" ? "SKU" : "รหัสสินค้า");
@@ -147,28 +143,13 @@ export function ProductCard({
           </div>
         )}
 
-        <div className="mt-auto flex justify-between items-end gap-2 pt-2 border-t border-[#ededf7]/50">
-          <div className="min-w-0">
-            {price !== null ? (
-              <>
-                <span className="font-body-lg text-secondary font-bold block truncate">
-                  {formatPrice(price, locale)}
-                </span>
-                {product.pricingUnit && (
-                  <span className="block font-label-sm text-muted-foreground truncate">
-                    {pick(product.pricingUnit, "name", locale)}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="font-label-md text-[#434653] font-semibold">
-                {priceOnRequestLabel}
-              </span>
-            )}
-          </div>
+        <div className="mt-auto flex justify-between items-center gap-2 pt-3 border-t border-[#ededf7]/50">
+          <span className="font-label-md text-primary font-semibold truncate">
+            {viewDetailLabel}
+          </span>
           {/* Circular CTA accent — echoes the logo's outer ring */}
           <span
-            className="shrink-0 p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all mb-1"
+            className="shrink-0 p-2 rounded-full border border-primary-container text-primary group-hover:bg-primary-container group-hover:text-white transition-all"
             aria-hidden="true"
           >
             <ArrowRight className="h-4 w-4" />

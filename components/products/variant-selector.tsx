@@ -2,13 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Check, PackageX } from "lucide-react";
-import { formatPrice } from "@/lib/products";
 import { AddToQuote, type CartProductInfo, type QuoteLine } from "./add-to-quote";
 
 export interface VariantOption {
   id: number;
   sku: string | null;
-  price: number;
   /** Whether this combination is offered at all — not a stock level */
   isAvailable: boolean;
   isDefault: boolean;
@@ -27,15 +25,12 @@ export interface AttributeGroup {
 interface VariantSelectorProps {
   groups: AttributeGroup[];
   variants: VariantOption[];
-  locale: string;
   /**
    * Used when the product has no variants at all. Plenty of products are sold as
-   * a single thing with nothing to pick, and those must still show a price and
-   * be quotable rather than reading as unavailable.
+   * a single thing with nothing to pick, and those must stay quotable rather
+   * than reading as unavailable.
    */
-  basePrice: number | null;
   baseSku: string | null;
-  pricingUnitName: string | null;
   labels: {
     selectOptions: string;
     selectAllPrompt: string;
@@ -43,8 +38,8 @@ interface VariantSelectorProps {
     sku: string;
   };
   /**
-   * When present, an add-to-quotation-cart control is rendered below the price
-   * panel. It lives here because this component owns `matchedVariant` — the only
+   * When present, an add-to-quotation-cart control is rendered below the option
+   * groups. It lives here because this component owns `matchedVariant` — the only
    * place that knows which variant the customer settled on.
    */
   cartProduct?: CartProductInfo;
@@ -53,14 +48,11 @@ interface VariantSelectorProps {
 export function VariantSelector({
   groups,
   variants,
-  locale,
-  basePrice,
   baseSku,
-  pricingUnitName,
   labels,
   cartProduct,
 }: VariantSelectorProps) {
-  /** No variants at all — the product is quoted at its base price. */
+  /** No variants at all — nothing to pick, so the product is always quotable. */
   const isSimple = variants.length === 0;
   // Seed the selection from the variant flagged as default, else the first one
   const initial = useMemo(() => {
@@ -147,18 +139,14 @@ export function VariantSelector({
       return resolved;
     });
 
-  // A simple product falls back to its base price; otherwise the price and the
-  // orderable line both come from the variant the customer landed on.
-  const price = isSimple ? basePrice : matchedVariant?.price ?? null;
+  // A product with nothing to pick is always quotable; otherwise the line comes
+  // from the variant the customer landed on, and only if it is actually offered.
   const shownSku = isSimple ? baseSku : matchedVariant?.sku ?? null;
-  const quoteLine: QuoteLine | null =
-    price === null
-      ? null
-      : isSimple
-        ? { variantId: null, sku: baseSku, unitPrice: price }
-        : matchedVariant && matchedVariant.isAvailable
-          ? { variantId: matchedVariant.id, sku: matchedVariant.sku, unitPrice: matchedVariant.price }
-          : null;
+  const quoteLine: QuoteLine | null = isSimple
+    ? { variantId: null, sku: baseSku }
+    : matchedVariant?.isAvailable
+      ? { variantId: matchedVariant.id, sku: matchedVariant.sku }
+      : null;
 
   return (
     <div className="space-y-6">
@@ -238,34 +226,26 @@ export function VariantSelector({
         </div>
       )}
 
-      {/* Price panel reacting to the current selection */}
-      <div className="rounded-lg border border-[#c4e2f5] bg-[#f3f3fc] p-5">
-        {price !== null ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-baseline gap-2">
-              <span className="font-display-md text-secondary font-bold">
-                {formatPrice(price, locale)}
-              </span>
-              {pricingUnitName && (
-                <span className="font-label-md text-[#434653]">{pricingUnitName}</span>
-              )}
-            </div>
-
-            {shownSku && (
-              <span className="font-label-sm text-[#747684]">
-                {labels.sku}: {shownSku}
-              </span>
-            )}
-          </div>
-        ) : !isComplete ? (
-          <p className="font-body-sm text-[#434653]">{labels.selectAllPrompt}</p>
-        ) : (
-          <p className="inline-flex items-center gap-2 font-body-sm font-medium text-[#ba1a1a]">
-            <PackageX className="h-4 w-4" />
-            {labels.unavailable}
+      {/* Status line reacting to the current selection — sits directly above the
+          add-to-cart control so the reason a disabled button is disabled is right
+          next to it. */}
+      {!isComplete ? (
+        <p className="font-body-sm text-[#434653]">{labels.selectAllPrompt}</p>
+      ) : quoteLine === null ? (
+        <p className="inline-flex items-center gap-2 font-body-sm font-medium text-[#ba1a1a]">
+          <PackageX className="h-4 w-4" />
+          {labels.unavailable}
+        </p>
+      ) : (
+        // Only the variant's own code: a simple product already shows its SKU in
+        // the page header, so repeating it here would just be noise.
+        !isSimple &&
+        shownSku && (
+          <p className="font-label-sm text-[#747684]">
+            {labels.sku}: {shownSku}
           </p>
-        )}
-      </div>
+        )
+      )}
 
       {cartProduct && <AddToQuote product={cartProduct} line={quoteLine} />}
     </div>

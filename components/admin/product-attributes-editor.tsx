@@ -167,7 +167,7 @@ function AttributeCard({
             variant="ghost"
             size="sm"
             onClick={() => onUpdate({ isVariantAxis: !variantAxis })}
-            title={variantAxis ? "ย้ายไปเป็นข้อมูลจำเพาะ ลูกค้าจะเลือกไม่ได้" : "ย้ายมาเป็นตัวเลือก ลูกค้าจะเลือกได้และตั้งราคาแยกได้"}
+            title={variantAxis ? "ย้ายไปเป็นข้อมูลจำเพาะ ลูกค้าจะเลือกไม่ได้" : "ย้ายมาเป็นตัวเลือก ลูกค้าจะเลือกได้ก่อนขอใบเสนอราคา"}
           >
             <ArrowUpDown className="size-3.5" />
             {variantAxis ? "ย้ายไปข้อมูลจำเพาะ" : "ย้ายมาเป็นตัวเลือก"}

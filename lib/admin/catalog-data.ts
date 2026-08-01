@@ -10,7 +10,6 @@ export async function getCatalogRows(resource: CatalogResource, input: { query?:
     case "subcategories": { const where = input.query ? { OR: [{ nameTh: { contains: input.query } }, { nameEn: { contains: input.query } }, { slug: { contains: input.query } }] } : {}; return Promise.all([prisma.subCategory.findMany({ where, ...paging, orderBy: [{ categoryId: "asc" }, { sortOrder: "asc" }], include: { category: { select: { nameTh: true } }, _count: { select: { products: true } } } }), prisma.subCategory.count({ where })]); }
     case "brands": { const where = input.query ? { OR: [{ name: { contains: input.query } }, { slug: { contains: input.query } }] } : {}; return Promise.all([prisma.brand.findMany({ where, ...paging, orderBy: { name: "asc" }, include: { _count: { select: { products: true } } } }), prisma.brand.count({ where })]); }
     case "units": { const where = input.query ? { OR: [{ nameTh: { contains: input.query } }, { nameEn: { contains: input.query } }, { code: { contains: input.query } }] } : {}; return Promise.all([prisma.productUnit.findMany({ where, ...paging, orderBy: { nameTh: "asc" }, include: { _count: { select: { products: true } } } }), prisma.productUnit.count({ where })]); }
-    case "pricing-units": { const where = input.query ? { OR: [{ nameTh: { contains: input.query } }, { nameEn: { contains: input.query } }, { code: { contains: input.query } }] } : {}; return Promise.all([prisma.pricingUnit.findMany({ where, ...paging, orderBy: { nameTh: "asc" }, include: { _count: { select: { products: true } } } }), prisma.pricingUnit.count({ where })]); }
     case "attributes": { const where = input.query ? { OR: [{ nameTh: { contains: input.query } }, { nameEn: { contains: input.query } }, { slug: { contains: input.query } }] } : {}; return Promise.all([prisma.attribute.findMany({ where, ...paging, orderBy: [{ sortOrder: "asc" }, { nameTh: "asc" }], include: { _count: { select: { values: true, products: true } } } }), prisma.attribute.count({ where })]); }
     case "attribute-values": { const where = input.query ? { OR: [{ valueTh: { contains: input.query } }, { valueEn: { contains: input.query } }, { slug: { contains: input.query } }] } : {}; return Promise.all([prisma.attributeValue.findMany({ where, ...paging, orderBy: [{ attributeId: "asc" }, { sortOrder: "asc" }], include: { attribute: { select: { nameTh: true } }, _count: { select: { products: true, variants: true } } } }), prisma.attributeValue.count({ where })]); }
     case "article-categories": { const where = input.query ? { OR: [{ nameTh: { contains: input.query } }, { nameEn: { contains: input.query } }, { slug: { contains: input.query } }] } : {}; return Promise.all([prisma.articleCategory.findMany({ where, ...paging, orderBy: { nameTh: "asc" }, include: { _count: { select: { articles: true } } } }), prisma.articleCategory.count({ where })]); }
@@ -21,17 +20,16 @@ export async function getCatalogRows(resource: CatalogResource, input: { query?:
 
 export async function getCatalogCounts(): Promise<Record<CatalogResource, number>> {
   const prisma = getPrisma();
-  const [categories, subcategories, brands, units, pricingUnits, attributes, attributeValues, articleCategories] = await Promise.all([
+  const [categories, subcategories, brands, units, attributes, attributeValues, articleCategories] = await Promise.all([
     prisma.category.count(),
     prisma.subCategory.count(),
     prisma.brand.count(),
     prisma.productUnit.count(),
-    prisma.pricingUnit.count(),
     prisma.attribute.count(),
     prisma.attributeValue.count(),
     prisma.articleCategory.count(),
   ]);
-  return { categories, subcategories, brands, units, "pricing-units": pricingUnits, attributes, "attribute-values": attributeValues, "article-categories": articleCategories };
+  return { categories, subcategories, brands, units, attributes, "attribute-values": attributeValues, "article-categories": articleCategories };
 }
 
 export async function getCatalogOptions() {

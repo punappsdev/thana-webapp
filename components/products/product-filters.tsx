@@ -26,8 +26,6 @@ interface ProductSortAndFilterProps {
   currentParams: {
     sort?: string;
     brand?: string;
-    minPrice?: string;
-    maxPrice?: string;
   };
   locale: string;
   /** A search term is active, so relevance becomes an option — and the default. */
@@ -37,13 +35,8 @@ interface ProductSortAndFilterProps {
     filterButton: string;
     sortRelevance: string;
     sortFeatured: string;
-    sortPriceAsc: string;
-    sortPriceDesc: string;
     sortNameAsc: string;
     sortNameDesc: string;
-    priceRange: string;
-    minPrice: string;
-    maxPrice: string;
     apply: string;
     clearFilters: string;
     brandHeading: string;
@@ -69,15 +62,11 @@ export function ProductSortAndFilter({
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>(
     typeof currentParams.brand === "string" ? currentParams.brand.split(",") : []
   );
-  const [tempMinPrice, setTempMinPrice] = React.useState(currentParams.minPrice || "");
-  const [tempMaxPrice, setTempMaxPrice] = React.useState(currentParams.maxPrice || "");
 
   // Sync state if parameters change externally (e.g. locale or link change)
   React.useEffect(() => {
     setSelectedBrands(typeof currentParams.brand === "string" ? currentParams.brand.split(",") : []);
-    setTempMinPrice(currentParams.minPrice || "");
-    setTempMaxPrice(currentParams.maxPrice || "");
-  }, [currentParams.brand, currentParams.minPrice, currentParams.maxPrice]);
+  }, [currentParams.brand]);
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(window.location.search);
@@ -105,18 +94,6 @@ export function ProductSortAndFilter({
       params.delete("brand");
     }
 
-    if (tempMinPrice.trim()) {
-      params.set("minPrice", tempMinPrice.trim());
-    } else {
-      params.delete("minPrice");
-    }
-
-    if (tempMaxPrice.trim()) {
-      params.set("maxPrice", tempMaxPrice.trim());
-    } else {
-      params.delete("maxPrice");
-    }
-
     params.delete("page"); // Reset page
     router.push(`${pathname}?${params.toString()}`);
     setIsOpen(false);
@@ -124,23 +101,16 @@ export function ProductSortAndFilter({
 
   const handleClearFilters = () => {
     setSelectedBrands([]);
-    setTempMinPrice("");
-    setTempMaxPrice("");
 
     const params = new URLSearchParams(window.location.search);
     params.delete("brand");
-    params.delete("minPrice");
-    params.delete("maxPrice");
     params.delete("page"); // Reset page
 
     router.push(`${pathname}?${params.toString()}`);
     setIsOpen(false);
   };
 
-  const isFilterActive =
-    selectedBrands.length > 0 ||
-    tempMinPrice !== "" ||
-    tempMaxPrice !== "";
+  const isFilterActive = selectedBrands.length > 0;
 
   return (
     <div className="flex items-center gap-3">
@@ -159,7 +129,7 @@ export function ProductSortAndFilter({
             <span>{labels.filterButton}</span>
             {isFilterActive && (
               <span className="flex items-center justify-center bg-secondary text-white text-[10px] leading-none h-4 min-w-4 rounded-full px-1">
-                {selectedBrands.length + (tempMinPrice || tempMaxPrice ? 1 : 0)}
+                {selectedBrands.length}
               </span>
             )}
           </button>
@@ -227,34 +197,6 @@ export function ProductSortAndFilter({
               </div>
             )}
 
-            {/* Price Range Filter */}
-            <div className="space-y-2">
-              <span className="font-label-sm font-bold text-on-surface block">
-                {labels.priceRange}
-              </span>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    placeholder={labels.minPrice}
-                    value={tempMinPrice}
-                    onChange={(e) => setTempMinPrice(e.target.value)}
-                    className="w-full h-9 rounded-md border border-[#c4e2f5] px-3 py-1.5 font-body-sm text-[#434653] placeholder:text-[#747684]/50 focus:outline-none focus:border-[#078ee4] focus:ring-1 focus:ring-[#078ee4] bg-white transition-all text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </div>
-                <span className="text-[#c4e2f5] font-semibold">-</span>
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    placeholder={labels.maxPrice}
-                    value={tempMaxPrice}
-                    onChange={(e) => setTempMaxPrice(e.target.value)}
-                    className="w-full h-9 rounded-md border border-[#c4e2f5] px-3 py-1.5 font-body-sm text-[#434653] placeholder:text-[#747684]/50 focus:outline-none focus:border-[#078ee4] focus:ring-1 focus:ring-[#078ee4] bg-white transition-all text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Actions */}
             <div className="flex gap-2 pt-2 border-t border-[#ededf7]">
               <button
@@ -288,12 +230,6 @@ export function ProductSortAndFilter({
           )}
           <SelectItem value="featured" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
             {labels.sortFeatured}
-          </SelectItem>
-          <SelectItem value="price-asc" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
-            {labels.sortPriceAsc}
-          </SelectItem>
-          <SelectItem value="price-desc" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
-            {labels.sortPriceDesc}
           </SelectItem>
           <SelectItem value="name-asc" className="cursor-pointer !font-body-sm font-medium hover:bg-[#f3f3fc]">
             {labels.sortNameAsc}

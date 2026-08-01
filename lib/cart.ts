@@ -1,10 +1,10 @@
 /**
  * Quotation cart — pure domain logic and localStorage access.
  *
- * Products here are quote-request only (see the `stockQty` note in schema.prisma),
- * so the cart is a wish list the customer assembles before asking for a price.
- * Everything lives in the browser for now; the request is only persisted server
- * side when the customer submits the contact form.
+ * Nothing here is priced: the site quotes on request only, so a cart is purely
+ * the list of items the customer wants quoted. Everything lives in the browser
+ * for now; the request is only persisted server side when the customer submits
+ * the contact form.
  */
 
 /**
@@ -17,7 +17,7 @@
  */
 export type CartItem = {
   productId: number;
-  /** Null for a product sold at its base price, with no options to choose. */
+  /** Null for a product with no options to choose. */
   variantId: number | null;
   /** Kept so a line can link back to the product page */
   slug: string;
@@ -25,10 +25,6 @@ export type CartItem = {
   nameEn: string;
   image: string | null;
   sku: string | null;
-  /** Snapshot of the listed price — re-checked server side when the quote is requested */
-  unitPrice: number;
-  pricingUnitNameTh: string | null;
-  pricingUnitNameEn: string | null;
   qty: number;
 };
 
@@ -59,7 +55,6 @@ function parseItem(raw: unknown): CartItem | null {
   if (it.variantId !== null && (typeof it.variantId !== "number" || !Number.isFinite(it.variantId))) return null;
   if (typeof it.slug !== "string" || it.slug === "") return null;
   if (typeof it.nameTh !== "string" || typeof it.nameEn !== "string") return null;
-  if (typeof it.unitPrice !== "number" || !Number.isFinite(it.unitPrice)) return null;
   if (typeof it.qty !== "number") return null;
 
   return {
@@ -70,11 +65,6 @@ function parseItem(raw: unknown): CartItem | null {
     nameEn: it.nameEn,
     image: typeof it.image === "string" ? it.image : null,
     sku: typeof it.sku === "string" ? it.sku : null,
-    unitPrice: it.unitPrice,
-    pricingUnitNameTh:
-      typeof it.pricingUnitNameTh === "string" ? it.pricingUnitNameTh : null,
-    pricingUnitNameEn:
-      typeof it.pricingUnitNameEn === "string" ? it.pricingUnitNameEn : null,
     qty: clampQty(it.qty),
   };
 }
@@ -115,8 +105,8 @@ export function writeCart(items: CartItem[]): void {
 
 /**
  * Adds a line, merging into the matching one when the same variant is added twice.
- * The snapshot fields are refreshed on merge so a stale price from an earlier
- * session never survives a fresh visit to the product page.
+ * The snapshot fields are refreshed on merge so stale details from an earlier
+ * session never survive a fresh visit to the product page.
  */
 export function addItem(items: CartItem[], incoming: CartItem): CartItem[] {
   const key = lineKey(incoming);
@@ -146,8 +136,4 @@ export function removeItem(items: CartItem[], key: string): CartItem[] {
 /** Total pieces across all lines — what the header badge shows. */
 export function cartCount(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.qty, 0);
-}
-
-export function cartSubtotal(items: CartItem[]): number {
-  return items.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
 }

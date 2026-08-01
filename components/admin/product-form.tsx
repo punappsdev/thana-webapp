@@ -49,6 +49,7 @@ type SavedAttribute = {
 
 type SavedVariant = {
   sku: string;
+  /** Not editable any more — carried through so a save cannot zero it out. */
   price: number;
   image: string;
   isAvailable: boolean;
@@ -70,15 +71,12 @@ type ProductRecord = {
   usageGuideEn: string | null;
   coverImage: string | null;
   catalogPdf: string | null;
-  basePrice: number | null;
-  currency: string;
   published: boolean;
   sortOrder: number;
   categoryId: number | null;
   subCategoryId: number | null;
   brandId: number | null;
   unitId: number | null;
-  pricingUnitId: number | null;
   images: ImageRow[];
   attributes: SavedAttribute[];
   variants: SavedVariant[];
@@ -89,7 +87,6 @@ type EditorOptions = {
   attributes: DictionaryAttribute[];
   brands: Option[];
   units: Option[];
-  pricingUnits: Option[];
 };
 
 const initialState: ActionResult = { success: false, message: "" };
@@ -142,7 +139,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
   const axes = useMemo(() => buildAxes(attributes, options.attributes), [attributes, options.attributes]);
 
   /**
-   * The price rows are a pure function of the options, so keep them in step
+   * The variant rows are a pure function of the options, so keep them in step
    * automatically instead of behind a "generate" button the admin had to
    * remember to press. Rows for combinations that still exist keep whatever was
    * typed into them; the identity check stops this from looping.
@@ -197,8 +194,9 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     newValues: attribute.newValues.map((value) => ({ key: value._key, valueTh: value.valueTh, valueEn: value.valueEn })),
   }));
 
-  // An empty price stays empty so the action can reject it, rather than being
-  // silently written to the database as 0.
+  // `price` is no longer editable anywhere, but it still round-trips: the action
+  // deletes and recreates every variant on save, so leaving it out would wipe the
+  // stored prices the moment anyone edits a product.
   const variantsPayload = variants.map((variant, index) => ({
     sku: variant.sku,
     price: variant.price,
@@ -213,7 +211,6 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="id" value={record?.id || ""} />
       <input type="hidden" name="updatedAt" value={record?.updatedAt ? new Date(record.updatedAt).toISOString() : ""} />
-      <input type="hidden" name="currency" value={record?.currency || "THB"} />
       <input type="hidden" name="imagesJson" value={JSON.stringify(images)} readOnly />
       <input type="hidden" name="attributesJson" value={JSON.stringify(attributesPayload)} readOnly />
       <input type="hidden" name="variantsJson" value={JSON.stringify(variantsPayload)} readOnly />
@@ -225,7 +222,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             {record ? <Badge variant={record.published ? "default" : "secondary"}>{record.published ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
           </div>
           <p className="font-body-sm text-muted-foreground mt-1">
-            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการชื่อ ราคา รูปภาพ และตัวเลือกของสินค้าได้ในที่เดียว"}
+            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการชื่อ รูปภาพ และตัวเลือกของสินค้าได้ในที่เดียว"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -322,7 +319,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
 
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline-sm">รหัสและราคา</CardTitle>
+                <CardTitle className="font-headline-sm">รหัสสินค้า</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field label="SKU (รหัสสินค้า)">
@@ -330,9 +327,6 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                   <p className="font-body-sm text-muted-foreground mt-1.5">
                     รหัสอ้างอิงสินค้าในระบบ ห้ามซ้ำกัน เช่น GL-001
                   </p>
-                </Field>
-                <Field label="ราคา">
-                  <Input name="basePrice" type="number" min="0" step="0.01" defaultValue={record?.basePrice ?? ""} className="font-body-sm" />
                 </Field>
                 {/* Slug is generated automatically; keep it mounted (only collapsed)
                     so its value still submits and the on-blur auto-fill keeps working. */}
@@ -364,12 +358,11 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
               <CardTitle className="font-headline-sm">การจัดหมวดหมู่</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <SelectField name="categoryId" label="หมวดหมู่" value={categoryId} onChange={setCategoryId} options={options.categories.map((item) => ({ id: item.id, label: item.nameTh }))} />
                 <SelectField name="subCategoryId" label="หมวดหมู่ย่อย" defaultValue={record?.subCategoryId} options={(category?.subCategories || []).map((item) => ({ id: item.id, label: item.nameTh }))} />
                 <SelectField name="brandId" label="แบรนด์" defaultValue={record?.brandId} options={options.brands.map((item) => ({ id: item.id, label: optionLabel(item) }))} />
                 <SelectField name="unitId" label="หน่วยสินค้า" defaultValue={record?.unitId} options={options.units.map((item) => ({ id: item.id, label: optionLabel(item) }))} />
-                <SelectField name="pricingUnitId" label="หน่วยราคา" defaultValue={record?.pricingUnitId} options={options.pricingUnits.map((item) => ({ id: item.id, label: optionLabel(item) }))} />
               </div>
             </CardContent>
           </Card>
@@ -381,7 +374,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
               <Info className="mt-0.5 size-5 shrink-0 text-primary" />
               <div className="space-y-1">
                 <p className="font-label-md">“ตัวเลือก” กับ “ข้อมูลจำเพาะ” ต่างกันอย่างไร?</p>
-                <p className="font-body-sm text-muted-foreground"><span className="font-semibold text-foreground">ตัวเลือก</span> = สิ่งที่ลูกค้าเลือกได้ก่อนขอราคา และตั้งราคาแยกแต่ละแบบได้ เช่น ความหนา สี &nbsp;·&nbsp; <span className="font-semibold text-foreground">ข้อมูลจำเพาะ</span> = ข้อมูลที่แสดงบนหน้าสินค้าอย่างเดียว ลูกค้าเลือกไม่ได้ และไม่มีผลกับราคา</p>
+                <p className="font-body-sm text-muted-foreground"><span className="font-semibold text-foreground">ตัวเลือก</span> = สิ่งที่ลูกค้าเลือกได้ก่อนขอใบเสนอราคา เช่น ความหนา สี &nbsp;·&nbsp; <span className="font-semibold text-foreground">ข้อมูลจำเพาะ</span> = ข้อมูลที่แสดงบนหน้าสินค้าอย่างเดียว ลูกค้าเลือกไม่ได้</p>
               </div>
             </CardContent>
           </Card>
@@ -389,7 +382,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             <CardHeader>
               <CardTitle className="font-headline-sm">ตัวเลือกที่ลูกค้าเลือกได้</CardTitle>
               <p className="font-body-sm text-muted-foreground">
-                สิ่งที่ลูกค้าต้องเลือกก่อนขอใบเสนอราคา เช่น ความหนา ขนาด สี — แต่ละแบบตั้งราคาแยกกันได้
+                สิ่งที่ลูกค้าต้องเลือกก่อนขอใบเสนอราคา เช่น ความหนา ขนาด สี
               </p>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -401,8 +394,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                 emptyState={
                   <div className="rounded-lg border border-dashed p-4">
                     <p className="font-body-sm text-muted-foreground">
-                      สินค้านี้ไม่มีตัวเลือก ลูกค้าจะขอใบเสนอราคาได้ทันทีที่
-                      <span className="font-semibold text-foreground"> ราคา</span> ที่กรอกไว้ในแท็บข้อมูลหลัก
+                      สินค้านี้ไม่มีตัวเลือก ลูกค้าจะกดขอใบเสนอราคาได้ทันทีจากหน้าสินค้า
                     </p>
                   </div>
                 }
@@ -426,7 +418,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             <CardHeader>
               <CardTitle className="font-headline-sm">ข้อมูลจำเพาะ</CardTitle>
               <p className="font-body-sm text-muted-foreground">
-                ข้อมูลที่แสดงในตารางรายละเอียดบนหน้าสินค้าอย่างเดียว ลูกค้าเลือกไม่ได้ และไม่มีผลกับราคา
+                ข้อมูลที่แสดงในตารางรายละเอียดบนหน้าสินค้าอย่างเดียว ลูกค้าเลือกไม่ได้
               </p>
             </CardHeader>
             <CardContent>

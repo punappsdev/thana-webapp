@@ -18,6 +18,7 @@ export type ValueToken = string;
 export type VariantRow = {
   _key: string;
   sku: string;
+  /** Not shown or editable — kept so saving cannot wipe the stored value. */
   price: number | "";
   image: string;
   isAvailable: boolean;
@@ -69,7 +70,7 @@ function cartesian(axes: VariantAxis[]): ValueToken[][] {
 }
 
 /**
- * Rebuilds the price rows from the current options, carrying over anything the
+ * Rebuilds the variant rows from the current options, carrying over anything the
  * admin already typed for a combination that still exists. This runs on every
  * option change instead of behind a button — the rows are a pure function of the
  * options, and a stale table waiting for someone to remember to press "generate"
@@ -87,10 +88,10 @@ export function syncVariants(current: VariantRow[], axes: VariantAxis[]): Varian
     if (exact) return { ...exact, valueTokens: tokens, sortOrder: index };
 
     // Adding or removing an option changes every combination key, which would
-    // blank out prices the admin already typed. Inherit from whichever old row
-    // shares the most values — adding "colour" to a product priced per thickness
-    // then carries each thickness price onto its colour rows. SKU is left empty
-    // because it has to stay unique.
+    // blank out what the admin already filled in. Inherit from whichever old row
+    // shares the most values — adding "colour" to a product with thickness rows
+    // then carries each thickness row's image (and its stored, no-longer-editable
+    // price) onto its colour rows. SKU is left empty because it has to stay unique.
     const closest = current.reduce<{ row: VariantRow; overlap: number } | null>((best, row) => {
       const overlap = row.valueTokens.filter((token) => tokens.includes(token)).length;
       return overlap > 0 && (!best || overlap > best.overlap) ? { row, overlap } : best;
@@ -141,7 +142,7 @@ export function ProductVariantsTable({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-label-lg font-semibold">ราคาแต่ละแบบ</h3>
+        <h3 className="font-label-lg font-semibold">ตัวเลือกสินค้าแต่ละแบบ</h3>
         <p className="font-label-sm text-muted-foreground">
           {axes.map((axis) => axis.label).join(" × ")} — {variants.length} รายการ
         </p>
@@ -163,7 +164,6 @@ export function ProductVariantsTable({
               {axes.map((axis) => (
                 <TableHead key={axis.attributeKey} className="font-label-md">{axis.label}</TableHead>
               ))}
-              <TableHead className="font-label-md">ราคา</TableHead>
               <TableHead className="font-label-md">SKU</TableHead>
               <TableHead className="font-label-md">รูป</TableHead>
               <TableHead className="text-center font-label-md">ขายอยู่</TableHead>
@@ -181,17 +181,6 @@ export function ProductVariantsTable({
                     </TableCell>
                   );
                 })}
-                <TableCell>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={row.price}
-                    onChange={(event) => update(row._key, { price: event.target.value === "" ? "" : Number(event.target.value) })}
-                    placeholder="0.00"
-                    className="w-28 font-body-sm"
-                  />
-                </TableCell>
                 <TableCell>
                   <Input value={row.sku} onChange={(event) => update(row._key, { sku: event.target.value })} placeholder="ไม่บังคับ" className="w-32 font-body-sm" />
                 </TableCell>

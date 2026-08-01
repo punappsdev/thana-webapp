@@ -11,7 +11,6 @@ import {
   CommandGroup,
   CommandItem,
   CommandList,
-  CommandShortcut,
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -354,7 +353,6 @@ export function ProductSearchBox({
                     <ProductRow
                       key={product.id}
                       product={product}
-                      priceOnRequest={t("priceOnRequest")}
                       onSelect={() => goTo(`/products/${product.slug}`)}
                     />
                   ))}
@@ -418,11 +416,9 @@ export function ProductSearchBox({
 
 function ProductRow({
   product,
-  priceOnRequest,
   onSelect,
 }: {
   product: SearchSuggestion;
-  priceOnRequest: string;
   onSelect: () => void;
 }) {
   return (
@@ -447,9 +443,6 @@ function ProductRow({
           {product.categoryName ? ` · ${product.categoryName}` : ""}
         </span>
       </span>
-      <CommandShortcut className="shrink-0 font-label-sm font-semibold tracking-normal text-secondary">
-        {product.price ?? priceOnRequest}
-      </CommandShortcut>
     </CommandItem>
   );
 }

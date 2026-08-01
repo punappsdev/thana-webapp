@@ -16,18 +16,15 @@ export interface CartProductInfo {
   nameTh: string;
   nameEn: string;
   image: string | null;
-  pricingUnitNameTh: string | null;
-  pricingUnitNameEn: string | null;
 }
 
 /**
  * What a cart line needs about the thing being added. `variantId` is null for a
- * product with no options at all, which is quoted at its base price.
+ * product with no options at all.
  */
 export interface QuoteLine {
   variantId: number | null;
   sku: string | null;
-  unitPrice: number;
 }
 
 interface AddToQuoteProps {
@@ -58,7 +55,6 @@ export function AddToQuote({ product, line }: AddToQuoteProps) {
       ...product,
       variantId: line.variantId,
       sku: line.sku,
-      unitPrice: line.unitPrice,
       qty,
     });
 
