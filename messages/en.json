@@ -39,22 +39,22 @@
     "empty": "No featured products at the moment"
   },
   "Cart": {
-    "title": "Quotation Cart",
+    "title": "Quotation List",
     "description": "The products you have selected for your quotation request",
-    "openCart": "Open quotation cart",
+    "openCart": "Open quotation list",
     "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}",
-    "empty": "Your quotation cart is empty",
+    "empty": "Your quotation list is empty",
     "emptyHint": "Add the products you are interested in to request a single quotation for all of them.",
     "browseProducts": "Browse products",
-    "addToCart": "Add to quotation cart",
-    "added": "Added to cart",
+    "addToCart": "Add to list",
+    "added": "Added to list",
     "quantity": "Quantity",
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "remove": "Remove this item",
-    "clear": "Clear cart",
-    "clearConfirm": "Remove all products from your quotation cart?",
-    "viewCart": "View full cart",
+    "clear": "Clear list",
+    "clearConfirm": "Remove all products from your quotation list?",
+    "viewCart": "View full list",
     "continueShopping": "Continue browsing",
     "requestQuote": "Request a quotation"
   },
@@ -87,7 +87,7 @@
     "usageGuide": "Usage guide",
     "specifications": "Specifications",
     "selectOptions": "Select options",
-    "selectAllPrompt": "Select all options before adding to your cart",
+    "selectAllPrompt": "Select all options before adding to your list",
     "unavailableCombination": "This combination is not available",
     "downloadCatalog": "Download catalog (PDF)",
     "backToProducts": "Back to products",
@@ -243,11 +243,11 @@
     "steps": [
       {
         "title": "Select Products",
-        "desc": "Choose the products you want and add to quote cart"
+        "desc": "Choose the products you want and add to quote list"
       },
       {
-        "title": "Check Quotation Cart",
-        "desc": "Review the items in your quotation cart"
+        "title": "Check Quotation List",
+        "desc": "Review the items in your quotation list"
       },
       {
         "title": "Fill Contact Info",
