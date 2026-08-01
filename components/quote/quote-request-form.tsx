@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { ArrowLeft, CheckCircle2, MessageSquareQuote, Package, Truck } from "lucide-react";
@@ -25,6 +25,171 @@ import { CheckField } from "./check-field";
 import { PrivacyPolicyDialog } from "./privacy-policy-dialog";
 
 const initialState: QuoteFormResult = { success: false, message: "" };
+const CONTACT_STORAGE_KEY = "thana-quote-contact-v2";
+const LEGACY_CONTACT_STORAGE_KEY = "thana-quote-contact-v1";
+
+const EMPTY_CONTACT = {
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
+  lineId: "",
+};
+
+const EMPTY_COMPANY_INVOICE = {
+  needTaxInvoice: false,
+  companyName: "",
+  taxId: "",
+  addressLine: "",
+  subDistrict: "",
+  district: "",
+  province: "",
+  postalCode: "",
+};
+
+type ContactDetails = typeof EMPTY_CONTACT;
+type ContactField = keyof ContactDetails;
+type CompanyInvoiceDetails = typeof EMPTY_COMPANY_INVOICE;
+type CompanyInvoiceField = Exclude<keyof CompanyInvoiceDetails, "needTaxInvoice">;
+type RememberedDetails = ContactDetails & CompanyInvoiceDetails;
+
+function emptyContact(): ContactDetails {
+  return { ...EMPTY_CONTACT };
+}
+
+function emptyCompanyInvoice(): CompanyInvoiceDetails {
+  return { ...EMPTY_COMPANY_INVOICE };
+}
+
+function emptyRememberedDetails(): RememberedDetails {
+  return { ...EMPTY_CONTACT, ...EMPTY_COMPANY_INVOICE };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStorageValue(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function parseSavedDetails(raw: string | null, includesCompanyInvoice: boolean): RememberedDetails | null {
+  try {
+    if (!raw) return null;
+
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed)) return null;
+
+    if (
+      typeof parsed.firstName !== "string" ||
+      typeof parsed.lastName !== "string" ||
+      typeof parsed.phone !== "string" ||
+      typeof parsed.email !== "string" ||
+      typeof parsed.lineId !== "string"
+    ) {
+      return null;
+    }
+
+    if (!includesCompanyInvoice) {
+      return {
+        firstName: parsed.firstName,
+        lastName: parsed.lastName,
+        phone: parsed.phone,
+        email: parsed.email,
+        lineId: parsed.lineId,
+        ...emptyCompanyInvoice(),
+      };
+    }
+
+    if (
+      typeof parsed.needTaxInvoice !== "boolean" ||
+      typeof parsed.companyName !== "string" ||
+      typeof parsed.taxId !== "string" ||
+      typeof parsed.addressLine !== "string" ||
+      typeof parsed.subDistrict !== "string" ||
+      typeof parsed.district !== "string" ||
+      typeof parsed.province !== "string" ||
+      typeof parsed.postalCode !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      firstName: parsed.firstName,
+      lastName: parsed.lastName,
+      phone: parsed.phone,
+      email: parsed.email,
+      lineId: parsed.lineId,
+      needTaxInvoice: parsed.needTaxInvoice,
+      companyName: parsed.companyName,
+      taxId: parsed.taxId,
+      addressLine: parsed.addressLine,
+      subDistrict: parsed.subDistrict,
+      district: parsed.district,
+      province: parsed.province,
+      postalCode: parsed.postalCode,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readSavedDetails(): RememberedDetails {
+  const currentDetails = parseSavedDetails(readStorageValue(CONTACT_STORAGE_KEY), true);
+  if (currentDetails) return currentDetails;
+
+  const legacyContact = parseSavedDetails(readStorageValue(LEGACY_CONTACT_STORAGE_KEY), false);
+  return legacyContact ?? emptyRememberedDetails();
+}
+
+function saveRememberedDetails(details: RememberedDetails): boolean {
+  try {
+    window.localStorage.setItem(
+      CONTACT_STORAGE_KEY,
+      JSON.stringify({
+        firstName: details.firstName,
+        lastName: details.lastName,
+        phone: details.phone,
+        email: details.email,
+        lineId: details.lineId,
+        needTaxInvoice: details.needTaxInvoice,
+        companyName: details.companyName,
+        taxId: details.taxId,
+        addressLine: details.addressLine,
+        subDistrict: details.subDistrict,
+        district: details.district,
+        province: details.province,
+        postalCode: details.postalCode,
+      }),
+    );
+    window.localStorage.removeItem(LEGACY_CONTACT_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function deleteSavedDetails(): boolean {
+  let deleted = true;
+
+  for (const key of [CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      deleted = false;
+    }
+  }
+
+  return deleted;
+}
+
+function hasSavedDetails(details: RememberedDetails): boolean {
+  return Object.values(details).some((value) => value === true || (typeof value === "string" && value !== ""));
+}
 
 export function QuoteRequestForm() {
   const t = useTranslations("QuoteForm");
@@ -33,19 +198,80 @@ export function QuoteRequestForm() {
   const { items, count, hydrated, clear } = useCart();
 
   const [state, action, pending] = useActionState(submitQuoteRequest, initialState);
+
+  const [consent, setConsent] = useState(false);
+  const [contact, setContact] = useState<ContactDetails>(emptyContact);
+  const [companyInvoice, setCompanyInvoice] = useState<CompanyInvoiceDetails>(emptyCompanyInvoice);
+  const [rememberContact, setRememberContact] = useState(false);
+  const [hasSavedData, setHasSavedData] = useState(false);
+  const [contactStorageStatus, setContactStorageStatus] = useState("");
+  const submittedDetailsRef = useRef<RememberedDetails>(emptyRememberedDetails());
+  const submittedRememberContactRef = useRef(false);
+
   // Without this the browser wipes every field whenever validation fails, and the
   // customer has to retype the whole form. See lib/use-no-reset-submit.ts.
-  const handleSubmit = useNoResetSubmit(action);
+  const submitWithoutReset = useNoResetSubmit(action);
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    submittedDetailsRef.current = { ...contact, ...companyInvoice };
+    submittedRememberContactRef.current = rememberContact;
+    submitWithoutReset(event);
+  };
 
-  const [needTaxInvoice, setNeedTaxInvoice] = useState(false);
-  const [consent, setConsent] = useState(false);
-  const [province, setProvince] = useState("");
+  // localStorage is browser-only. Keeping the initial state empty makes the
+  // server and first client render identical, then fills the controlled fields.
+  useEffect(() => {
+    const savedDetails = readSavedDetails();
+    queueMicrotask(() => {
+      setContact({
+        firstName: savedDetails.firstName,
+        lastName: savedDetails.lastName,
+        phone: savedDetails.phone,
+        email: savedDetails.email,
+        lineId: savedDetails.lineId,
+      });
+      setCompanyInvoice({
+        needTaxInvoice: savedDetails.needTaxInvoice,
+        companyName: savedDetails.companyName,
+        taxId: savedDetails.taxId,
+        addressLine: savedDetails.addressLine,
+        subDistrict: savedDetails.subDistrict,
+        district: savedDetails.district,
+        province: savedDetails.province,
+        postalCode: savedDetails.postalCode,
+      });
+      setHasSavedData(hasSavedDetails(savedDetails));
+      setRememberContact(hasSavedDetails(savedDetails));
+    });
+  }, []);
 
   // The request is recorded server side, so the browser copy has done its job.
   // `clear` is a module-level store function, so its identity never changes.
   useEffect(() => {
-    if (state.success) clear();
+    if (!state.success) return;
+
+    if (submittedRememberContactRef.current) {
+      saveRememberedDetails(submittedDetailsRef.current);
+    } else {
+      deleteSavedDetails();
+    }
+
+    clear();
   }, [state.success, clear]);
+
+  const updateContact = (field: ContactField, value: string) => {
+    setContact((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateCompanyInvoice = (field: CompanyInvoiceField, value: string) => {
+    setCompanyInvoice((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleDeleteSavedDetails = () => {
+    const deleted = deleteSavedDetails();
+    setRememberContact(false);
+    setHasSavedData(false);
+    setContactStorageStatus(t(deleted ? "savedContactDeleted" : "savedContactDeleteFailed"));
+  };
 
   // Checked before the cart branches below: emptying the cart would otherwise
   // drop straight to the empty state and hide the reference code.
@@ -71,7 +297,10 @@ export function QuoteRequestForm() {
   }
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
-  const showDeliveryNote = needTaxInvoice && province !== "" && province !== PHUKET_CODE;
+  const showDeliveryNote =
+    companyInvoice.needTaxInvoice &&
+    companyInvoice.province !== "" &&
+    companyInvoice.province !== PHUKET_CODE;
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -94,10 +323,22 @@ export function QuoteRequestForm() {
         <Section title={t("contactSection")}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("firstName")} name="firstName" error={fieldError("firstName")} required>
-              <Input id="firstName" name="firstName" autoComplete="given-name" />
+              <Input
+                id="firstName"
+                name="firstName"
+                value={contact.firstName}
+                onChange={(event) => updateContact("firstName", event.target.value)}
+                autoComplete="given-name"
+              />
             </Field>
             <Field label={t("lastName")} name="lastName" error={fieldError("lastName")} required>
-              <Input id="lastName" name="lastName" autoComplete="family-name" />
+              <Input
+                id="lastName"
+                name="lastName"
+                value={contact.lastName}
+                onChange={(event) => updateContact("lastName", event.target.value)}
+                autoComplete="family-name"
+              />
             </Field>
           </div>
           <Field
@@ -107,16 +348,57 @@ export function QuoteRequestForm() {
             hint={t("phoneHint")}
             required
           >
-            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" />
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              value={contact.phone}
+              onChange={(event) => updateContact("phone", event.target.value)}
+              autoComplete="tel"
+            />
           </Field>
+
+          <div className="space-y-3 border-t border-[#ededf7] pt-5">
+            <CheckField name="rememberContact" checked={rememberContact} onChange={setRememberContact}>
+              <span className="block">
+                <span className="block font-label-md text-[#434653]">{t("rememberContact")}</span>
+                <span className="mt-1 block font-label-sm leading-relaxed text-[#747684]">
+                  {t("rememberContactHint")}
+                </span>
+              </span>
+            </CheckField>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-8">
+              <button
+                type="button"
+                disabled={!hasSavedData}
+                onClick={handleDeleteSavedDetails}
+                className="rounded-md border border-[#c4e2f5] px-3 py-2 font-label-sm text-primary transition-colors hover:border-primary hover:bg-[#f3f3fc] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-[#c4e2f5] disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {t("deleteSavedContact")}
+              </button>
+              {contactStorageStatus && (
+                <p role="status" aria-live="polite" className="font-label-sm text-[#434653]">
+                  {contactStorageStatus}
+                </p>
+              )}
+            </div>
+          </div>
         </Section>
 
         <Section title={t("companySection")}>
-          <CheckField name="needTaxInvoice" checked={needTaxInvoice} onChange={setNeedTaxInvoice}>
+          <CheckField
+            name="needTaxInvoice"
+            checked={companyInvoice.needTaxInvoice}
+            onChange={(checked) =>
+              setCompanyInvoice((current) => ({ ...current, needTaxInvoice: checked }))
+            }
+          >
             {t("needTaxInvoice")}
           </CheckField>
 
-          {needTaxInvoice && (
+          {companyInvoice.needTaxInvoice && (
             <div className="space-y-4 border-t border-[#ededf7] pt-5">
               <Field
                 label={t("companyName")}
@@ -124,7 +406,13 @@ export function QuoteRequestForm() {
                 error={fieldError("companyName")}
                 required
               >
-                <Input id="companyName" name="companyName" autoComplete="organization" />
+                <Input
+                  id="companyName"
+                  name="companyName"
+                  value={companyInvoice.companyName}
+                  onChange={(event) => updateCompanyInvoice("companyName", event.target.value)}
+                  autoComplete="organization"
+                />
               </Field>
               <Field
                 label={t("taxId")}
@@ -133,7 +421,14 @@ export function QuoteRequestForm() {
                 hint={t("taxIdHint")}
                 required
               >
-                <Input id="taxId" name="taxId" inputMode="numeric" maxLength={20} />
+                <Input
+                  id="taxId"
+                  name="taxId"
+                  value={companyInvoice.taxId}
+                  onChange={(event) => updateCompanyInvoice("taxId", event.target.value)}
+                  inputMode="numeric"
+                  maxLength={20}
+                />
               </Field>
               <Field
                 label={t("addressLine")}
@@ -141,7 +436,13 @@ export function QuoteRequestForm() {
                 error={fieldError("addressLine")}
                 required
               >
-                <Input id="addressLine" name="addressLine" autoComplete="street-address" />
+                <Input
+                  id="addressLine"
+                  name="addressLine"
+                  value={companyInvoice.addressLine}
+                  onChange={(event) => updateCompanyInvoice("addressLine", event.target.value)}
+                  autoComplete="street-address"
+                />
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -151,10 +452,20 @@ export function QuoteRequestForm() {
                   error={fieldError("subDistrict")}
                   required
                 >
-                  <Input id="subDistrict" name="subDistrict" />
+                  <Input
+                    id="subDistrict"
+                    name="subDistrict"
+                    value={companyInvoice.subDistrict}
+                    onChange={(event) => updateCompanyInvoice("subDistrict", event.target.value)}
+                  />
                 </Field>
                 <Field label={t("district")} name="district" error={fieldError("district")} required>
-                  <Input id="district" name="district" />
+                  <Input
+                    id="district"
+                    name="district"
+                    value={companyInvoice.district}
+                    onChange={(event) => updateCompanyInvoice("district", event.target.value)}
+                  />
                 </Field>
               </div>
 
@@ -165,7 +476,11 @@ export function QuoteRequestForm() {
                   error={fieldError("province")}
                   required
                 >
-                  <Select name="province" value={province} onValueChange={setProvince}>
+                  <Select
+                    name="province"
+                    value={companyInvoice.province}
+                    onValueChange={(value) => updateCompanyInvoice("province", value)}
+                  >
                     <SelectTrigger id="province" className="w-full">
                       <SelectValue placeholder={t("provincePlaceholder")} />
                     </SelectTrigger>
@@ -184,7 +499,14 @@ export function QuoteRequestForm() {
                   error={fieldError("postalCode")}
                   required
                 >
-                  <Input id="postalCode" name="postalCode" inputMode="numeric" maxLength={10} />
+                  <Input
+                    id="postalCode"
+                    name="postalCode"
+                    value={companyInvoice.postalCode}
+                    onChange={(event) => updateCompanyInvoice("postalCode", event.target.value)}
+                    inputMode="numeric"
+                    maxLength={10}
+                  />
                 </Field>
               </div>
 
@@ -204,10 +526,22 @@ export function QuoteRequestForm() {
         <Section title={t("channelSection")} description={t("channelHint")}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("email")} name="email" error={fieldError("email")}>
-              <Input id="email" name="email" type="email" autoComplete="email" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={contact.email}
+                onChange={(event) => updateContact("email", event.target.value)}
+                autoComplete="email"
+              />
             </Field>
             <Field label={t("lineId")} name="lineId" error={fieldError("lineId")}>
-              <Input id="lineId" name="lineId" />
+              <Input
+                id="lineId"
+                name="lineId"
+                value={contact.lineId}
+                onChange={(event) => updateContact("lineId", event.target.value)}
+              />
             </Field>
           </div>
         </Section>
