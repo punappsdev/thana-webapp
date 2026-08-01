@@ -28,7 +28,7 @@ export function activityActionVariant(action: string): "default" | "secondary" |
   return "secondary";
 }
 
-const extraEntityLabels: Record<string, string> = { products: "สินค้า", quotations: "ใบเสนอราคา" };
+const extraEntityLabels: Record<string, string> = { products: "สินค้า", quotations: "ใบเสนอราคา", popups: "Popup โปรโมชั่น" };
 
 export function entityTypeLabel(type: string): string {
   if (type in extraEntityLabels) return extraEntityLabels[type];

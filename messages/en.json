@@ -235,6 +235,11 @@
       "lastUpdated": "Last updated: August 1, 2026"
     }
   },
+  "Popup": {
+    "title": "Special promotion",
+    "description": "Promotion announcement from Thana Glass Group",
+    "close": "Close promotion"
+  },
   "ContactFab": {
     "line": "Chat on LINE",
     "messenger": "Facebook Page",

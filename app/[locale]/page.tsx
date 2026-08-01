@@ -8,9 +8,12 @@ import { Partners } from "@/components/homepage/partners";
 import { CtaSection } from "@/components/homepage/cta-section";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
+import { PromotionPopup } from "@/components/promotion/promotion-popup";
+import { getActivePopup } from "@/lib/admin/popup-data";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  const popup = await getActivePopup();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -29,6 +32,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       <Footer />
       <ContactFab />
+      {popup ? <PromotionPopup popup={popup} locale={locale} /> : null}
     </div>
   );
 }

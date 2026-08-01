@@ -235,6 +235,11 @@
       "lastUpdated": "ปรับปรุงข้อมูลล่าสุดเมื่อ: 1 สิงหาคม 2569"
     }
   },
+  "Popup": {
+    "title": "โปรโมชั่นพิเศษ",
+    "description": "ประกาศโปรโมชั่นจาก Thana Glass Group",
+    "close": "ปิดโปรโมชั่น"
+  },
   "ContactFab": {
     "line": "คุยกับเราทาง LINE",
     "messenger": "Facebook Page",

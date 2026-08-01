@@ -253,6 +253,45 @@ model Banner {
 }
 
 // ---------------------------------------------------------------------------
+// PromotionPopup — โฆษณาโปรโมชั่นที่เด้งขึ้นมาเมื่อผู้เข้าชมเปิดหน้าแรก
+//
+// แยกจาก Banner โดยตั้งใจ: startDate/endDate ของ Banner ใช้แสดง "ตัวนับถอยหลัง"
+// บนแบนเนอร์เท่านั้น ไม่ได้กรองการมองเห็น แต่ของ popup ใช้กรองจริง ๆ ว่าจะเด้งหรือไม่
+// อีกทั้ง popup เป็นรูปภาพล้วน จึงไม่ต้องการ title/subtitle/button สองภาษาแบบ Banner
+// ---------------------------------------------------------------------------
+
+/// ความถี่ในการเด้ง popup ให้ผู้เข้าชมคนเดิม — บังคับใช้ฝั่ง client ด้วย session/localStorage
+enum PopupFrequency {
+  ALWAYS
+  ONCE_PER_SESSION
+  ONCE_PER_DAY
+}
+
+model PromotionPopup {
+  id        Int            @id @default(autoincrement())
+  /// ชื่อภายในไว้ให้แอดมินจำรายการได้ ไม่แสดงต่อผู้เข้าชม (popup เป็นรูปภาพล้วน)
+  name      String
+  imageUrl  String
+  /// alt text สองภาษาเพื่อ accessibility — ไม่ใช่ข้อความที่วาดทับบนรูป
+  altTh     String?
+  altEn     String?
+  /// คลิกรูปแล้วไปที่ URL นี้ (path ภายในเช่น /promotions/xxx หรือลิงก์นอก); ว่าง = คลิกไม่ได้
+  linkUrl   String?
+  /// ช่วงเวลาที่อนุญาตให้เด้ง; null = ไม่จำกัดด้านนั้น
+  startDate DateTime?
+  endDate   DateTime?
+  frequency PopupFrequency @default(ONCE_PER_DAY)
+  /// ลำดับความสำคัญเมื่อมีหลายรายการเข้าเงื่อนไขพร้อมกัน — ตัวเลขน้อยแสดงก่อน
+  sortOrder Int            @default(0)
+  published Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([published, startDate, endDate])
+  @@index([sortOrder])
+}
+
+// ---------------------------------------------------------------------------
 // Categories — shared by Product and Work (portfolio)
 // ---------------------------------------------------------------------------
 
