@@ -61,6 +61,7 @@ export async function submitQuoteRequest(
   const t = await getTranslations({ locale, namespace: "QuoteForm" });
 
   const needTaxInvoice = formData.get("needTaxInvoice") === "on";
+  const needDelivery = formData.has("needDelivery");
 
   // Built per request because every message is translated at this point.
   const schema = z
@@ -87,6 +88,11 @@ export async function submitQuoteRequest(
       district: optionalText,
       province: optionalText,
       postalCode: optionalText,
+      deliveryAddressLine: optionalText,
+      deliverySubDistrict: optionalText,
+      deliveryDistrict: optionalText,
+      deliveryProvince: optionalText,
+      deliveryPostalCode: optionalText,
       consent: z.literal("on", { message: t("errorConsent") }),
     })
     // At least one way to send the quotation back. Reported on `email` because
@@ -96,6 +102,38 @@ export async function submitQuoteRequest(
       message: t("errorChannel"),
     })
     .superRefine((data, ctx) => {
+      if (needDelivery) {
+        const requiredDelivery = [
+          ["deliveryAddressLine", data.deliveryAddressLine],
+          ["deliverySubDistrict", data.deliverySubDistrict],
+          ["deliveryDistrict", data.deliveryDistrict],
+          ["deliveryPostalCode", data.deliveryPostalCode],
+        ] as const;
+        for (const [field, value] of requiredDelivery) {
+          if (value === null) {
+            ctx.addIssue({ code: "custom", path: [field], message: t("errorRequired") });
+          }
+        }
+
+        if (
+          data.deliveryPostalCode !== null &&
+          digitsOnly(data.deliveryPostalCode).length !== 5
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["deliveryPostalCode"],
+            message: t("errorPostalCode"),
+          });
+        }
+        if (data.deliveryProvince === null || !isProvinceCode(data.deliveryProvince)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["deliveryProvince"],
+            message: t("errorProvince"),
+          });
+        }
+      }
+
       if (!needTaxInvoice) return;
 
       const required = [
@@ -135,6 +173,11 @@ export async function submitQuoteRequest(
     district: formData.get("district") ?? "",
     province: formData.get("province") ?? "",
     postalCode: formData.get("postalCode") ?? "",
+    deliveryAddressLine: formData.get("deliveryAddressLine") ?? "",
+    deliverySubDistrict: formData.get("deliverySubDistrict") ?? "",
+    deliveryDistrict: formData.get("deliveryDistrict") ?? "",
+    deliveryProvince: formData.get("deliveryProvince") ?? "",
+    deliveryPostalCode: formData.get("deliveryPostalCode") ?? "",
     consent: formData.get("consent") ?? "",
   });
 
@@ -211,6 +254,13 @@ export async function submitQuoteRequest(
           district: needTaxInvoice ? d.district : null,
           province: needTaxInvoice ? d.province : null,
           postalCode: needTaxInvoice && d.postalCode ? digitsOnly(d.postalCode) : null,
+          needDelivery,
+          deliveryAddressLine: needDelivery ? d.deliveryAddressLine : null,
+          deliverySubDistrict: needDelivery ? d.deliverySubDistrict : null,
+          deliveryDistrict: needDelivery ? d.deliveryDistrict : null,
+          deliveryProvince: needDelivery ? d.deliveryProvince : null,
+          deliveryPostalCode:
+            needDelivery && d.deliveryPostalCode ? digitsOnly(d.deliveryPostalCode) : null,
           consentAt: new Date(),
           locale,
           ipAddress,

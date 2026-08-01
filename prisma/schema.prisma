@@ -553,6 +553,15 @@ model QuotationRequest {
   province       String? @db.VarChar(64)
   postalCode     String? @db.VarChar(10)
 
+  /// ติ๊กเมื่อต้องการให้จัดส่งสินค้า ทำให้ฟิลด์ที่อยู่ด้านล่างทั้งชุดถูกกรอก
+  needDelivery        Boolean @default(false)
+  deliveryAddressLine String? @db.VarChar(255)
+  deliverySubDistrict String? @db.VarChar(120)
+  deliveryDistrict    String? @db.VarChar(120)
+  /// รหัสจังหวัดจาก lib/provinces.ts (เช่น "phuket") ไม่ใช่ชื่อที่แสดงผล
+  deliveryProvince    String? @db.VarChar(64)
+  deliveryPostalCode  String? @db.VarChar(10)
+
   /// เวลาที่ลูกค้าติ๊กยินยอมตามนโยบายความเป็นส่วนตัว เก็บไว้เป็นหลักฐาน PDPA
   consentAt DateTime
 

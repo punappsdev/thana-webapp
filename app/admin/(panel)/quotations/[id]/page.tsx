@@ -20,7 +20,7 @@ export default async function QuotationDetailPage({
   const request = await getQuotationDetail(Number(id));
   if (!request) notFound();
 
-  const outsidePhuket = request.needTaxInvoice && isOutsidePhuket(request.province);
+  const outsidePhuket = request.needDelivery && isOutsidePhuket(request.deliveryProvince);
 
   return (
     <div className="space-y-6">
@@ -96,6 +96,31 @@ export default async function QuotationDetailPage({
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline-sm">ข้อมูลการจัดส่ง</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <DetailRow label="สถานะ" value={request.needDelivery ? "ต้องการจัดส่ง" : "ไม่ต้องการจัดส่ง"} />
+              {request.needDelivery ? (
+                <>
+                  <DetailRow label="ที่อยู่สำหรับจัดส่ง" value={request.deliveryAddressLine} />
+                  <DetailRow label="ตำบล / แขวง" value={request.deliverySubDistrict} />
+                  <DetailRow label="อำเภอ / เขต" value={request.deliveryDistrict} />
+                  <DetailRow label="จังหวัด" value={provinceName(request.deliveryProvince, "th")} />
+                  <DetailRow label="รหัสไปรษณีย์" value={request.deliveryPostalCode} />
+                </>
+              ) : null}
+
+              {outsidePhuket ? (
+                <p className="flex items-start gap-2.5 rounded-md border border-primary/20 bg-primary/5 p-3 font-body-sm text-foreground">
+                  <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
+                  จัดส่งนอกจังหวัดภูเก็ต — มีค่าบริการจัดส่ง ยกเว้นกระจกเทมเปอร์และกระจกลามิเนต
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+
           {request.needTaxInvoice ? (
             <Card>
               <CardHeader>
@@ -110,12 +135,6 @@ export default async function QuotationDetailPage({
                 <DetailRow label="จังหวัด" value={provinceName(request.province, "th")} />
                 <DetailRow label="รหัสไปรษณีย์" value={request.postalCode} />
 
-                {outsidePhuket ? (
-                  <p className="flex items-start gap-2.5 rounded-md border border-primary/20 bg-primary/5 p-3 font-body-sm text-foreground">
-                    <Truck className="mt-0.5 size-4 shrink-0 text-primary" />
-                    จัดส่งนอกจังหวัดภูเก็ต — มีค่าบริการจัดส่ง ยกเว้นกระจกเทมเปอร์และกระจกลามิเนต
-                  </p>
-                ) : null}
               </CardContent>
             </Card>
           ) : null}

@@ -25,7 +25,8 @@ import { CheckField } from "./check-field";
 import { PrivacyPolicyDialog } from "./privacy-policy-dialog";
 
 const initialState: QuoteFormResult = { success: false, message: "" };
-const CONTACT_STORAGE_KEY = "thana-quote-contact-v2";
+const CONTACT_STORAGE_KEY = "thana-quote-contact-v3";
+const PREVIOUS_CONTACT_STORAGE_KEY = "thana-quote-contact-v2";
 const LEGACY_CONTACT_STORAGE_KEY = "thana-quote-contact-v1";
 
 const EMPTY_CONTACT = {
@@ -47,11 +48,22 @@ const EMPTY_COMPANY_INVOICE = {
   postalCode: "",
 };
 
+const EMPTY_DELIVERY = {
+  needDelivery: false,
+  deliveryAddressLine: "",
+  deliverySubDistrict: "",
+  deliveryDistrict: "",
+  deliveryProvince: "",
+  deliveryPostalCode: "",
+};
+
 type ContactDetails = typeof EMPTY_CONTACT;
 type ContactField = keyof ContactDetails;
 type CompanyInvoiceDetails = typeof EMPTY_COMPANY_INVOICE;
 type CompanyInvoiceField = Exclude<keyof CompanyInvoiceDetails, "needTaxInvoice">;
-type RememberedDetails = ContactDetails & CompanyInvoiceDetails;
+type DeliveryDetails = typeof EMPTY_DELIVERY;
+type DeliveryField = Exclude<keyof DeliveryDetails, "needDelivery">;
+type RememberedDetails = ContactDetails & CompanyInvoiceDetails & DeliveryDetails;
 
 function emptyContact(): ContactDetails {
   return { ...EMPTY_CONTACT };
@@ -61,8 +73,12 @@ function emptyCompanyInvoice(): CompanyInvoiceDetails {
   return { ...EMPTY_COMPANY_INVOICE };
 }
 
+function emptyDelivery(): DeliveryDetails {
+  return { ...EMPTY_DELIVERY };
+}
+
 function emptyRememberedDetails(): RememberedDetails {
-  return { ...EMPTY_CONTACT, ...EMPTY_COMPANY_INVOICE };
+  return { ...EMPTY_CONTACT, ...EMPTY_COMPANY_INVOICE, ...EMPTY_DELIVERY };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -77,7 +93,11 @@ function readStorageValue(key: string): string | null {
   }
 }
 
-function parseSavedDetails(raw: string | null, includesCompanyInvoice: boolean): RememberedDetails | null {
+function parseSavedDetails(
+  raw: string | null,
+  includesCompanyInvoice: boolean,
+  includesDelivery: boolean,
+): RememberedDetails | null {
   try {
     if (!raw) return null;
 
@@ -102,6 +122,7 @@ function parseSavedDetails(raw: string | null, includesCompanyInvoice: boolean):
         email: parsed.email,
         lineId: parsed.lineId,
         ...emptyCompanyInvoice(),
+        ...emptyDelivery(),
       };
     }
 
@@ -118,7 +139,7 @@ function parseSavedDetails(raw: string | null, includesCompanyInvoice: boolean):
       return null;
     }
 
-    return {
+    const details = {
       firstName: parsed.firstName,
       lastName: parsed.lastName,
       phone: parsed.phone,
@@ -133,16 +154,46 @@ function parseSavedDetails(raw: string | null, includesCompanyInvoice: boolean):
       province: parsed.province,
       postalCode: parsed.postalCode,
     };
+
+    if (!includesDelivery) return { ...details, ...emptyDelivery() };
+
+    if (
+      typeof parsed.needDelivery !== "boolean" ||
+      typeof parsed.deliveryAddressLine !== "string" ||
+      typeof parsed.deliverySubDistrict !== "string" ||
+      typeof parsed.deliveryDistrict !== "string" ||
+      typeof parsed.deliveryProvince !== "string" ||
+      typeof parsed.deliveryPostalCode !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      ...details,
+      needDelivery: parsed.needDelivery,
+      deliveryAddressLine: parsed.deliveryAddressLine,
+      deliverySubDistrict: parsed.deliverySubDistrict,
+      deliveryDistrict: parsed.deliveryDistrict,
+      deliveryProvince: parsed.deliveryProvince,
+      deliveryPostalCode: parsed.deliveryPostalCode,
+    };
   } catch {
     return null;
   }
 }
 
 function readSavedDetails(): RememberedDetails {
-  const currentDetails = parseSavedDetails(readStorageValue(CONTACT_STORAGE_KEY), true);
+  const currentDetails = parseSavedDetails(readStorageValue(CONTACT_STORAGE_KEY), true, true);
   if (currentDetails) return currentDetails;
 
-  const legacyContact = parseSavedDetails(readStorageValue(LEGACY_CONTACT_STORAGE_KEY), false);
+  const previousDetails = parseSavedDetails(
+    readStorageValue(PREVIOUS_CONTACT_STORAGE_KEY),
+    true,
+    false,
+  );
+  if (previousDetails) return previousDetails;
+
+  const legacyContact = parseSavedDetails(readStorageValue(LEGACY_CONTACT_STORAGE_KEY), false, false);
   return legacyContact ?? emptyRememberedDetails();
 }
 
@@ -164,19 +215,34 @@ function saveRememberedDetails(details: RememberedDetails): boolean {
         district: details.district,
         province: details.province,
         postalCode: details.postalCode,
+        needDelivery: details.needDelivery,
+        deliveryAddressLine: details.deliveryAddressLine,
+        deliverySubDistrict: details.deliverySubDistrict,
+        deliveryDistrict: details.deliveryDistrict,
+        deliveryProvince: details.deliveryProvince,
+        deliveryPostalCode: details.deliveryPostalCode,
       }),
     );
-    window.localStorage.removeItem(LEGACY_CONTACT_STORAGE_KEY);
-    return true;
   } catch {
     return false;
   }
+
+  let obsoleteKeysRemoved = true;
+  for (const key of [PREVIOUS_CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      obsoleteKeysRemoved = false;
+    }
+  }
+
+  return obsoleteKeysRemoved;
 }
 
 function deleteSavedDetails(): boolean {
   let deleted = true;
 
-  for (const key of [CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
+  for (const key of [CONTACT_STORAGE_KEY, PREVIOUS_CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
     try {
       window.localStorage.removeItem(key);
     } catch {
@@ -202,6 +268,8 @@ export function QuoteRequestForm() {
   const [consent, setConsent] = useState(false);
   const [contact, setContact] = useState<ContactDetails>(emptyContact);
   const [companyInvoice, setCompanyInvoice] = useState<CompanyInvoiceDetails>(emptyCompanyInvoice);
+  const [delivery, setDelivery] = useState<DeliveryDetails>(emptyDelivery);
+  const [useSameDeliveryAddress, setUseSameDeliveryAddress] = useState(false);
   const [rememberContact, setRememberContact] = useState(false);
   const [hasSavedData, setHasSavedData] = useState(false);
   const [contactStorageStatus, setContactStorageStatus] = useState("");
@@ -212,7 +280,7 @@ export function QuoteRequestForm() {
   // customer has to retype the whole form. See lib/use-no-reset-submit.ts.
   const submitWithoutReset = useNoResetSubmit(action);
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    submittedDetailsRef.current = { ...contact, ...companyInvoice };
+    submittedDetailsRef.current = { ...contact, ...companyInvoice, ...delivery };
     submittedRememberContactRef.current = rememberContact;
     submitWithoutReset(event);
   };
@@ -239,6 +307,14 @@ export function QuoteRequestForm() {
         province: savedDetails.province,
         postalCode: savedDetails.postalCode,
       });
+      setDelivery({
+        needDelivery: savedDetails.needDelivery,
+        deliveryAddressLine: savedDetails.deliveryAddressLine,
+        deliverySubDistrict: savedDetails.deliverySubDistrict,
+        deliveryDistrict: savedDetails.deliveryDistrict,
+        deliveryProvince: savedDetails.deliveryProvince,
+        deliveryPostalCode: savedDetails.deliveryPostalCode,
+      });
       setHasSavedData(hasSavedDetails(savedDetails));
       setRememberContact(hasSavedDetails(savedDetails));
     });
@@ -264,6 +340,34 @@ export function QuoteRequestForm() {
 
   const updateCompanyInvoice = (field: CompanyInvoiceField, value: string) => {
     setCompanyInvoice((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateDelivery = (field: DeliveryField, value: string) => {
+    setDelivery((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleDeliveryToggle = (checked: boolean) => {
+    setDelivery((current) => ({ ...current, needDelivery: checked }));
+    if (!checked) setUseSameDeliveryAddress(false);
+  };
+
+  const handleTaxInvoiceToggle = (checked: boolean) => {
+    setCompanyInvoice((current) => ({ ...current, needTaxInvoice: checked }));
+    if (!checked) setUseSameDeliveryAddress(false);
+  };
+
+  const handleSameDeliveryAddressToggle = (checked: boolean) => {
+    setUseSameDeliveryAddress(checked);
+    if (!checked) return;
+
+    setCompanyInvoice((current) => ({
+      ...current,
+      addressLine: delivery.deliveryAddressLine,
+      subDistrict: delivery.deliverySubDistrict,
+      district: delivery.deliveryDistrict,
+      province: delivery.deliveryProvince,
+      postalCode: delivery.deliveryPostalCode,
+    }));
   };
 
   const handleDeleteSavedDetails = () => {
@@ -298,9 +402,9 @@ export function QuoteRequestForm() {
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
   const showDeliveryNote =
-    companyInvoice.needTaxInvoice &&
-    companyInvoice.province !== "" &&
-    companyInvoice.province !== PHUKET_CODE;
+    delivery.needDelivery &&
+    delivery.deliveryProvince !== "" &&
+    delivery.deliveryProvince !== PHUKET_CODE;
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -358,22 +462,134 @@ export function QuoteRequestForm() {
               autoComplete="tel"
             />
           </Field>
+        </Section>
 
+        <Section title={t("deliverySection")} description={t("deliveryHint")}>
+          <CheckField name="needDelivery" checked={delivery.needDelivery} onChange={handleDeliveryToggle}>
+            {t("needDelivery")}
+          </CheckField>
+
+          {delivery.needDelivery && (
+            <div className="space-y-4 border-t border-[#ededf7] pt-5">
+              <Field
+                label={t("deliveryAddressLine")}
+                name="deliveryAddressLine"
+                error={fieldError("deliveryAddressLine")}
+                required
+              >
+                <Input
+                  id="deliveryAddressLine"
+                  name="deliveryAddressLine"
+                  value={delivery.deliveryAddressLine}
+                  onChange={(event) => updateDelivery("deliveryAddressLine", event.target.value)}
+                  autoComplete="street-address"
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("deliverySubDistrict")}
+                  name="deliverySubDistrict"
+                  error={fieldError("deliverySubDistrict")}
+                  required
+                >
+                  <Input
+                    id="deliverySubDistrict"
+                    name="deliverySubDistrict"
+                    value={delivery.deliverySubDistrict}
+                    onChange={(event) => updateDelivery("deliverySubDistrict", event.target.value)}
+                  />
+                </Field>
+                <Field
+                  label={t("deliveryDistrict")}
+                  name="deliveryDistrict"
+                  error={fieldError("deliveryDistrict")}
+                  required
+                >
+                  <Input
+                    id="deliveryDistrict"
+                    name="deliveryDistrict"
+                    value={delivery.deliveryDistrict}
+                    onChange={(event) => updateDelivery("deliveryDistrict", event.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("deliveryProvince")}
+                  name="deliveryProvince"
+                  error={fieldError("deliveryProvince")}
+                  required
+                >
+                  <Select
+                    name="deliveryProvince"
+                    value={delivery.deliveryProvince}
+                    onValueChange={(value) => updateDelivery("deliveryProvince", value)}
+                  >
+                    <SelectTrigger id="deliveryProvince" className="w-full">
+                      <SelectValue placeholder={t("deliveryProvincePlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {PROVINCES.map((item) => (
+                        <SelectItem key={item.code} value={item.code} className="font-body-sm">
+                          {locale === "en" ? item.nameEn : item.nameTh}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field
+                  label={t("deliveryPostalCode")}
+                  name="deliveryPostalCode"
+                  error={fieldError("deliveryPostalCode")}
+                  required
+                >
+                  <Input
+                    id="deliveryPostalCode"
+                    name="deliveryPostalCode"
+                    value={delivery.deliveryPostalCode}
+                    onChange={(event) => updateDelivery("deliveryPostalCode", event.target.value)}
+                    inputMode="numeric"
+                    maxLength={10}
+                  />
+                </Field>
+              </div>
+
+              {showDeliveryNote && (
+                <p
+                  role="status"
+                  className="flex items-start gap-2.5 rounded-md border border-[#c4e2f5] bg-[#f3f3fc] p-4 font-body-sm leading-relaxed text-[#434653]"
+                >
+                  <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  {t("deliveryNote")}
+                </p>
+              )}
+            </div>
+          )}
         </Section>
 
         <Section title={t("companySection")}>
           <CheckField
             name="needTaxInvoice"
             checked={companyInvoice.needTaxInvoice}
-            onChange={(checked) =>
-              setCompanyInvoice((current) => ({ ...current, needTaxInvoice: checked }))
-            }
+            onChange={handleTaxInvoiceToggle}
           >
             {t("needTaxInvoice")}
           </CheckField>
 
           {companyInvoice.needTaxInvoice && (
             <div className="space-y-4 border-t border-[#ededf7] pt-5">
+              {delivery.needDelivery && (
+                <CheckField
+                  name="useDeliveryAddress"
+                  checked={useSameDeliveryAddress}
+                  onChange={handleSameDeliveryAddressToggle}
+                >
+                  {t("useDeliveryAddress")}
+                </CheckField>
+              )}
+
               <Field
                 label={t("companyName")}
                 name="companyName"
@@ -483,16 +699,6 @@ export function QuoteRequestForm() {
                   />
                 </Field>
               </div>
-
-              {showDeliveryNote && (
-                <p
-                  role="status"
-                  className="flex items-start gap-2.5 rounded-md border border-[#c4e2f5] bg-[#f3f3fc] p-4 font-body-sm leading-relaxed text-[#434653]"
-                >
-                  <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                  {t("deliveryNote")}
-                </p>
-              )}
             </div>
           )}
         </Section>
