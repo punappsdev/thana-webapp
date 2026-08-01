@@ -21,8 +21,8 @@ import { pick } from "@/lib/products";
 import { PHUKET_CODE, PROVINCES } from "@/lib/provinces";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { submitQuoteRequest, type QuoteFormResult } from "@/app/[locale]/quote/actions";
+import { LegalDialog } from "@/components/legal/legal-dialog";
 import { CheckField } from "./check-field";
-import { PrivacyPolicyDialog } from "./privacy-policy-dialog";
 
 const initialState: QuoteFormResult = { success: false, message: "" };
 const CONTACT_STORAGE_KEY = "thana-quote-contact-v3";
@@ -755,7 +755,12 @@ export function QuoteRequestForm() {
 
         <Section title={t("consentSection")}>
           <CheckField name="consent" checked={consent} onChange={setConsent}>
-            {t("consentBefore")} <PrivacyPolicyDialog label={t("consentPolicyLink")} />
+            {t("consentBefore")} {" "}
+            <LegalDialog
+              document="privacy"
+              label={t("consentPolicyLink")}
+              triggerClassName="cursor-pointer font-semibold text-primary underline underline-offset-2 transition-colors hover:text-secondary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            />
           </CheckField>
           {fieldError("consent") && (
             <p className="font-label-sm text-[#ba1a1a]">{fieldError("consent")}</p>

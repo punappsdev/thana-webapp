@@ -14,8 +14,8 @@ const initialState: ActionResult = { success: false, message: "" };
 function LoginButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="mt-2 w-full" disabled={pending}>
-      <LogIn className="size-4" aria-hidden="true" />
+    <Button type="submit" size="lg" className="mt-4 w-full" disabled={pending}>
+      <LogIn className="size-5" aria-hidden="true" />
       {pending ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
     </Button>
   );
@@ -27,11 +27,11 @@ export function LoginForm() {
     <form action={action} className="mt-6 space-y-5">
       <div className="space-y-2">
         <Label htmlFor="email" className="font-label-md">อีเมล</Label>
-        <Input id="email" name="email" type="email" autoComplete="username" required className="font-body-sm" />
+        <Input id="email" name="email" type="email" autoComplete="username" required className="h-10 px-3.5 font-body-md" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password" className="font-label-md">รหัสผ่าน</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required className="font-body-sm" />
+        <Input id="password" name="password" type="password" autoComplete="current-password" required className="h-10 px-3.5 font-body-md" />
       </div>
       {state.message ? (
         <p role="alert" className="rounded-md border border-destructive/30 bg-error-container px-3 py-2 font-body-sm text-on-error-container">

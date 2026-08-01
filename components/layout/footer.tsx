@@ -4,7 +4,7 @@ import { Mail, Phone, Clock, MapPin } from "lucide-react";
 import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
-import { FooterPrivacyTrigger } from "./footer-privacy-trigger";
+import { LegalDialog } from "@/components/legal/legal-dialog";
 
 /**
  * The category column reads the database directly rather than fetching
@@ -112,8 +112,16 @@ export async function Footer() {
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-body-sm text-muted-foreground text-center md:text-left">{t("copyright")}</p>
         <div className="flex gap-6 font-body-sm text-muted-foreground">
-          <FooterPrivacyTrigger label={t("privacy")} />
-          <Link href="#" className="hover:text-primary transition-all">{t("terms")}</Link>
+          <LegalDialog
+            document="privacy"
+            label={t("privacy")}
+            triggerClassName="cursor-pointer font-body-sm font-normal text-muted-foreground no-underline transition-all hover:text-primary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          />
+          <LegalDialog
+            document="terms"
+            label={t("terms")}
+            triggerClassName="cursor-pointer font-body-sm font-normal text-muted-foreground no-underline transition-colors hover:text-primary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          />
         </div>
       </div>
     </footer>
