@@ -4,6 +4,7 @@ import { Mail, Phone, Clock, MapPin } from "lucide-react";
 import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
+import { FooterPrivacyTrigger } from "./footer-privacy-trigger";
 
 /**
  * The category column reads the database directly rather than fetching
@@ -111,11 +112,10 @@ export async function Footer() {
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-body-sm text-muted-foreground text-center md:text-left">{t("copyright")}</p>
         <div className="flex gap-6 font-body-sm text-muted-foreground">
-          <Link href="#" className="hover:text-primary transition-all">{t("privacy")}</Link>
+          <FooterPrivacyTrigger label={t("privacy")} />
           <Link href="#" className="hover:text-primary transition-all">{t("terms")}</Link>
         </div>
       </div>
     </footer>
   );
 }
-

@@ -37,7 +37,7 @@ export function PrivacyPolicyDialog({ label }: { label: string }) {
           <DialogTitle className="font-headline-sm text-primary">
             {t("policy.title")}
           </DialogTitle>
-          <DialogDescription className="font-body-sm text-[#434653]">
+          <DialogDescription className="font-body-sm whitespace-pre-line text-[#434653]">
             {t("policy.intro")}
           </DialogDescription>
         </DialogHeader>
@@ -46,9 +46,12 @@ export function PrivacyPolicyDialog({ label }: { label: string }) {
           {sections.map((section) => (
             <section key={section.heading} className="space-y-1.5">
               <h3 className="font-label-lg font-semibold text-on-surface">{section.heading}</h3>
-              <p className="font-body-sm leading-relaxed text-[#434653]">{section.body}</p>
+              <p className="font-body-sm whitespace-pre-line leading-relaxed text-[#434653]">
+                {section.body}
+              </p>
             </section>
           ))}
+          <p className="font-label-sm text-[#747684]">{t("policy.lastUpdated")}</p>
         </div>
       </DialogContent>
     </Dialog>
