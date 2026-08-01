@@ -359,32 +359,6 @@ export function QuoteRequestForm() {
             />
           </Field>
 
-          <div className="space-y-3 border-t border-[#ededf7] pt-5">
-            <CheckField name="rememberContact" checked={rememberContact} onChange={setRememberContact}>
-              <span className="block">
-                <span className="block font-label-md text-[#434653]">{t("rememberContact")}</span>
-                <span className="mt-1 block font-label-sm leading-relaxed text-[#747684]">
-                  {t("rememberContactHint")}
-                </span>
-              </span>
-            </CheckField>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-8">
-              <button
-                type="button"
-                disabled={!hasSavedData}
-                onClick={handleDeleteSavedDetails}
-                className="rounded-md border border-[#c4e2f5] px-3 py-2 font-label-sm text-primary transition-colors hover:border-primary hover:bg-[#f3f3fc] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-[#c4e2f5] disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {t("deleteSavedContact")}
-              </button>
-              {contactStorageStatus && (
-                <p role="status" aria-live="polite" className="font-label-sm text-[#434653]">
-                  {contactStorageStatus}
-                </p>
-              )}
-            </div>
-          </div>
         </Section>
 
         <Section title={t("companySection")}>
@@ -545,6 +519,33 @@ export function QuoteRequestForm() {
             </Field>
           </div>
         </Section>
+
+        <div className="space-y-3 border-t border-[#ededf7] pt-5">
+          <CheckField name="rememberContact" checked={rememberContact} onChange={setRememberContact}>
+            <span className="block">
+              <span className="block font-label-md text-[#434653]">{t("rememberContact")}</span>
+              <span className="mt-1 block font-label-sm leading-relaxed text-[#747684]">
+                {t("rememberContactHint")}
+              </span>
+            </span>
+          </CheckField>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-8">
+            <button
+              type="button"
+              disabled={!hasSavedData}
+              onClick={handleDeleteSavedDetails}
+              className="rounded-md border border-[#c4e2f5] px-3 py-2 font-label-sm text-primary transition-colors hover:border-primary hover:bg-[#f3f3fc] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-[#c4e2f5] disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {t("deleteSavedContact")}
+            </button>
+            {contactStorageStatus && (
+              <p role="status" aria-live="polite" className="font-label-sm text-[#434653]">
+                {contactStorageStatus}
+              </p>
+            )}
+          </div>
+        </div>
 
         <Section title={t("consentSection")}>
           <CheckField name="consent" checked={consent} onChange={setConsent}>
