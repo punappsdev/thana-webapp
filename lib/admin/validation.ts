@@ -39,6 +39,13 @@ export interface ProductVariantInput {
   attributeValueIds: number[];
 }
 
+/**
+ * How many variant rows one product may have — the product of every option axis.
+ * Lives here rather than next to the editor so the save action can enforce it
+ * too: the editor's cap is a courtesy, this is the one that actually holds.
+ */
+export const MAX_COMBINATIONS = 200;
+
 export function validateProductVariants(variants: ProductVariantInput[]): string[] {
   const errors = new Set<string>();
   const skus = new Set<string>();

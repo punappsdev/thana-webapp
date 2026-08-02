@@ -15,10 +15,12 @@ import {
   type ProductAttributeDraft,
 } from "@/components/admin/product-attributes-editor";
 import {
+  MAX_COMBINATIONS,
   ProductVariantsTable,
   buildAxes,
   combinationKey,
   existingToken,
+  isOverCombinationLimit,
   syncVariants,
   type VariantRow,
 } from "@/components/admin/product-variants-table";
@@ -91,6 +93,8 @@ type EditorOptions = {
 
 const initialState: ActionResult = { success: false, message: "" };
 
+const overLimitHint = `ตัวเลือกสินค้าได้สูงสุด ${MAX_COMBINATIONS} รายการ กรุณาลดจำนวนค่าของตัวเลือกลงก่อนจึงจะบันทึกได้`;
+
 
 export function ProductForm({ record, options }: { record: ProductRecord | null; options: EditorOptions }) {
   const router = useRouter();
@@ -137,6 +141,11 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
   );
 
   const axes = useMemo(() => buildAxes(attributes, options.attributes), [attributes, options.attributes]);
+
+  // Past the cap the variant table stops regenerating, so the rows on screen no
+  // longer match the options. Saving that would quietly store combinations the
+  // admin never saw — block it here rather than let the action reject it later.
+  const overLimit = isOverCombinationLimit(axes);
 
   /**
    * The variant rows are a pure function of the options, so keep them in step
@@ -236,22 +245,22 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
           ) : null}
           {record?.published ? (
             <>
-              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending || overLimit} title={overLimit ? overLimitHint : undefined}>
                 <Save className="size-4" />
                 ยกเลิกเผยแพร่ (เปลี่ยนเป็นร่าง)
               </Button>
-              <Button type="submit" name="intent" value="publish" disabled={pending}>
+              <Button type="submit" name="intent" value="publish" disabled={pending || overLimit} title={overLimit ? overLimitHint : undefined}>
                 <Save className="size-4" />
                 บันทึกการแก้ไข
               </Button>
             </>
           ) : (
             <>
-              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending}>
+              <Button type="submit" name="intent" value="draft" variant="outline" disabled={pending || overLimit} title={overLimit ? overLimitHint : undefined}>
                 <Save className="size-4" />
                 บันทึกร่าง
               </Button>
-              <Button type="submit" name="intent" value="publish" disabled={pending}>
+              <Button type="submit" name="intent" value="publish" disabled={pending || overLimit} title={overLimit ? overLimitHint : undefined}>
                 <ExternalLink className="size-4" />
                 เผยแพร่
               </Button>
@@ -262,6 +271,12 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
 
       {state.conflict ? (
         <p className="rounded-md border border-destructive bg-error-container p-3 font-body-sm text-on-error-container">{state.message}</p>
+      ) : null}
+
+      {/* The table's own warning sits in another tab, so repeat the reason next
+          to the buttons it just disabled — otherwise they look simply broken. */}
+      {overLimit ? (
+        <p className="rounded-md border border-destructive bg-error-container p-3 font-body-sm text-on-error-container">{overLimitHint}</p>
       ) : null}
 
       <Tabs defaultValue="general" className="space-y-4">

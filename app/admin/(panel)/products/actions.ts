@@ -10,6 +10,7 @@ import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import { reindexProducts } from "@/lib/search-index";
 import {
+  MAX_COMBINATIONS,
   isStaleVersion,
   slugifyAdminTitle,
   validateBilingualPublish,
@@ -51,7 +52,7 @@ const variantSchema = z.array(
     sortOrder: z.number().int().default(0),
     valueTokens: z.array(z.string().regex(/^[vn]:.+$/)),
   }),
-);
+).max(MAX_COMBINATIONS, `ตัวเลือกสินค้าได้สูงสุด ${MAX_COMBINATIONS} รายการ กรุณาลดจำนวนค่าของตัวเลือกลง`);
 
 const optionalId = z.preprocess((value) => (value === "none" || value === "" ? undefined : value), z.coerce.number().int().positive().optional());
 
@@ -128,8 +129,11 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     images = imageSchema.parse(JSON.parse(d.imagesJson));
     attributes = attributeSchema.parse(JSON.parse(d.attributesJson));
     variants = variantSchema.parse(JSON.parse(d.variantsJson));
-  } catch {
-    return { success: false, message: "ข้อมูลรูปภาพ คุณลักษณะ หรือตัวเลือกไม่ถูกต้อง" };
+  } catch (error) {
+    // A schema rejection here carries a message worth showing ("สูงสุด 4 รูป",
+    // the variant cap); only a malformed JSON blob needs the generic fallback.
+    const issue = error instanceof z.ZodError ? error.issues[0]?.message : null;
+    return { success: false, message: issue || "ข้อมูลรูปภาพ คุณลักษณะ หรือตัวเลือกไม่ถูกต้อง" };
   }
 
   // Anything created here lands in the shared dictionary and is rendered on both
@@ -296,9 +300,14 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
         }
       }
 
-      for (const [index, variant] of pricedVariants.entries()) {
-        await tx.productVariant.create({
-          data: {
+      // Written in bulk rather than row by row. Every statement inside an
+      // interactive transaction costs ~45ms here, and a per-variant create (plus
+      // its nested value rows) is 3 of them — 60 variants blew past Prisma's 5s
+      // transaction timeout and surfaced as a bare "บันทึกสินค้าไม่สำเร็จ".
+      // Three statements total now, regardless of how many variants there are.
+      if (pricedVariants.length) {
+        await tx.productVariant.createMany({
+          data: pricedVariants.map((variant, index) => ({
             productId: row.id,
             sku: variant.sku || null,
             price: variant.price,
@@ -306,8 +315,23 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
             isAvailable: variant.isAvailable,
             isDefault: variant.isDefault,
             sortOrder: variant.sortOrder || index,
-            attributeValues: { create: [...new Set(variant.valueTokens.map((token) => tokenToValueId.get(token)!))].map((attributeValueId) => ({ attributeValueId })) },
-          },
+          })),
+        });
+
+        // createMany cannot return ids on MySQL and the join rows need them.
+        // Every variant of this product was deleted just above, so these are all
+        // ours, and a multi-row INSERT assigns auto-increment ids in row order —
+        // reading back by ascending id lines them up with `pricedVariants`.
+        const created = await tx.productVariant.findMany({ where: { productId: row.id }, select: { id: true }, orderBy: { id: "asc" } });
+        if (created.length !== pricedVariants.length) throw new Error("VARIANT_ID_MISMATCH");
+
+        await tx.variantAttributeValue.createMany({
+          data: pricedVariants.flatMap((variant, index) =>
+            [...new Set(variant.valueTokens.map((token) => tokenToValueId.get(token)!))].map((attributeValueId) => ({
+              variantId: created[index].id,
+              attributeValueId,
+            })),
+          ),
         });
       }
 
@@ -337,6 +361,11 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     if (error instanceof Error && error.message.startsWith("AXIS:")) return { success: false, message: error.message.slice(5) };
     if (error instanceof Error && error.message === "VARIANT_TOKEN_UNRESOLVED") {
       return { success: false, message: "ตัวเลือกอ้างถึงค่าคุณลักษณะที่ถูกลบไปแล้ว กรุณากดสร้างตัวเลือกใหม่" };
+    }
+    // The fallback message says nothing about what went wrong, so anything
+    // reaching it has to be legible in the server log or it is undiagnosable.
+    if (!(error instanceof Error && error.message.includes("Unique constraint"))) {
+      console.error("saveProductAction failed", { productId: id, variants: variants.length, attributes: attributes.length }, error);
     }
     return { success: false, message: error instanceof Error && error.message.includes("Unique constraint") ? "รหัสสินค้า (SKU) นี้ถูกใช้แล้ว กรุณาเปลี่ยนใหม่" : "บันทึกสินค้าไม่สำเร็จ" };
   }

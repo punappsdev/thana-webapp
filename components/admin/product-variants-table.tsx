@@ -3,6 +3,7 @@
 import { MediaField } from "@/components/admin/media-field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MAX_COMBINATIONS } from "@/lib/admin/validation";
 import type { DictionaryAttribute, ProductAttributeDraft } from "@/components/admin/product-attributes-editor";
 
 /**
@@ -33,7 +34,16 @@ export type VariantAxis = {
   options: { token: ValueToken; label: string }[];
 };
 
-export const MAX_COMBINATIONS = 200;
+export { MAX_COMBINATIONS };
+
+/**
+ * True once the options would generate more rows than the cap. Both the table
+ * and the form's save buttons read this, so the warning and the disabled button
+ * can never disagree about where the line is.
+ */
+export function isOverCombinationLimit(axes: VariantAxis[]): boolean {
+  return axes.length > 0 && axes.reduce((total, axis) => total * axis.options.length, 1) > MAX_COMBINATIONS;
+}
 
 export function existingToken(attributeValueId: number): ValueToken {
   return `v:${attributeValueId}`;
@@ -135,7 +145,7 @@ export function ProductVariantsTable({
 
   const setDefault = (key: string) => onChange(variants.map((row) => ({ ...row, isDefault: row._key === key })));
 
-  const overLimit = axes.length > 0 && axes.reduce((total, axis) => total * axis.options.length, 1) > MAX_COMBINATIONS;
+  const overLimit = isOverCombinationLimit(axes);
 
   if (!axes.length) return null;
 
@@ -153,7 +163,7 @@ export function ProductVariantsTable({
 
       {overLimit ? (
         <p className="rounded-md border border-destructive bg-error-container p-3 font-body-sm text-on-error-container">
-          ตัวเลือกชุดนี้ทำให้เกิดมากกว่า {MAX_COMBINATIONS} รายการ กรุณาลดจำนวนค่าลงก่อน ตารางจึงจะอัปเดต
+          ตัวเลือกชุดนี้ทำให้เกิดมากกว่า {MAX_COMBINATIONS} รายการ กรุณาลดจำนวนค่าลงก่อน ตารางจึงจะอัปเดตและบันทึกได้
         </p>
       ) : null}
 
