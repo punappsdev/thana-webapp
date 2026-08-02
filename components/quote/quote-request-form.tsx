@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
-import { ArrowLeft, CheckCircle2, MessageSquareQuote, Package, Truck } from "lucide-react";
+import { ArrowLeft, Building2, CheckCircle2, MapPin, MessageSquareQuote, Package, Truck } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -559,13 +559,17 @@ export function QuoteRequestForm() {
               </div>
 
               {showDeliveryNote && (
-                <p
+                <div
                   role="status"
-                  className="flex items-start gap-2.5 rounded-md border border-[#c4e2f5] bg-[#f3f3fc] p-4 font-body-sm leading-relaxed text-[#434653]"
+                  className="flex items-center gap-3.5 rounded-xl border border-[#d0e1fd] bg-linear-to-r from-[#eff6ff] via-[#f0f4ff] to-[#f8fafc] p-4.5 sm:p-5 shadow-blue-sm transition-all hover:shadow-blue-md"
                 >
-                  <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                  {t("deliveryNote")}
-                </p>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-primary to-[#0040ad] text-white shadow-blue-sm">
+                    <Truck className="size-4.5" aria-hidden="true" />
+                  </span>
+                  <p className="min-w-0 flex-1 font-body-sm leading-relaxed text-[#434653]">
+                    {t("deliveryNote")}
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -729,7 +733,7 @@ export function QuoteRequestForm() {
         </Section>
 
         <Section title={t("contactBranchSection")} description={t("contactBranchHint")}>
-          <div className="space-y-2">
+          <div className="space-y-4">
             <RadioGroup
               id="contactBranch"
               name="contactBranch"
@@ -749,6 +753,69 @@ export function QuoteRequestForm() {
                 {fieldError("contactBranch")}
               </p>
             )}
+            <div
+              role="note"
+              aria-labelledby="contactBranch-coverage-title"
+              className="rounded-xl border border-[#dbe6f5] bg-linear-to-br from-[#f8fafc] via-[#f3f6fc] to-[#eef3fb] p-5 sm:p-6 shadow-blue-sm transition-all hover:shadow-blue-md"
+            >
+              <div className="flex items-center gap-3.5 border-b border-[#e2e8f0]/80 pb-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary to-[#0040ad] text-white shadow-blue-sm">
+                  <MapPin className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 id="contactBranch-coverage-title" className="font-label-lg font-bold text-foreground">
+                    {t("contactBranchCoverageTitle")}
+                  </h3>
+                  <p className="font-label-sm text-[#747684]">
+                    {t("contactBranchCoverageSubtitle")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
+                <div className="group flex flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white/90 p-4 transition-all duration-200 hover:border-[#a0b6ff] hover:bg-white hover:shadow-blue-sm">
+                  <div>
+                    <div className="flex items-center gap-2 border-b border-[#f0f4f9] pb-2.5">
+                      <Building2 className="size-4 text-primary shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
+                      <span className="font-label-md font-bold text-primary">
+                        {t("contactBranchCoverageHeadquarters")}
+                      </span>
+                    </div>
+                    <ul className="mt-3 space-y-2 font-body-sm text-[#434653]">
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
+                        <span>{t("contactBranchCoverageHeadquartersArea1")}</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
+                        <span>{t("contactBranchCoverageHeadquartersArea2")}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="group flex flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white/90 p-4 transition-all duration-200 hover:border-[#a0b6ff] hover:bg-white hover:shadow-blue-sm">
+                  <div>
+                    <div className="flex items-center gap-2 border-b border-[#f0f4f9] pb-2.5">
+                      <Building2 className="size-4 text-primary shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
+                      <span className="font-label-md font-bold text-primary">
+                        {t("contactBranchCoverageThalang")}
+                      </span>
+                    </div>
+                    <ul className="mt-3 space-y-2 font-body-sm text-[#434653]">
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
+                        <span>{t("contactBranchCoverageThalangArea1")}</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
+                        <span className="leading-snug">{t("contactBranchCoverageThalangArea2")}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </Section>
 
@@ -916,10 +983,17 @@ function BranchOption({ value, label }: { value: string; label: string }) {
   return (
     <Label
       htmlFor={id}
-      className="flex cursor-pointer items-center gap-3 rounded-md border border-[#c4e2f5] bg-white px-4 py-3 font-body-sm text-[#434653] transition-colors hover:border-[#078ee4] has-data-[state=checked]:border-primary has-data-[state=checked]:bg-[#f3f3fc] has-data-[state=checked]:text-primary focus-within:ring-3 focus-within:ring-ring/50"
+      className="flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border border-[#c4e2f5] bg-white px-4 py-4 font-body-sm text-[#434653] shadow-blue-sm transition-[border-color,background-color,box-shadow] hover:border-[#078ee4] hover:bg-[#faf8ff] hover:shadow-blue-md has-data-[state=checked]:border-primary has-data-[state=checked]:bg-linear-to-r has-data-[state=checked]:from-[#f0f4ff] has-data-[state=checked]:to-[#f8fafc] has-data-[state=checked]:text-primary has-data-[state=checked]:shadow-blue-md focus-within:ring-3 focus-within:ring-ring/50"
     >
-      <RadioGroupItem id={id} value={value} className="size-5 border-[#c4e2f5]" />
-      <span className="font-label-md">{label}</span>
+      <RadioGroupItem
+        id={id}
+        value={value}
+        className="size-5 border-2 border-[#c4e2f5] shadow-none data-[state=checked]:border-primary"
+      />
+      <span className="flex items-center gap-2 min-w-0 font-label-md font-semibold">
+        <Building2 className="size-4 shrink-0 text-primary/70" aria-hidden="true" />
+        {label}
+      </span>
     </Label>
   );
 }

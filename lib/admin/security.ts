@@ -50,6 +50,9 @@ export function sanitizeRichHtml(input: string): string {
       "h3",
       "strong",
       "em",
+      "u",
+      "s",
+      "hr",
       "blockquote",
       "ul",
       "ol",
@@ -60,6 +63,16 @@ export function sanitizeRichHtml(input: string): string {
     allowedAttributes: {
       a: ["href", "target", "rel"],
       img: ["src", "alt", "title"],
+      // Text alignment is the only inline style the editor emits; allowedStyles
+      // below limits it to the four safe keywords.
+      p: ["style"],
+      h2: ["style"],
+      h3: ["style"],
+    },
+    allowedStyles: {
+      "*": {
+        "text-align": [/^(left|right|center|justify)$/],
+      },
     },
     allowedSchemes: ["http", "https", "mailto"],
     allowedSchemesByTag: {

@@ -168,10 +168,12 @@ export default async function PromotionDetailPage({ params }: DetailProps) {
                          [&>blockquote]:border-l-4 [&>blockquote]:border-primary-container [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-muted-foreground [&>blockquote]:my-5
                          [&>img]:rounded-xl [&>img]:my-6 [&>img]:w-full [&>img]:object-cover
                          [&>p_img]:my-6
-                         [&>a]:text-secondary [&>a]:font-medium [&>a]:underline [&>a]:underline-offset-2 [&>a]:hover:text-primary
+                         [&>hr]:my-8 [&>hr]:border-t [&>hr]:border-border
+                         [&_a]:text-secondary [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-primary
                          [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2 [&>ol]:my-4 [&>ol>li]:font-body-md
                          [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>ul]:my-4 [&>ul>li]:font-body-md
-                         [&>strong]:text-foreground [&>strong]:font-semibold"
+                         [&_strong]:text-foreground [&_strong]:font-semibold
+                         [&_em]:italic [&_u]:underline [&_u]:underline-offset-2 [&_s]:line-through"
               dangerouslySetInnerHTML={{ __html: content }}
             />
 

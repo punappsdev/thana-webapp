@@ -43,6 +43,27 @@ describe("admin security helpers", () => {
     expect(clean).not.toContain("javascript:");
   });
 
+  it("keeps the formatting the rich text editor can produce", () => {
+    const clean = sanitizeRichHtml(
+      '<p style="text-align: center"><u>ขีดเส้นใต้</u> <s>ขีดฆ่า</s> <em>เอียง</em></p><hr /><h3 style="text-align:right">หัวข้อย่อย</h3>',
+    );
+
+    expect(clean).toContain("<u>ขีดเส้นใต้</u>");
+    expect(clean).toContain("<s>ขีดฆ่า</s>");
+    expect(clean).toContain("<em>เอียง</em>");
+    expect(clean).toContain("<hr />");
+    expect(clean).toContain('text-align:center');
+    expect(clean).toContain('text-align:right');
+  });
+
+  it("drops inline styles other than text alignment", () => {
+    const clean = sanitizeRichHtml('<p style="position:fixed;top:0;text-align:left;color:red">x</p>');
+
+    expect(clean).toContain("text-align:left");
+    expect(clean).not.toContain("position");
+    expect(clean).not.toContain("color:red");
+  });
+
   it("allows only approved media types and limits", () => {
     expect(validateUploadMetadata("image/jpeg", 10 * 1024 * 1024)).toEqual({ ok: true, kind: "IMAGE" });
     expect(validateUploadMetadata("application/pdf", 25 * 1024 * 1024)).toEqual({ ok: true, kind: "PDF" });
