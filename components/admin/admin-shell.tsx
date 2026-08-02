@@ -18,6 +18,7 @@ import {
   Package,
   ReceiptText,
   Settings,
+  SlidersHorizontal,
   Star,
   Tags,
   UserRound,
@@ -42,6 +43,7 @@ const navigation = [
   { label: "โปรโมชั่น", href: "/admin/content/promotions", icon: Tags },
   { label: "คลังไฟล์", href: "/admin/media", icon: ImageIcon },
   { label: "บันทึกกิจกรรม", href: "/admin/activity", icon: Activity },
+  { label: "ตั้งค่าเว็บไซต์", href: "/admin/settings", icon: SlidersHorizontal },
 ];
 
 function NavContent({ pathname }: { pathname: string }) {

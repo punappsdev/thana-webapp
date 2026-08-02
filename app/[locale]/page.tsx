@@ -9,7 +9,9 @@ import { CtaSection } from "@/components/homepage/cta-section";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
 import { PromotionPopup } from "@/components/promotion/promotion-popup";
+import { MourningTone } from "@/components/layout/mourning-tone";
 import { getActivePopup } from "@/lib/admin/popup-data";
+import { getSiteSettings } from "@/lib/admin/site-settings";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -49,7 +51,7 @@ export async function generateMetadata({ params }: HomeProps): Promise<Metadata>
 
 export default async function Home({ params }: HomeProps) {
   const { locale } = await params;
-  const popup = await getActivePopup();
+  const [popup, settings] = await Promise.all([getActivePopup(), getSiteSettings()]);
   const t = await getTranslations("Hero");
   const tFooter = await getTranslations("Footer");
   const tContact = await getTranslations("ContactPage");
@@ -59,6 +61,7 @@ export default async function Home({ params }: HomeProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      {settings.mourningMode ? <MourningTone /> : null}
       <JsonLd data={organizationLd} />
       <Header />
       
