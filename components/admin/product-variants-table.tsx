@@ -148,7 +148,7 @@ export function ProductVariantsTable({
         </p>
       </div>
       <p className="font-body-sm text-muted-foreground">
-        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> คือแบบที่แสดงก่อน เลือกได้เพียงแบบเดียว
+        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> คือแบบที่แสดงก่อน เลือกได้เพียงแบบเดียว · รูปตัวเลือกควรเป็นสี่เหลี่ยมจัตุรัส 1:1 ระบบจะแสดงในกรอบ 1:1 และตัดส่วนที่เกินกรอบออก
       </p>
 
       {overLimit ? (

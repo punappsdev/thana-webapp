@@ -445,6 +445,9 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
           <Card>
             <CardHeader>
               <CardTitle className="font-headline-sm">รูปภาพและแคตตาล็อก</CardTitle>
+              <p className="font-body-sm text-muted-foreground">
+                กรุณาใช้รูปสินค้าแบบสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 × 800 px) ระบบจะแสดงทุกภาพในกรอบ 1:1 โดยคงสัดส่วนภาพและตัดส่วนขอบที่เกินกรอบออก จึงควรวางสินค้าไว้กลางภาพ
+              </p>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
@@ -453,7 +456,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                   label="รูปปก"
                   accept="image"
                   defaultValue={record?.coverImage}
-                  description="แนะนำรูปทรงสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 x 800 px)"
+                  description="ใช้รูปสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 × 800 px) ระบบจะแสดงในกรอบ 1:1 และตัดส่วนที่เกินกรอบออก"
                 />
                 <MediaField
                   name="catalogPdf"
@@ -466,7 +469,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-headline-sm">รูปเพิ่มเติม ({images.length}/4)</h3>
-                  <p className="font-body-sm text-muted-foreground">แสดงเป็นแกลเลอรีให้ลูกค้าคลิกดูภาพใหญ่ในหน้าสินค้า (สูงสุด 4 รูป - แนะนำสัดส่วน 4:3 เช่น 1000 x 750 px)</p>
+                  <p className="font-body-sm text-muted-foreground">แสดงเป็นแกลเลอรีให้ลูกค้าคลิกดูภาพใหญ่ในหน้าสินค้า (สูงสุด 4 รูป — ใช้รูปสี่เหลี่ยมจัตุรัส 1:1 ระบบจะตัดส่วนที่เกินกรอบออก)</p>
                 </div>
                 <Button
                   type="button"
@@ -484,7 +487,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                     accept="image"
                     value={image.url}
                     onChange={(url) => setImages((current) => current.map((row, i) => (i === index ? { ...row, url } : row)))}
-                    description="แนะนำสัดส่วน 4:3 (เช่น 1000 x 750 px)"
+                    description="ใช้รูปสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 × 800 px) ระบบจะตัดส่วนที่เกินกรอบออก"
                   />
                   <Input
                     value={image.altTh}

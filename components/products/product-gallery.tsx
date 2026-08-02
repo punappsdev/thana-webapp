@@ -21,7 +21,7 @@ export function ProductGallery({ images, locale }: { images: GalleryImage[]; loc
 
   if (count === 0) {
     return (
-      <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl border border-[#c4e2f5] bg-[#e2e2eb] shadow-blue-sm">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-[#c4e2f5] bg-[#e2e2eb] shadow-blue-sm">
         <div className="flex h-full w-full items-center justify-center">
           <Package className="h-14 w-14 text-[#747684]" />
         </div>
@@ -35,7 +35,7 @@ export function ProductGallery({ images, locale }: { images: GalleryImage[]; loc
         type="button"
         onClick={() => setOpen(true)}
         aria-label={labels.zoom}
-        className="group relative block aspect-4/3 w-full cursor-zoom-in overflow-hidden rounded-2xl border border-[#c4e2f5] bg-[#e2e2eb] shadow-blue-sm"
+        className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border border-[#c4e2f5] bg-[#e2e2eb] shadow-blue-sm"
       >
         <Image
           src={images[active].url}
@@ -81,7 +81,7 @@ export function ProductGallery({ images, locale }: { images: GalleryImage[]; loc
           >
             <DialogPrimitive.Title className="sr-only">{images[active].alt}</DialogPrimitive.Title>
 
-            <div className="relative h-[80vh] w-full max-w-5xl">
+            <div className="relative aspect-square w-full max-w-[80vh]">
               <Image src={images[active].url} alt={images[active].alt} fill className="object-contain" sizes="100vw" />
             </div>
 
