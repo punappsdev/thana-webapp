@@ -40,7 +40,7 @@ export async function Footer() {
           </p>
           <div className="flex gap-4">
             <a
-              href="https://line.me/R/ti/p/~@thanaglass"
+              href="https://lin.ee/P3ZGgWM"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 bg-accent rounded-full hover:bg-[#06C755] hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95 flex items-center justify-center"

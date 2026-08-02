@@ -124,7 +124,7 @@ export function ContactMain() {
                           <div className="flex flex-wrap gap-2 mb-3">
                             {/* LINE */}
                             <a
-                              href={`https://line.me/R/ti/p/~${branch.line}`}
+                              href="https://lin.ee/P3ZGgWM"
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}

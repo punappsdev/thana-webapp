@@ -206,7 +206,7 @@ export default async function PromotionDetailPage({ params }: DetailProps) {
                     : "สนใจรับสิทธิ์โปรโมชั่นนี้? สามารถติดต่อสอบถามเจ้าหน้าที่ได้ทันที"}
                 </p>
                 <a
-                  href="https://line.me"
+                  href="https://lin.ee/P3ZGgWM"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 bg-[#06C755] hover:bg-[#05b04b] text-white px-8 py-3.5 font-label-md font-bold rounded-full shadow-lg transition-transform hover:scale-105"

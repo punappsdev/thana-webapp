@@ -42,7 +42,7 @@ export function ContactFab() {
             </span>
             <a
               id="fab-link-line"
-              href="https://line.me"
+              href="https://lin.ee/P3ZGgWM"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#06C755] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
@@ -61,7 +61,7 @@ export function ContactFab() {
             </span>
             <a
               id="fab-link-facebook"
-              href="https://facebook.com"
+              href="https://www.facebook.com/thanachaihq"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#0084FF] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
