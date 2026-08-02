@@ -514,14 +514,14 @@ async function main() {
   console.log("Seeding brands...");
   const brands = await Promise.all(
     [
-      { slug: "thana-glass", name: "Thana Glass" },
-      { slug: "guardian", name: "Guardian Glass" },
-      { slug: "agc", name: "AGC" },
-      { slug: "scg", name: "SCG" },
-      { slug: "gyproc", name: "Gyproc" },
-      { slug: "ykk", name: "YKK AP" },
-      { slug: "shera", name: "Shera" },
-      { slug: "dowsil", name: "DOWSIL" },
+      { slug: "thana-glass", nameTh: "Thana Glass", nameEn: "Thana Glass" },
+      { slug: "guardian", nameTh: "Guardian Glass", nameEn: "Guardian Glass" },
+      { slug: "agc", nameTh: "AGC", nameEn: "AGC" },
+      { slug: "scg", nameTh: "SCG", nameEn: "SCG" },
+      { slug: "gyproc", nameTh: "Gyproc", nameEn: "Gyproc" },
+      { slug: "ykk", nameTh: "YKK AP", nameEn: "YKK AP" },
+      { slug: "shera", nameTh: "Shera", nameEn: "Shera" },
+      { slug: "dowsil", nameTh: "DOWSIL", nameEn: "DOWSIL" },
     ].map((b) => prisma.brand.create({ data: b }))
   );
   const brandBy = Object.fromEntries(brands.map((b) => [b.slug, b.id]));

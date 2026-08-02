@@ -2,9 +2,11 @@
 
 import { Award, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 export function AboutUs() {
   const t = useTranslations("AboutUs");
+  const brandName = t("brandName");
 
   return (
     <section className="py-16 px-4 md:px-10 max-w-[1280px] mx-auto bg-white overflow-hidden">
@@ -12,13 +14,13 @@ export function AboutUs() {
         {/* Text Description Block */}
         <div className="order-2 lg:order-1">
           <span className="font-label-sm text-secondary font-bold tracking-wider mb-3 block">
-            {t("tag")}
+            {t("tag", { brandName })}
           </span>
           <h2 className="font-headline-lg-mobile lg:font-headline-lg text-primary mb-6">
             {t("title")}
           </h2>
           <p className="font-body-md text-muted-foreground mb-8">
-            {t("desc")}
+            {t("desc", { brandName })}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
@@ -47,9 +49,12 @@ export function AboutUs() {
             </div>
           </div>
 
-          <button className="bg-primary hover:bg-[#00174b] text-white px-10 py-4 rounded-lg font-bold transition-all shadow-md font-label-sm cursor-pointer">
+          <Link
+            href="/about"
+            className="inline-block bg-primary hover:bg-[#00174b] text-white px-10 py-4 rounded-lg font-bold transition-all shadow-md font-label-sm cursor-pointer"
+          >
             {t("btnMore")}
-          </button>
+          </Link>
         </div>
 
         {/* Picture Block */}

@@ -1,24 +1,38 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 import { CartSheet } from "@/components/cart/cart-sheet";
 import { notoSansThai, prompt } from "@/lib/fonts";
-import { SITE_NAME, SITE_URL } from "@/lib/seo";
+import { SITE_NAME, SITE_URL, metaDescription } from "@/lib/seo";
 import "../globals.css";
 
-export const metadata: Metadata = {
-  // Lets every page below return relative canonical/hreflang paths.
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Thana Glass | กระจกนิรภัย กระจกอลูมิเนียม ภูเก็ต",
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: "High-end glass and aluminum installation services in Phuket",
-  openGraph: {
-    siteName: SITE_NAME,
-    type: "website",
-  },
-};
+/**
+ * Site-wide defaults. These only surface when a page returns no title or
+ * description of its own, so they are resolved per locale rather than hard-coded
+ * — an English fallback on a Thai URL is worse than no fallback at all.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Hero" });
+
+  return {
+    // Lets every page below return relative canonical/hreflang paths.
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: t("pageTitle"),
+      template: `%s | ${SITE_NAME}`,
+    },
+    description: metaDescription(locale, t("metaDescription")),
+    openGraph: {
+      siteName: SITE_NAME,
+      type: "website",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

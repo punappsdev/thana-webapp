@@ -53,7 +53,7 @@ export interface ProductForIndex {
   nameEn: string;
   sku: string;
   slug: string;
-  brand?: { name: string } | null;
+  brand?: { nameTh: string; nameEn: string } | null;
   category?: { nameTh: string; nameEn: string } | null;
   subCategory?: { nameTh: string; nameEn: string } | null;
   unit?: { nameTh: string; nameEn: string } | null;
@@ -83,7 +83,8 @@ export function buildProductSearchText(product: ProductForIndex): string {
     // A second, separator-free copy so "GLTP6" also finds "GL-TP-6".
     product.sku.replace(/[^\p{L}\p{N}]+/gu, ""),
     product.slug,
-    product.brand?.name,
+    product.brand?.nameTh,
+    product.brand?.nameEn,
     product.category?.nameTh,
     product.category?.nameEn,
     product.subCategory?.nameTh,

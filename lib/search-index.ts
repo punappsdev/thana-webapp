@@ -21,7 +21,7 @@ const INDEX_SELECT = {
   nameEn: true,
   sku: true,
   slug: true,
-  brand: { select: { name: true } },
+  brand: { select: { nameTh: true, nameEn: true } },
   category: { select: { nameTh: true, nameEn: true } },
   subCategory: { select: { nameTh: true, nameEn: true } },
   unit: { select: { nameTh: true, nameEn: true } },

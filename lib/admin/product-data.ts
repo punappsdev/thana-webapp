@@ -79,7 +79,7 @@ export async function getProductEditorOptions() {
     // The whole dictionary, not just one category's slice — a product may use any
     // attribute, and the editor's combobox searches across all of them.
     prisma.attribute.findMany({ orderBy: { sortOrder: "asc" }, include: { values: { orderBy: { sortOrder: "asc" } } } }),
-    prisma.brand.findMany({ orderBy: { name: "asc" } }),
+    prisma.brand.findMany({ orderBy: { nameTh: "asc" } }),
     prisma.productUnit.findMany({ orderBy: { nameTh: "asc" } }),
   ]);
   return {
@@ -92,7 +92,7 @@ export async function getProductEditorOptions() {
       inputType: attribute.inputType,
       values: attribute.values.map((value) => ({ id: value.id, valueTh: value.valueTh, valueEn: value.valueEn, colorHex: value.colorHex })),
     })),
-    brands: brands.map((x) => ({ id: x.id, name: x.name })),
+    brands: brands.map((x) => ({ id: x.id, nameTh: x.nameTh, nameEn: x.nameEn })),
     units: units.map((x) => ({ id: x.id, nameTh: x.nameTh })),
   };
 }

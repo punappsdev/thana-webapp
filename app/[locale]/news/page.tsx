@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
 import { JsonLd } from "@/components/seo/json-ld";
-import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
 import type { Metadata } from "next";
 import type { News, Promotion } from "@/generated/prisma/client";
 
@@ -53,9 +53,18 @@ export async function generateMetadata({
         ? t("filterPromotions")
         : t("title");
 
+  // `type` survives into the canonical URL, so all three views are indexed
+  // separately and each describes what it actually lists.
+  const descriptionKey =
+    type === "news"
+      ? "newsMetaDescription"
+      : type === "promotions"
+        ? "promotionsMetaDescription"
+        : "metaDescription";
+
   return {
     title: pageNumber > 1 ? `${scope} — ${pageNumber}` : scope,
-    description: t("description"),
+    description: metaDescription(locale, t(descriptionKey)),
     alternates: alternatesFor(locale, newsCanonical(type, pageNumber)),
   };
 }

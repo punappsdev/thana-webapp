@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
 import { JsonLd } from "@/components/seo/json-ld";
-import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
+import { pick } from "@/lib/products";
 import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -44,9 +45,19 @@ export async function generateMetadata({
   if (canonicalPage > 1) qs.set("page", String(canonicalPage));
   const canonicalQuery = qs.toString();
 
+  // Category filters stay in the canonical URL and are indexed on their own, so
+  // each gets a description naming the category instead of the shared blurb.
+  const categoryRecord = category
+    ? await prisma.articleCategory.findUnique({ where: { slug: category } })
+    : null;
+  const scope = categoryRecord ? pick(categoryRecord, "name", locale) : null;
+
   return {
     title: canonicalPage > 1 ? `${t("title")} — ${canonicalPage}` : t("title"),
-    description: t("description"),
+    description: metaDescription(
+      locale,
+      scope ? t("categoryMetaDescription", { category: scope }) : t("metaDescription")
+    ),
     alternates: alternatesFor(
       locale,
       canonicalQuery ? `/articles?${canonicalQuery}` : "/articles"

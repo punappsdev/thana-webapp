@@ -18,7 +18,8 @@ import {
 
 interface BrandItem {
   slug: string;
-  name: string;
+  nameTh: string;
+  nameEn: string;
 }
 
 /** `?brand=a,b` → ["a", "b"]. An absent or empty param means "no brand filter". */
@@ -200,7 +201,7 @@ export function ProductSortAndFilter({
                           </div>
                         </div>
                         <span className="font-body-sm text-[#434653] font-medium leading-none">
-                          {brand.name}
+                          {locale === "en" ? brand.nameEn : brand.nameTh}
                         </span>
                       </label>
                     );

@@ -79,8 +79,8 @@ export async function Footer() {
           <div>
             <h2 className="font-headline-sm font-semibold text-primary mb-6">{t("headingCompanies")}</h2>
             <ul className="flex flex-col gap-4 text-muted-foreground font-body-sm">
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.0")}</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-all hover:underline">{t("companies.1")}</Link></li>
+              <li>{t("companies.0")}</li>
+              <li>{t("companies.1")}</li>
             </ul>
           </div>
 

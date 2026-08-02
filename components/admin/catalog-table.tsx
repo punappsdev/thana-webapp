@@ -64,7 +64,7 @@ export function CatalogTable({ resource, rows, categories, attributes }: { resou
                 </TableRow>
               ) : rows.map((row) => {
                 const count = referenceCount(row);
-                const name = joinText(row, "nameTh", "valueTh", "name") || `${catalogLabels[resource]} #${String(row.id)}`;
+                const name = joinText(row, "nameTh", "valueTh") || `${catalogLabels[resource]} #${String(row.id)}`;
                 const secondary = joinText(row, "nameEn", "valueEn");
                 return (
                   <TableRow key={String(row.id)}>

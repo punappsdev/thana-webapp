@@ -19,6 +19,7 @@ import {
   SITE_LOGO,
   absoluteUrl,
   alternatesFor,
+  metaDescription,
   organizationGraph,
   type BranchInfo,
 } from "@/lib/seo";
@@ -30,9 +31,10 @@ interface HomeProps {
 export async function generateMetadata({ params }: HomeProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations("Hero");
-  const tFooter = await getTranslations("Footer");
   const title = t("pageTitle");
-  const description = tFooter("desc");
+  // Deliberately not the footer blurb: that copy is written to be read on the
+  // page, and at ~110 characters it leaves a third of the snippet empty.
+  const description = metaDescription(locale, t("metaDescription"));
 
   return {
     // `absolute` skips the layout's "| Thana Glass" template — the homepage

@@ -43,7 +43,7 @@ export function CatalogEditor({ resource, edit, categories, attributes, onSaved 
     </div>
   );
 
-  const bilingual = !["brands", "attribute-values"].includes(resource);
+  const bilingual = resource !== "attribute-values";
   const usesSlug = ["categories", "subcategories", "brands", "attributes", "attribute-values", "article-categories"].includes(resource);
   const usesCode = ["units", "pricing-units"].includes(resource);
   const hasSortOrder = ["categories", "subcategories", "attributes", "attribute-values"].includes(resource);
@@ -56,7 +56,6 @@ export function CatalogEditor({ resource, edit, categories, attributes, onSaved 
 
       <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
-          {resource === "brands" ? field("name", "ชื่อแบรนด์", true, "text", undefined, "sm:col-span-2") : null}
           {bilingual ? <>{field("nameTh", "ชื่อ (ภาษาไทย)")}{field("nameEn", "ชื่อ (ภาษาอังกฤษ)")}</> : null}
           {resource === "attribute-values" ? <>{field("valueTh", "ค่า (ภาษาไทย)")}{field("valueEn", "ค่า (ภาษาอังกฤษ)")}{field("colorHex", "รหัสสี (ถ้ามี)", false, "text", "เช่น #FF0000 สำหรับสีแดง")}{field("numericValue", "ค่าตัวเลข (ถ้ามี)", false, "number", "เช่น 10 สำหรับความหนา 10 มม.")}</> : null}
 

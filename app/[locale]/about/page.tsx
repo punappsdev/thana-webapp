@@ -6,7 +6,7 @@ import { Partners } from "@/components/homepage/partners";
 import Image from "next/image";
 import { Building2, Sparkles, ShieldCheck, Layers, Trophy, Eye } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
-import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
 import type { Metadata } from "next";
 
 interface Branch {
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations("AboutPage");
   return {
     title: t("title"),
-    description: t("subtitle"),
+    description: metaDescription(locale, t("metaDescription")),
     alternates: alternatesFor(locale, "/about"),
   };
 }

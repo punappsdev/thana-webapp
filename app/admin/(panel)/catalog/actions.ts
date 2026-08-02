@@ -12,7 +12,7 @@ import { reindexProductsWhere } from "@/lib/search-index";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 import type { Prisma } from "@/generated/prisma/client";
 
-const schema = z.object({ resource: z.string(), id: z.coerce.number().int().positive().optional().or(z.literal("")), slug: z.string().trim().optional().default(""), code: z.string().trim().optional().default(""), name: z.string().trim().optional().default(""), nameTh: z.string().trim().optional().default(""), nameEn: z.string().trim().optional().default(""), descriptionTh: z.string().optional().default(""), descriptionEn: z.string().optional().default(""), coverImage: z.string().optional().default(""), logo: z.string().optional().default(""), websiteUrl: z.string().optional().default(""), unit: z.string().optional().default(""), inputType: z.enum(["SELECT", "COLOR", "NUMBER", "TEXT"]).optional().default("SELECT"), valueTh: z.string().optional().default(""), valueEn: z.string().optional().default(""), colorHex: z.string().optional().default(""), numericValue: z.string().optional().default(""), sortOrder: z.coerce.number().int().optional().default(0), categoryId: z.coerce.number().int().positive().optional().or(z.literal("")), attributeId: z.coerce.number().int().positive().optional().or(z.literal("")), published: z.string().optional() });
+const schema = z.object({ resource: z.string(), id: z.coerce.number().int().positive().optional().or(z.literal("")), slug: z.string().trim().optional().default(""), code: z.string().trim().optional().default(""), nameTh: z.string().trim().optional().default(""), nameEn: z.string().trim().optional().default(""), descriptionTh: z.string().optional().default(""), descriptionEn: z.string().optional().default(""), coverImage: z.string().optional().default(""), logo: z.string().optional().default(""), websiteUrl: z.string().optional().default(""), unit: z.string().optional().default(""), inputType: z.enum(["SELECT", "COLOR", "NUMBER", "TEXT"]).optional().default("SELECT"), valueTh: z.string().optional().default(""), valueEn: z.string().optional().default(""), colorHex: z.string().optional().default(""), numericValue: z.string().optional().default(""), sortOrder: z.coerce.number().int().optional().default(0), categoryId: z.coerce.number().int().positive().optional().or(z.literal("")), attributeId: z.coerce.number().int().positive().optional().or(z.literal("")), published: z.string().optional() });
 
 export async function saveCatalogAction(_state: ActionResult, formData: FormData): Promise<ActionResult> {
   const admin = await requireAdmin();
@@ -20,12 +20,22 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
   if (!parsed.success) return { success: false, message: "กรุณาตรวจสอบข้อมูล", fieldErrors: parsed.error.flatten().fieldErrors };
   if (!isCatalogResource(parsed.data.resource)) return { success: false, message: "ประเภทข้อมูลไม่ถูกต้อง" };
   const d = parsed.data; const id = typeof d.id === "number" ? d.id : undefined; const prisma = getPrisma();
+  if (d.resource === "brands" && (!d.nameTh || !d.nameEn)) {
+    return {
+      success: false,
+      message: "กรุณากรอกชื่อแบรนด์ทั้งภาษาไทยและภาษาอังกฤษ",
+      fieldErrors: {
+        ...(d.nameTh ? {} : { nameTh: ["กรุณากรอกชื่อภาษาไทย"] }),
+        ...(d.nameEn ? {} : { nameEn: ["กรุณากรอกชื่อภาษาอังกฤษ"] }),
+      },
+    };
+  }
   // Slug / code are hidden from non-technical admins and generated from the
   // English name (falling back to a short token for Thai-only input). Only fill
   // when empty so an edit keeps its existing slug and power users can still
   // override via the "advanced" fields.
   const usesCode = d.resource === "units";
-  const slugSource = d.resource === "brands" ? d.name : d.resource === "attribute-values" ? d.valueEn : d.nameEn;
+  const slugSource = d.resource === "brands" ? d.nameEn : d.resource === "attribute-values" ? d.valueEn : d.nameEn;
   if (usesCode) { if (!d.code) d.code = codeFromName(d.nameEn) || fallbackToken("U").toUpperCase().replace(/[^A-Z0-9]+/g, ""); }
   else if (!d.slug) { d.slug = slugifyAdminTitle(slugSource) || fallbackToken(d.resource); }
   const baseSlug = d.slug; const baseCode = d.code;
@@ -44,7 +54,7 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
       switch (d.resource) {
         case "categories": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: d.descriptionTh || null, descriptionEn: d.descriptionEn || null, coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on" }; return id ? prisma.category.update({ where: { id }, data }) : prisma.category.create({ data }); }
         case "subcategories": { if (typeof d.categoryId !== "number") throw new Error("กรุณาเลือกหมวดหมู่"); const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on", categoryId: d.categoryId }; return id ? prisma.subCategory.update({ where: { id }, data }) : prisma.subCategory.create({ data }); }
-        case "brands": { const data = { slug: d.slug, name: d.name, logo: d.logo || null, websiteUrl: d.websiteUrl || null }; return id ? prisma.brand.update({ where: { id }, data }) : prisma.brand.create({ data }); }
+        case "brands": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, logo: d.logo || null, websiteUrl: d.websiteUrl || null }; return id ? prisma.brand.update({ where: { id }, data }) : prisma.brand.create({ data }); }
         case "units": { const data = { code: d.code, nameTh: d.nameTh, nameEn: d.nameEn }; return id ? prisma.productUnit.update({ where: { id }, data }) : prisma.productUnit.create({ data }); }
         case "attributes": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, unit: d.unit || null, inputType: d.inputType, sortOrder: d.sortOrder }; return id ? prisma.attribute.update({ where: { id }, data }) : prisma.attribute.create({ data }); }
         case "attribute-values": { if (typeof d.attributeId !== "number") throw new Error("กรุณาเลือกคุณลักษณะ"); const data = { slug: d.slug, valueTh: d.valueTh, valueEn: d.valueEn, colorHex: d.colorHex || null, numericValue: d.numericValue || null, sortOrder: d.sortOrder, attributeId: d.attributeId }; return id ? prisma.attributeValue.update({ where: { id }, data }) : prisma.attributeValue.create({ data }); }
@@ -66,7 +76,7 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
     // Product.searchText carries copies of these names, so an edit has to refresh
     // every product pointing at the record. A create has no products yet.
     if (id) { const where = productsAffectedBy(d.resource, saved.id); if (where) await reindexProductsWhere(where); }
-    await recordActivity({ adminId: admin.id, action: id ? "UPDATE" : "CREATE", entityType: d.resource, entityId: saved.id, label: d.nameTh || d.name || d.valueTh || d.code || d.slug });
+    await recordActivity({ adminId: admin.id, action: id ? "UPDATE" : "CREATE", entityType: d.resource, entityId: saved.id, label: d.nameTh || d.valueTh || d.code || d.slug });
     revalidatePath(`/admin/catalog/${d.resource}`); revalidatePath("/products"); revalidatePath("/en/products");
     const newMediaUrl = d.resource === "brands" ? d.logo : d.coverImage;
     if (oldMediaUrl && oldMediaUrl !== newMediaUrl) await deleteOrphanedMedia([oldMediaUrl]);

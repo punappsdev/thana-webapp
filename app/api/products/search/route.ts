@@ -104,9 +104,9 @@ export async function GET(request: NextRequest) {
         take: CATEGORY_LIMIT,
       }),
       prisma.brand.findMany({
-        where: { name: { contains: query }, products: { some: { published: true } } },
-        select: { slug: true, name: true },
-        orderBy: { name: "asc" },
+        where: { [nameField]: { contains: query }, products: { some: { published: true } } },
+        select: { slug: true, nameTh: true, nameEn: true },
+        orderBy: { [nameField]: "asc" },
         take: BRAND_LIMIT,
       }),
     ]);
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
             parentSlug: sub.category.slug,
           })),
         ].slice(0, CATEGORY_LIMIT),
-        brands: brands.map((brand) => ({ slug: brand.slug, name: brand.name })),
+        brands: brands.map((brand) => ({ slug: brand.slug, name: pick(brand, "name", locale) })),
         total,
       } satisfies SearchResponse,
       {

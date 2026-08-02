@@ -4,7 +4,7 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { getTranslations } from "next-intl/server";
 import { ShoppingCart } from "lucide-react";
 import { CartPageContent } from "@/components/cart/cart-page-content";
-import { alternatesFor } from "@/lib/seo";
+import { alternatesFor, metaDescription } from "@/lib/seo";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations("Cart");
   return {
     title: t("title"),
-    description: t("description"),
+    description: metaDescription(locale, t("metaDescription")),
     alternates: alternatesFor(locale, "/cart"),
     // Per-visitor contents with nothing to rank on.
     robots: { index: false, follow: true },

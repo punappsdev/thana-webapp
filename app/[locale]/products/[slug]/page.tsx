@@ -14,7 +14,13 @@ import {
   type VariantOption,
 } from "@/components/products/variant-selector";
 import { JsonLd } from "@/components/seo/json-ld";
-import { SITE_URL, absoluteUrl, alternatesFor, breadcrumbLd } from "@/lib/seo";
+import {
+  SITE_URL,
+  absoluteUrl,
+  alternatesFor,
+  breadcrumbLd,
+  metaDescription,
+} from "@/lib/seo";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -25,8 +31,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale, slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
   if (!product || !product.published) return {};
+  const t = await getTranslations("Products");
   const name = pick(product, "name", locale);
-  const description = pick(product, "description", locale) || undefined;
+  // The catalogue description is free-form multi-line text with no length cap,
+  // so it is flattened and clamped; products written without one fall back to a
+  // generated line instead of inheriting the site-wide default.
+  const description = metaDescription(
+    locale,
+    pick(product, "description", locale),
+    t("detailMetaDescription", { name })
+  );
   return {
     title: name,
     description,
@@ -73,6 +87,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const name = pick(product, "name", locale);
   const description = pick(product, "description", locale);
   const usageGuide = pick(product, "usageGuide", locale);
+  const brandName = product.brand ? pick(product.brand, "name", locale) : null;
   const catalogDownloadUrl = product.catalogPdf
     ? `${product.catalogPdf}${product.catalogPdf.includes("?") ? "&" : "?"}download=1`
     : null;
@@ -155,7 +170,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     sku: product.sku,
     url: absoluteUrl(locale, `/products/${slug}`),
     image: gallery.map((img) => `${SITE_URL}${img.url}`),
-    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand.name } } : {}),
+    ...(brandName ? { brand: { "@type": "Brand", name: brandName } } : {}),
     ...(product.category
       ? { category: pick(product.category, "name", locale) }
       : {}),
@@ -238,8 +253,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                       {pick(product.category, "name", locale)}
                     </span>
                   )}
-                  {product.brand && (
-                    <span className="font-label-sm text-[#747684]">{product.brand.name}</span>
+                  {brandName && (
+                    <span className="font-label-sm text-[#747684]">{brandName}</span>
                   )}
                 </div>
 

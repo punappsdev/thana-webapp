@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
 type CategoryOption = { id: number; nameTh: string; nameEn: string; subCategories: { id: number; nameTh: string }[] };
-type Option = { id: number; name?: string; nameTh?: string };
+type Option = { id: number; nameTh?: string; nameEn?: string };
 type ImageRow = { _key?: string; url: string; altTh: string; altEn: string; sortOrder: number };
 
 type SavedAttribute = {
@@ -188,7 +188,8 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     }
   }, [state, router]);
 
-  const optionLabel = (option: Option) => option.name || option.nameTh || String(option.id);
+  const optionLabel = (option: Option) =>
+    [option.nameTh, option.nameEn].filter((name): name is string => Boolean(name?.trim())).join(" / ") || String(option.id);
 
   // Serialized for the server action. Attributes carry either an existing id or
   // a name to create; variants address values by token so newly typed values

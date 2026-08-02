@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
 import { JsonLd } from "@/components/seo/json-ld";
-import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
+import { pick } from "@/lib/products";
 import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -38,9 +39,19 @@ export async function generateMetadata({
   if (pageNumber > 1) qs.set("page", String(pageNumber));
   const query = qs.toString();
 
+  // Each category filter is a separate canonical URL, so it earns its own
+  // description rather than repeating the listing's.
+  const categoryRecord = category
+    ? await prisma.category.findUnique({ where: { slug: category } })
+    : null;
+  const scope = categoryRecord ? pick(categoryRecord, "name", locale) : null;
+
   return {
     title: pageNumber > 1 ? `${t("title")} — ${pageNumber}` : t("title"),
-    description: t("description"),
+    description: metaDescription(
+      locale,
+      scope ? t("categoryMetaDescription", { category: scope }) : t("metaDescription")
+    ),
     alternates: alternatesFor(locale, query ? `/portfolio?${query}` : "/portfolio"),
   };
 }

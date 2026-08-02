@@ -10,7 +10,13 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { JsonLd } from "@/components/seo/json-ld";
-import { SITE_URL, absoluteUrl, alternatesFor, breadcrumbLd } from "@/lib/seo";
+import {
+  SITE_URL,
+  absoluteUrl,
+  alternatesFor,
+  breadcrumbLd,
+  metaDescription,
+} from "@/lib/seo";
 
 interface DetailProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -27,17 +33,24 @@ export async function generateMetadata({
 
   if (!article) return {};
 
+  const t = await getTranslations("Articles");
   const title = locale === "en" ? article.titleEn : article.titleTh;
-  const description = locale === "en" ? article.excerptEn : article.excerptTh;
+  // Excerpts are optional and unbounded in the schema — clamp what is there,
+  // and build a line from the headline when it is missing.
+  const description = metaDescription(
+    locale,
+    locale === "en" ? article.excerptEn : article.excerptTh,
+    t("detailMetaDescription", { title })
+  );
 
   return {
     // The layout's title template appends "| Thana Glass".
     title,
-    description: description || undefined,
+    description,
     alternates: alternatesFor(locale, `/articles/${slug}`),
     openGraph: {
       title,
-      description: description || undefined,
+      description,
       type: "article",
       url: absoluteUrl(locale, `/articles/${slug}`),
       images: article.coverImage ? [`${SITE_URL}${article.coverImage}`] : [],

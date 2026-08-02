@@ -357,7 +357,8 @@ model SubCategory {
 model Brand {
   id         Int       @id @default(autoincrement())
   slug       String    @unique
-  name       String
+  nameTh     String
+  nameEn     String
   logo       String?
   websiteUrl String?
   products   Product[]

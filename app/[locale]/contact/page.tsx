@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import {
   alternatesFor,
   breadcrumbLd,
+  metaDescription,
   organizationGraph,
   type BranchInfo,
 } from "@/lib/seo";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations("ContactPage");
   return {
     title: t("title"),
-    description: t("subtitle"),
+    description: metaDescription(locale, t("metaDescription")),
     alternates: alternatesFor(locale, "/contact"),
   };
 }

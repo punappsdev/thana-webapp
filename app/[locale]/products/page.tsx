@@ -27,7 +27,7 @@ import { ProductSortAndFilter } from "@/components/products/product-filters";
 import { findCatalogPage } from "@/lib/product-search";
 import { searchTextWhere } from "@/lib/search";
 import { JsonLd } from "@/components/seo/json-ld";
-import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
 import type { Metadata } from "next";
 import type { Prisma } from "../../../generated/prisma/client";
 
@@ -96,7 +96,13 @@ export async function generateMetadata({
 
   return {
     title: canonicalPage > 1 ? `${title} — ${canonicalPage}` : title,
-    description: t("description"),
+    // Every category and sub-category is its own indexable URL, so each needs a
+    // description of its own — one shared blurb across them all reads as
+    // boilerplate and gives Google nothing to distinguish them by.
+    description: metaDescription(
+      locale,
+      scope ? t("categoryMetaDescription", { category: scope }) : t("metaDescription")
+    ),
     alternates: alternatesFor(
       locale,
       catalogCanonical(categoryRecord?.slug, subRecord?.slug, canonicalPage)
@@ -145,7 +151,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   // Fetch active brands dynamically to show in the filters
   const brands = await prisma.brand.findMany({
-    orderBy: { name: "asc" },
+    orderBy: { nameTh: "asc" },
   });
 
   const activeBrands = typeof brand === "string" ? brand.split(",") : [];
@@ -322,7 +328,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                   )}
                 </div>
                 <ProductSortAndFilter
-                  brands={brands.map((b) => ({ slug: b.slug, name: b.name }))}
+                  brands={brands.map((b) => ({ slug: b.slug, nameTh: b.nameTh, nameEn: b.nameEn }))}
                   currentParams={{ sort, brand }}
                   locale={locale}
                   hasQuery={!!searchQuery}

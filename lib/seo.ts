@@ -53,6 +53,56 @@ export function alternatesFor(locale: string, path = "/"): Metadata["alternates"
   };
 }
 
+/**
+ * Google truncates snippets on rendered pixel width, not character count;
+ * ~160 characters is the point at which a desktop result reliably starts
+ * losing its tail. Nothing in the schema bounds admin-authored copy — product
+ * descriptions and excerpts are all `@db.Text` — so anything heading for
+ * `<meta name="description">` passes through {@link metaDescription} first.
+ */
+export const META_DESCRIPTION_MAX = 160;
+
+/**
+ * Trims to `max` on a word boundary. Thai writes without spaces between words,
+ * so a space-based cut would leave a mangled syllable; `Intl.Segmenter` knows
+ * the dictionary and is asked for the boundary instead.
+ */
+function clampToWords(text: string, locale: string, max: number) {
+  if (text.length <= max) return text;
+  // One character of the budget belongs to the ellipsis.
+  const budget = max - 1;
+  let kept = "";
+
+  for (const { segment } of new Intl.Segmenter(locale, {
+    granularity: "word",
+  }).segment(text)) {
+    if (kept.length + segment.length > budget) break;
+    kept += segment;
+  }
+
+  // A single word longer than the whole budget segments into nothing usable.
+  if (!kept) kept = text.slice(0, budget);
+
+  return `${kept.replace(/[\s,.;:!?—–-]+$/u, "")}…`;
+}
+
+/**
+ * Picks the first candidate with any content, flattens the newlines authors
+ * type into textareas, and clamps the result to snippet length. Returns
+ * `undefined` when nothing usable was passed so Next falls back to the layout
+ * description rather than emitting an empty tag.
+ */
+export function metaDescription(
+  locale: string,
+  ...candidates: (string | null | undefined)[]
+): string | undefined {
+  for (const candidate of candidates) {
+    const text = candidate?.replace(/\s+/g, " ").trim();
+    if (text) return clampToWords(text, locale, META_DESCRIPTION_MAX);
+  }
+  return undefined;
+}
+
 /** Branch entry as authored in `ContactPage.branches`. */
 export interface BranchInfo {
   name: string;

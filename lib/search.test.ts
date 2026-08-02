@@ -51,7 +51,7 @@ describe("buildProductSearchText", () => {
     nameEn: "Clear Tempered Glass",
     sku: "GL-TP-6",
     slug: "clear-tempered-glass",
-    brand: { name: "Guardian" },
+    brand: { nameTh: "การ์เดียน", nameEn: "Guardian" },
     category: { nameTh: "กระจก", nameEn: "Glass" },
     subCategory: { nameTh: "กระจกนิรภัย", nameEn: "Safety Glass" },
     unit: { nameTh: "แผ่น", nameEn: "Sheet" },

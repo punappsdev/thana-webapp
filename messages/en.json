@@ -14,6 +14,7 @@
     }
   },
   "Hero": {
+    "metaDescription": "Thana Glass & Aluminum in Phuket supplies and installs safety glass, aluminum systems and gypsum work — expert fitting and free quotes on request.",
     "pageTitle": "Thana Glass & Aluminum Phuket — Glass, Aluminum and Gypsum Supply and Installation",
     "slides": [
       {
@@ -40,6 +41,7 @@
     "empty": "No featured products at the moment"
   },
   "Cart": {
+    "metaDescription": "Review the glass and aluminum products you have selected, then send your request to Thana Glass & Aluminum Phuket in just a few clicks.",
     "title": "Quotation List",
     "description": "The products you have selected for your quotation request",
     "openCart": "Open quotation list",
@@ -60,6 +62,9 @@
     "requestQuote": "Request a quotation"
   },
   "Products": {
+    "metaDescription": "Browse safety glass, aluminum profiles, gypsum and installation hardware from Thana Glass Phuket — every category, with expert advice on hand.",
+    "categoryMetaDescription": "{category} from Thana Glass & Aluminum Phuket — compare specifications, sizes and available models, then request an online quotation in minutes.",
+    "detailMetaDescription": "{name} from Thana Glass & Aluminum Phuket — full specifications, available options and pricing on request. Add it to an online quotation today.",
     "title": "All Products",
     "description": "Quality glass, gypsum, aluminum, and installation hardware — backed by expert consultation from our team.",
     "eyebrow": "Product Catalog",
@@ -117,9 +122,10 @@
     "searchLoading": "Searching..."
   },
   "AboutUs": {
-    "tag": "ABOUT THANA GLASS GROUP",
+    "brandName": "Thana Glass Group",
+    "tag": "ABOUT {brandName}",
     "title": "Trustworthy Leader in Glass & Aluminum Innovation",
-    "desc": "With over 20 years of experience in the industry, Thana Glass Group continuously strives to develop production standards and services. We are a trusted partner for architects, contractors, and homeowners nationwide.",
+    "desc": "With over 20 years of experience in the industry, {brandName} continuously strives to develop production standards and services. We are a trusted partner for architects, contractors, and homeowners nationwide.",
     "tis": {
       "title": "TIS Standard",
       "desc": "Every product passes international quality standards testing."
@@ -248,6 +254,7 @@
     "scrollTop": "Scroll to top"
   },
   "ContactPage": {
+    "metaDescription": "Contact Thana Glass & Aluminum Phuket — addresses, maps, phone numbers and opening hours for every branch, plus free advice on your glass project.",
     "eyebrow": "Get In Touch",
     "title": "Contact Us",
     "subtitle": "Get in touch with our branches and view locations",
@@ -285,6 +292,7 @@
     ]
   },
   "AboutPage": {
+    "metaDescription": "Meet Thana Glass & Aluminum Phuket — our story, our team, our branches and the standards behind every glass and aluminum installation we deliver.",
     "title": "About Us",
     "subtitle": "Precision, transparency, and structural integrity — crafted in every panel of glass and aluminum we install.",
     "eyebrow": "Our Story",
@@ -350,6 +358,8 @@
     ]
   },
   "Portfolio": {
+    "metaDescription": "See real glass and aluminum installations by Thana Glass Phuket — homes, hotels and commercial buildings, organised by category with full photos.",
+    "categoryMetaDescription": "{category} projects installed by Thana Glass & Aluminum Phuket — browse real photos from homes, hotels and commercial buildings we completed.",
     "eyebrow": "Our Works",
     "title": "Project Showcase",
     "description": "A collection of our glass and aluminum installation works, by category.",
@@ -362,6 +372,9 @@
     "close": "Close"
   },
   "Articles": {
+    "metaDescription": "Articles and practical tips on glass, aluminum and interior design from the Thana Glass Phuket team — pick the right material before you buy.",
+    "categoryMetaDescription": "{category} articles from Thana Glass & Aluminum Phuket — material guides, maintenance advice and decorating ideas you can actually put to use.",
+    "detailMetaDescription": "{title} — an article from Thana Glass & Aluminum Phuket, specialists in glass, aluminum and interior design across the island.",
     "eyebrow": "Knowledge Base",
     "title": "Articles & Knowledge",
     "description": "A collection of useful articles about glass, aluminum, and interior designs.",
@@ -376,6 +389,10 @@
     "readingTime": "Estimated reading time: {minutes} min"
   },
   "News": {
+    "metaDescription": "The latest news and promotions from Thana Glass & Aluminum Phuket — new products, special offers and company activities, updated regularly.",
+    "newsMetaDescription": "News from Thana Glass & Aluminum Phuket — new product arrivals, company announcements and the events we run throughout the year in Phuket.",
+    "promotionsMetaDescription": "Current promotions and special discounts from Thana Glass & Aluminum Phuket on glass and aluminum work — check the offers before they expire.",
+    "detailMetaDescription": "{title} — news and promotions from Thana Glass & Aluminum Phuket, your full-service glass and aluminum specialists on the island.",
     "title": "News & Promotions",
     "description": "Stay updated with the latest news and special promotions from Thana Glass & Aluminum",
     "promotionsTitle": "Special Promotions",
@@ -402,6 +419,7 @@
     "nextPage": "Next"
   },
   "QuoteForm": {
+    "metaDescription": "Request an online quotation for glass and aluminum work from Thana Glass Phuket — a short form, and our team replies with pricing right away.",
     "eyebrow": "Request a quotation",
     "title": "Tell us how to reach you",
     "description": "Fill in your contact details and our team will prepare your quotation and get back to you as soon as possible.",
