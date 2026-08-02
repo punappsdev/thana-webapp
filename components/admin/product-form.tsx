@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
+import { isDraftSku, slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
 type CategoryOption = { id: number; nameTh: string; nameEn: string; subCategories: { id: number; nameTh: string }[] };
 type Option = { id: number; nameTh?: string; nameEn?: string };
@@ -232,7 +232,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             {record ? <Badge variant={record.published ? "default" : "secondary"}>{record.published ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
           </div>
           <p className="font-body-sm text-muted-foreground mt-1">
-            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "จัดการชื่อ รูปภาพ และตัวเลือกของสินค้าได้ในที่เดียว"}
+            {record?.published ? "แก้ไขข้อมูลแล้วกดบันทึก หรือกด 'ยกเลิกเผยแพร่' เพื่อเปลี่ยนกลับเป็นฉบับร่าง" : "บันทึกร่างได้ทันทีแม้กรอกยังไม่ครบ แล้วค่อยกลับมาทำต่อ — กรอกให้ครบก่อนกดเผยแพร่"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -339,9 +339,12 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field label="SKU (รหัสสินค้า)">
-                  <Input name="sku" defaultValue={record?.sku} className="font-body-sm" />
+                  {/* A draft without a SKU carries a generated placeholder so the
+                      unique column has a value; show it as empty so the admin
+                      types a real code instead of editing machine text. */}
+                  <Input name="sku" defaultValue={isDraftSku(record?.sku) ? "" : record?.sku} className="font-body-sm" />
                   <p className="font-body-sm text-muted-foreground mt-1.5">
-                    รหัสอ้างอิงสินค้าในระบบ ห้ามซ้ำกัน เช่น GL-001
+                    รหัสอ้างอิงสินค้าในระบบ ห้ามซ้ำกัน เช่น GL-001 — เว้นว่างไว้ก่อนได้ แต่ต้องกรอกก่อนเผยแพร่
                   </p>
                 </Field>
                 {/* Slug is generated automatically; keep it mounted (only collapsed)

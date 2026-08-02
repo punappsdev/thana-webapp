@@ -32,6 +32,25 @@ export function validateBilingualPublish(
   }, {});
 }
 
+/**
+ * Prefix of the placeholder SKU a draft product gets while the admin has not
+ * typed a real one yet. `Product.sku` is `@unique` and NOT NULL, so a blank
+ * draft cannot simply store "" — every row needs its own token.
+ */
+export const DRAFT_SKU_PREFIX = "DRAFT-";
+
+/** The random tail matters: two tabs saving in the same millisecond would
+ *  otherwise collide on the unique index and surface as a duplicate-SKU error.
+ *  Padded because Math.random() can produce a short base-36 fraction. */
+export function draftSku(): string {
+  const tail = Math.random().toString(36).slice(2).padEnd(4, "0").slice(0, 4);
+  return `${DRAFT_SKU_PREFIX}${Date.now().toString(36)}-${tail}`;
+}
+
+export function isDraftSku(sku: string | null | undefined): boolean {
+  return !!sku?.startsWith(DRAFT_SKU_PREFIX);
+}
+
 export interface ProductVariantInput {
   sku?: string | null;
   price: number;
@@ -46,7 +65,14 @@ export interface ProductVariantInput {
  */
 export const MAX_COMBINATIONS = 200;
 
-export function validateProductVariants(variants: ProductVariantInput[]): string[] {
+/**
+ * A draft is work in progress, so only the rules the database itself enforces
+ * apply to it: duplicate variant SKUs (`ProductVariant.sku` is `@unique`, and
+ * letting one through would surface as an unrelated P2002 message) and negative
+ * prices. Everything else exists so the public variant picker behaves, and is
+ * therefore checked only when publishing.
+ */
+export function validateProductVariants(variants: ProductVariantInput[], published = true): string[] {
   const errors = new Set<string>();
   const skus = new Set<string>();
   const combinations = new Set<string>();
@@ -59,18 +85,25 @@ export function validateProductVariants(variants: ProductVariantInput[]): string
       skus.add(sku);
     }
 
-    const combination = [...variant.attributeValueIds].sort((a, b) => a - b).join(":");
-    if (combinations.has(combination)) {
-      errors.add("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
+    // A caller that addresses values by token rather than id passes no value ids
+    // and compares combinations itself, so an empty list is not a combination to
+    // dedupe — treating it as one would flag every multi-variant product.
+    if (variant.attributeValueIds.length) {
+      const combination = [...variant.attributeValueIds].sort((a, b) => a - b).join(":");
+      if (published && combinations.has(combination)) {
+        errors.add("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
+      }
+      combinations.add(combination);
     }
-    combinations.add(combination);
 
     if (variant.price < 0) errors.add("ราคาต้องไม่ติดลบ");
     if (variant.isDefault) defaultCount += 1;
   }
 
-  if (defaultCount > 1) errors.add("กำหนดตัวเลือกเริ่มต้นได้เพียงหนึ่งรายการ");
-  if (variants.length > 0 && defaultCount === 0) errors.add("กรุณากำหนดตัวเลือกเริ่มต้นหนึ่งรายการ");
+  if (published) {
+    if (defaultCount > 1) errors.add("กำหนดตัวเลือกเริ่มต้นได้เพียงหนึ่งรายการ");
+    if (variants.length > 0 && defaultCount === 0) errors.add("กรุณากำหนดตัวเลือกเริ่มต้นหนึ่งรายการ");
+  }
   return [...errors];
 }
 

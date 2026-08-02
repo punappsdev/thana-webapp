@@ -50,12 +50,14 @@ export async function savePopupAction(_state: ActionResult, formData: FormData):
   const endDate = parseDateInput(data.endDate);
 
   const fieldErrors: FieldErrors = {};
-  if (!data.name) fieldErrors.name = ["กรุณาตั้งชื่อรายการเพื่อให้ค้นหาได้ภายหลัง"];
-  if (!data.imageUrl) fieldErrors.imageUrl = ["กรุณาเลือกรูป Popup"];
+  // Both columns are NOT NULL but a draft may not have either yet, so it stores
+  // "" and the admin list falls back to a placeholder label / icon.
+  if (published && !data.name) fieldErrors.name = ["กรุณาตั้งชื่อรายการก่อนเผยแพร่"];
+  if (published && !data.imageUrl) fieldErrors.imageUrl = ["กรุณาเลือกรูป Popup ก่อนเผยแพร่"];
   if (startDate && endDate && endDate <= startDate) fieldErrors.endDate = ["วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น"];
   // Publishing something already past its window would silently show nothing.
   else if (published && endDate && endDate <= new Date()) fieldErrors.endDate = ["วันสิ้นสุดผ่านไปแล้ว Popup จะไม่แสดง กรุณาแก้ไขก่อนเผยแพร่"];
-  if (Object.keys(fieldErrors).length) return { success: false, message: "กรุณากรอกข้อมูลให้ครบก่อนบันทึก", fieldErrors };
+  if (Object.keys(fieldErrors).length) return { success: false, message: "กรุณากรอกข้อมูลให้ครบก่อนเผยแพร่", fieldErrors };
 
   const prisma = getPrisma();
   const id = typeof data.id === "number" ? data.id : undefined;

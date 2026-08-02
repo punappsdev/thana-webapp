@@ -11,6 +11,8 @@ import { getPrisma } from "@/lib/prisma";
 import { reindexProducts } from "@/lib/search-index";
 import {
   MAX_COMBINATIONS,
+  draftSku,
+  isDraftSku,
   isStaleVersion,
   slugifyAdminTitle,
   validateBilingualPublish,
@@ -62,7 +64,9 @@ const formSchema = z.object({
   // Hidden from non-technical admins and generated from the English name; a typed
   // value (from the advanced section) is still honoured, just sanitized/deduped.
   slug: z.string().trim().optional().default(""),
-  sku: z.string().trim().min(1),
+  // Optional so a half-finished product can still be saved as a draft; a real
+  // value is required to publish (and a placeholder is generated meanwhile).
+  sku: z.string().trim().optional().default(""),
   nameTh: z.string().trim(),
   nameEn: z.string().trim(),
   descriptionTh: z.string().optional().default(""),
@@ -121,6 +125,12 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
   const published = d.intent === "publish";
   const languageErrors = validateBilingualPublish({ nameTh: d.nameTh, nameEn: d.nameEn }, published);
   if (Object.keys(languageErrors).length) return { success: false, message: "กรุณากรอกชื่อสองภาษาให้ครบก่อนเผยแพร่", fieldErrors: languageErrors };
+  // A draft keeps its generated placeholder SKU (which the form hides), so an
+  // empty field here always means the admin has not chosen a real one yet.
+  if (published && !d.sku) {
+    const message = "กรุณากรอกรหัสสินค้า (SKU) ก่อนเผยแพร่";
+    return { success: false, message, fieldErrors: { sku: [message] } };
+  }
 
   let images: z.infer<typeof imageSchema>;
   let attributes: z.infer<typeof attributeSchema>;
@@ -138,16 +148,20 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
 
   // Anything created here lands in the shared dictionary and is rendered on both
   // the Thai and English storefront, so neither language may be left blank —
-  // otherwise /en silently shows Thai text with nothing flagging the gap.
+  // otherwise /en silently shows Thai text with nothing flagging the gap. These
+  // two rules hold for drafts as well: the rows outlive this product and would
+  // turn up half-filled in every other product's editor.
   for (const attribute of attributes) {
     if (attribute.attributeId === null && (!attribute.newNameTh || !attribute.newNameEn)) {
       return { success: false, message: "กรุณากรอกชื่อรายการใหม่ให้ครบทั้งภาษาไทยและภาษาอังกฤษ" };
     }
-    if (!attribute.valueIds.length && !attribute.newValues.length) {
-      return { success: false, message: `กรุณาเพิ่มค่าให้ "${attribute.newNameTh || "รายการที่เลือกไว้"}" อย่างน้อยหนึ่งค่า` };
-    }
     if (attribute.newValues.some((value) => !value.valueTh || !value.valueEn)) {
       return { success: false, message: "กรุณากรอกค่าใหม่ให้ครบทั้งภาษาไทยและภาษาอังกฤษ" };
+    }
+    // An empty attribute only matters once customers see it, so a draft may
+    // carry one the admin has not filled in yet.
+    if (published && !attribute.valueIds.length && !attribute.newValues.length) {
+      return { success: false, message: `กรุณาเพิ่มค่าให้ "${attribute.newNameTh || "รายการที่เลือกไว้"}" อย่างน้อยหนึ่งค่า` };
     }
   }
 
@@ -155,7 +169,9 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
   const id = typeof d.id === "number" ? d.id : undefined;
   // Snapshot the current media URLs before the write so files dropped on this
   // edit can be cleaned up afterwards (only if nothing else still uses them).
-  const oldMedia = id ? await prisma.product.findUnique({ where: { id }, select: { coverImage: true, catalogPdf: true, images: { select: { url: true } }, variants: { select: { image: true } } } }) : null;
+  // `sku` rides along so re-saving a draft can reuse the placeholder it was given
+  // the first time instead of minting a new one on every save.
+  const oldMedia = id ? await prisma.product.findUnique({ where: { id }, select: { sku: true, coverImage: true, catalogPdf: true, images: { select: { url: true } }, variants: { select: { image: true } } } }) : null;
   const categoryId = typeof d.categoryId === "number" ? d.categoryId : null;
   const subCategoryId = typeof d.subCategoryId === "number" ? d.subCategoryId : null;
 
@@ -189,17 +205,24 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     price: variant.price === "" ? 0 : Number(variant.price),
   }));
 
+  // Combinations are compared here rather than inside the helper because the rows
+  // address values by token, not by id — hence the empty `attributeValueIds`.
   const variantErrors = validateProductVariants(
     pricedVariants.map((variant) => ({ sku: variant.sku, price: variant.price, isDefault: variant.isDefault, attributeValueIds: [] })),
-  ).filter((error) => error !== "ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
-  const duplicateCombination = new Set(variants.map((variant) => [...variant.valueTokens].sort().join("|"))).size !== variants.length;
-  if (duplicateCombination) variantErrors.push("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
+    published,
+  );
+  if (published) {
+    const duplicateCombination = new Set(variants.map((variant) => [...variant.valueTokens].sort().join("|"))).size !== variants.length;
+    if (duplicateCombination) variantErrors.push("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
+  }
   if (variantErrors.length) return { success: false, message: variantErrors.join(" · ") };
 
   const slug = await ensureUniqueProductSlug(prisma, slugifyAdminTitle(d.slug || d.nameEn) || fallbackToken("product"), id);
   const core = {
     slug,
-    sku: d.sku,
+    // Reuse an existing placeholder so a draft's SKU stays put across saves; a
+    // brand new draft gets a fresh one because the column is unique and NOT NULL.
+    sku: d.sku || (isDraftSku(oldMedia?.sku) ? oldMedia!.sku : draftSku()),
     nameTh: d.nameTh,
     nameEn: d.nameEn,
     descriptionTh: d.descriptionTh || null,
@@ -269,13 +292,17 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
       const unresolved = variants.flatMap((variant) => variant.valueTokens).filter((token) => !tokenToValueId.has(token));
       if (unresolved.length) throw new Error("VARIANT_TOKEN_UNRESOLVED");
 
-      const axisErrors = validateVariantAxisCoverage(
-        variants.map((variant) => ({ attributeValueIds: variant.valueTokens.map((token) => tokenToValueId.get(token)!) })),
-        resolved
-          .filter((attribute) => attribute.isVariantAxis)
-          .map((attribute) => ({ attributeId: attribute.attributeId, nameTh: attribute.nameTh, valueIds: attribute.valueIds })),
-      );
-      if (axisErrors.length) throw new Error(`AXIS:${axisErrors.join(" · ")}`);
+      // Only the public variant selector cares that every axis is covered, so a
+      // draft may hold half-built combinations until it is ready to publish.
+      if (published) {
+        const axisErrors = validateVariantAxisCoverage(
+          variants.map((variant) => ({ attributeValueIds: variant.valueTokens.map((token) => tokenToValueId.get(token)!) })),
+          resolved
+            .filter((attribute) => attribute.isVariantAxis)
+            .map((attribute) => ({ attributeId: attribute.attributeId, nameTh: attribute.nameTh, valueIds: attribute.valueIds })),
+        );
+        if (axisErrors.length) throw new Error(`AXIS:${axisErrors.join(" · ")}`);
+      }
 
       await tx.productImage.deleteMany({ where: { productId: row.id } });
       await tx.productAttribute.deleteMany({ where: { productId: row.id } });

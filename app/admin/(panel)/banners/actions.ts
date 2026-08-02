@@ -48,10 +48,12 @@ export async function saveBannerAction(_state: ActionResult, formData: FormData)
   const isPromotion = data.type === "PROMOTION";
   const published = data.intent === "publish";
   const fieldErrors = validateBilingualPublish({ titleTh: data.titleTh, titleEn: data.titleEn }, published);
-  if (!data.imageUrl) fieldErrors.imageUrl = ["กรุณาเลือกรูปแบนเนอร์"];
+  // A draft may still be missing its artwork — the column is NOT NULL, so it just
+  // stores "" until then, and every renderer already guards on a falsy imageUrl.
+  if (published && !data.imageUrl) fieldErrors.imageUrl = ["กรุณาเลือกรูปแบนเนอร์ก่อนเผยแพร่"];
   // A published promotion banner must point at a promotion so it can be clicked through.
   if (isPromotion && published && !data.promotionId) fieldErrors.promotionId = ["กรุณาเลือกโปรโมชั่นที่เชื่อมโยงก่อนเผยแพร่"];
-  if (Object.keys(fieldErrors).length) return { success: false, message: "กรุณากรอกข้อมูลให้ครบก่อนบันทึก", fieldErrors };
+  if (Object.keys(fieldErrors).length) return { success: false, message: "กรุณากรอกข้อมูลให้ครบก่อนเผยแพร่", fieldErrors };
 
   const prisma = getPrisma();
   const id = typeof data.id === "number" ? data.id : undefined;

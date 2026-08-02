@@ -87,7 +87,7 @@ export default async function PopupListPage() {
                       </div>
                     </TableCell>
                     <TableCell className="whitespace-normal">
-                      <p className="font-label-md font-semibold">{item.name}</p>
+                      <p className="font-label-md font-semibold">{item.name || "ยังไม่ได้ตั้งชื่อ"}</p>
                       <p className="font-body-sm text-muted-foreground">{item.linkUrl || "คลิกไม่ได้"}</p>
                     </TableCell>
                     <TableCell>

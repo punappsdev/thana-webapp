@@ -69,6 +69,7 @@ export function PopupForm({ record }: { record: PromotionPopup | null }) {
           </div>
           <p className="font-body-sm text-muted-foreground mt-1">
             รูปโปรโมชั่นที่เด้งขึ้นมาเมื่อผู้เข้าชมเปิดหน้าแรก แสดงได้ทีละหนึ่งรายการ — เลือกว่าจะให้อันไหนขึ้นได้ที่หน้ารายการ Popup
+            {isPublished ? "" : " บันทึกร่างได้ทันทีแม้กรอกยังไม่ครบ กรอกให้ครบก่อนกดเผยแพร่"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

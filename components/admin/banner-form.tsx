@@ -63,7 +63,8 @@ export function BannerForm({ type, record, promotions }: { type: BannerType; rec
             {record ? <Badge variant={isPublished ? "default" : "secondary"}>{isPublished ? "เผยแพร่อยู่" : "ฉบับร่าง"}</Badge> : null}
           </div>
           <p className="font-body-sm text-muted-foreground mt-1">
-            {isPromotion ? "เชื่อมกับโปรโมชั่นเพื่อให้คลิกแบนเนอร์ไปยังหน้ารายละเอียดได้ แสดงบนสไลด์หน้าข่าว/โปรโมชั่น" : "แสดงบนแบนเนอร์หน้าแรก กรอกหัวข้อสองภาษาให้ครบก่อนเผยแพร่"}
+            {isPromotion ? "เชื่อมกับโปรโมชั่นเพื่อให้คลิกแบนเนอร์ไปยังหน้ารายละเอียดได้ แสดงบนสไลด์หน้าข่าว/โปรโมชั่น" : "แสดงบนแบนเนอร์หน้าแรก"}
+            {isPublished ? " กรอกหัวข้อสองภาษาให้ครบก่อนเผยแพร่" : " — บันทึกร่างได้ทันทีแม้กรอกยังไม่ครบ กรอกให้ครบก่อนกดเผยแพร่"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

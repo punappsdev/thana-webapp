@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   slugifyAdminTitle,
+  draftSku,
+  isDraftSku,
   isStaleVersion,
   validateBilingualPublish,
   validateProductVariants,
@@ -35,6 +37,38 @@ describe("admin validation", () => {
       "ราคาต้องไม่ติดลบ",
       "กำหนดตัวเลือกเริ่มต้นได้เพียงหนึ่งรายการ",
     ]));
+  });
+
+  it("ignores combinations when the caller passes no value ids", () => {
+    // The product action addresses values by token and dedupes them itself.
+    const result = validateProductVariants([
+      { sku: "SKU-1", price: 100, isDefault: true, attributeValueIds: [] },
+      { sku: "SKU-2", price: 100, isDefault: false, attributeValueIds: [] },
+    ]);
+
+    expect(result).toEqual([]);
+  });
+
+  it("lets a draft keep incomplete variants but still guards the unique index", () => {
+    const result = validateProductVariants([
+      { sku: "SKU-1", price: 100, isDefault: false, attributeValueIds: [2, 1] },
+      { sku: "sku-1", price: -1, isDefault: false, attributeValueIds: [1, 2] },
+    ], false);
+
+    // No default and a duplicate combination are fine until the product is published.
+    expect(result).toEqual(expect.arrayContaining(["SKU ของแต่ละตัวเลือกต้องไม่ซ้ำกัน", "ราคาต้องไม่ติดลบ"]));
+    expect(result).not.toContain("กรุณากำหนดตัวเลือกเริ่มต้นหนึ่งรายการ");
+    expect(result).not.toContain("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
+  });
+
+  it("recognises the placeholder SKU a draft product is given", () => {
+    expect(isDraftSku(draftSku())).toBe(true);
+    expect(isDraftSku("GL-001")).toBe(false);
+    expect(isDraftSku("")).toBe(false);
+    expect(isDraftSku(null)).toBe(false);
+    // A random tail keeps two saves in the same millisecond off each other's
+    // Product.sku, which is a unique index.
+    expect(draftSku()).toMatch(/^DRAFT-[a-z0-9]+-[a-z0-9]{4}$/);
   });
 
   it("detects optimistic concurrency conflicts from updatedAt", () => {
