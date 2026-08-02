@@ -396,6 +396,8 @@
     "filterAll": "All",
     "filterNews": "News",
     "filterPromotions": "Promotions",
+    "badgeNews": "News",
+    "badgePromotion": "Promotion",
     "prevPage": "Previous",
     "nextPage": "Next"
   },

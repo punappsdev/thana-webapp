@@ -110,7 +110,7 @@ export default async function NewsDetailPage({ params }: DetailProps) {
           <div className="space-y-4 mb-8">
             <div className="flex flex-wrap items-center gap-3">
               <span className="bg-[#c4e2f5] text-[#002c7d] px-3 py-1 rounded-md font-label-sm font-semibold tracking-wide">
-                News
+                {t("badgeNews")}
               </span>
               <span className="flex items-center gap-2 font-label-sm text-muted-foreground">
                 <Calendar className="h-4 w-4 text-primary" />

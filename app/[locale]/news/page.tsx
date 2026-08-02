@@ -207,7 +207,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
                           />
                           {/* Mockup matching tag badge overlay */}
                           <div className="absolute top-3 left-3 bg-primary text-white px-2.5 py-1 rounded-md font-label-sm font-bold uppercase tracking-wider shadow-sm z-10">
-                            News
+                            {t("badgeNews")}
                           </div>
                         </div>
                       )}
@@ -284,7 +284,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
                         />
                         {/* Overlay badge matching news card style but using secondary brand color */}
                         <div className="absolute top-3 left-3 bg-secondary text-white px-2.5 py-1 rounded-md font-label-sm font-bold uppercase tracking-wider shadow-sm z-10">
-                          Promotion
+                          {t("badgePromotion")}
                         </div>
                       </div>
                     )}
