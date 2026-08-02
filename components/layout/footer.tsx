@@ -31,7 +31,7 @@ export async function Footer() {
             src="/main-logo-tp.png"
             alt="Thana Glass Logo"
             width={160}
-            height={48}
+            height={52}
             className="h-12 w-auto object-contain self-start"
             style={{ width: 'auto' }}
           />

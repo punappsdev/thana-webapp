@@ -43,7 +43,7 @@ interface PageProps {
   }>;
 }
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 15;
 
 /**
  * Canonical path for a catalog view. Category and sub-category produce genuinely

@@ -55,7 +55,7 @@ export function Header() {
               src="/main-logo-tp.png"
               alt="Thana Glass Group Logo"
               width={160}
-              height={48}
+              height={52}
               className="h-10 lg:h-8 xl:h-12 w-auto object-contain"
               style={{ width: 'auto' }}
               priority
