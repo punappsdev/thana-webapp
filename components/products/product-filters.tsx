@@ -21,6 +21,11 @@ interface BrandItem {
   name: string;
 }
 
+/** `?brand=a,b` → ["a", "b"]. An absent or empty param means "no brand filter". */
+function parseBrandParam(value: string | undefined): string[] {
+  return value ? value.split(",") : [];
+}
+
 interface ProductSortAndFilterProps {
   brands: BrandItem[];
   currentParams: {
@@ -59,14 +64,21 @@ export function ProductSortAndFilter({
   // relevance — the server orders by match quality unless told otherwise.
   const defaultSort = hasQuery ? "relevance" : "featured";
   const activeSort = currentParams.sort || defaultSort;
-  const [selectedBrands, setSelectedBrands] = React.useState<string[]>(
-    typeof currentParams.brand === "string" ? currentParams.brand.split(",") : []
+  // The ticked boxes are a draft the popover holds until "Apply" writes them to
+  // the URL. When the param moves on its own — Back/Forward, a locale switch, a
+  // link that carries its own filter — the draft has to follow it.
+  //
+  // Adjusting state during render rather than in an effect: the reset lands in
+  // the same pass, so the popover never paints one frame of stale ticks.
+  const [selectedBrands, setSelectedBrands] = React.useState<string[]>(() =>
+    parseBrandParam(currentParams.brand)
   );
+  const [syncedBrandParam, setSyncedBrandParam] = React.useState(currentParams.brand);
 
-  // Sync state if parameters change externally (e.g. locale or link change)
-  React.useEffect(() => {
-    setSelectedBrands(typeof currentParams.brand === "string" ? currentParams.brand.split(",") : []);
-  }, [currentParams.brand]);
+  if (currentParams.brand !== syncedBrandParam) {
+    setSyncedBrandParam(currentParams.brand);
+    setSelectedBrands(parseBrandParam(currentParams.brand));
+  }
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(window.location.search);
