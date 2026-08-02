@@ -175,9 +175,9 @@ export function VariantSelector({
     <div className="space-y-6">
       {groups.length > 0 && (
         <div className="space-y-5">
-          <h3 className="font-headline-sm font-semibold text-on-surface">
+          <h2 className="font-headline-sm font-semibold text-on-surface">
             {labels.selectOptions}
-          </h3>
+          </h2>
 
           {groups.map((group) => (
             <div key={group.id} className="space-y-2">

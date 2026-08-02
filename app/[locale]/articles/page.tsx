@@ -15,11 +15,44 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
+import { JsonLd } from "@/components/seo/json-ld";
+import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ category?: string; query?: string; page?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { category, query: search, page = "1" } = await searchParams;
+  const t = await getTranslations("Articles");
+  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+
+  // Free-text search results are the same articles re-sliced: crawlable, but
+  // consolidated onto the clean listing.
+  const isSearch = !!search?.trim();
+  const canonicalPage = isSearch ? 1 : pageNumber;
+
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (canonicalPage > 1) qs.set("page", String(canonicalPage));
+  const canonicalQuery = qs.toString();
+
+  return {
+    title: canonicalPage > 1 ? `${t("title")} — ${canonicalPage}` : t("title"),
+    description: t("description"),
+    alternates: alternatesFor(
+      locale,
+      canonicalQuery ? `/articles?${canonicalQuery}` : "/articles"
+    ),
+    ...(isSearch ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 export default async function ArticlesPage({
@@ -34,6 +67,7 @@ export default async function ArticlesPage({
 
   const t = await getTranslations("Articles");
   const tNews = await getTranslations("News");
+  const tNav = await getTranslations("Header");
 
   // Fetch categories
   const categories = await prisma.articleCategory.findMany({
@@ -67,8 +101,21 @@ export default async function ArticlesPage({
   const totalPages = Math.ceil(totalItems / limit);
   const articles = allArticles.slice(skip, skip + limit);
 
+  const activeCategory = category ? categories.find((c) => c.slug === category) : undefined;
+  const breadcrumb = breadcrumbLd(
+    locale,
+    [
+      { name: t("title"), ...(activeCategory ? { path: "/articles" } : {}) },
+      ...(activeCategory
+        ? [{ name: locale === "en" ? activeCategory.nameEn : activeCategory.nameTh }]
+        : []),
+    ],
+    tNav("nav.home")
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <JsonLd data={breadcrumb} />
       <Header />
 
       <main className="flex-1 main-content-spacer">

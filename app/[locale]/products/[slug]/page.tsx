@@ -13,24 +13,37 @@ import {
   type AttributeGroup,
   type VariantOption,
 } from "@/components/products/variant-selector";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_URL, absoluteUrl, alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
   if (!product || !product.published) return {};
+  const name = pick(product, "name", locale);
+  const description = pick(product, "description", locale) || undefined;
   return {
-    title: pick(product, "name", locale),
-    description: pick(product, "description", locale) || undefined,
+    title: name,
+    description,
+    alternates: alternatesFor(locale, `/products/${slug}`),
+    openGraph: {
+      title: name,
+      description,
+      url: absoluteUrl(locale, `/products/${slug}`),
+      images: product.coverImage ? [`${SITE_URL}${product.coverImage}`] : [],
+    },
   };
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { locale, slug } = await params;
   const t = await getTranslations("Products");
+  const tNav = await getTranslations("Header");
 
   const product = await prisma.product.findUnique({
     where: { slug },
@@ -129,8 +142,52 @@ export default async function ProductDetailPage({ params }: PageProps) {
     })),
   ];
 
+  // No `offers` node: this catalog is quotation-based and has no published
+  // prices, and an offer without a price is worse than no offer at all.
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    description: description || undefined,
+    sku: product.sku,
+    url: absoluteUrl(locale, `/products/${slug}`),
+    image: gallery.map((img) => `${SITE_URL}${img.url}`),
+    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand.name } } : {}),
+    ...(product.category
+      ? { category: pick(product.category, "name", locale) }
+      : {}),
+    ...(specs.length > 0
+      ? {
+          additionalProperty: specs.map(([, spec]) => ({
+            "@type": "PropertyValue",
+            name: spec.label,
+            value: spec.values.join(", "),
+          })),
+        }
+      : {}),
+  };
+
+  const breadcrumb = breadcrumbLd(
+    locale,
+    [
+      { name: t("title"), path: "/products" },
+      ...(product.category
+        ? [
+            {
+              name: pick(product.category, "name", locale),
+              path: `/products?category=${product.category.slug}`,
+            },
+          ]
+        : []),
+      { name },
+    ],
+    tNav("nav.home")
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <JsonLd data={productLd} />
+      <JsonLd data={breadcrumb} />
       <Header />
 
       <main className="flex-1 main-content-spacer">

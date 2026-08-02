@@ -18,11 +18,46 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
+import { JsonLd } from "@/components/seo/json-ld";
+import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 import type { News, Promotion } from "@/generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ type?: string; page?: string }>;
+}
+
+/** Canonical path for a listing view — `type` and `page` both change what is shown. */
+function newsCanonical(type: string, page: number) {
+  const qs = new URLSearchParams();
+  if (type && type !== "all") qs.set("type", type);
+  if (page > 1) qs.set("page", String(page));
+  const query = qs.toString();
+  return query ? `/news?${query}` : "/news";
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { type = "all", page = "1" } = await searchParams;
+  const t = await getTranslations("News");
+  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+
+  const scope =
+    type === "news"
+      ? t("filterNews")
+      : type === "promotions"
+        ? t("filterPromotions")
+        : t("title");
+
+  return {
+    title: pageNumber > 1 ? `${scope} — ${pageNumber}` : scope,
+    description: t("description"),
+    alternates: alternatesFor(locale, newsCanonical(type, pageNumber)),
+  };
 }
 
 export default async function NewsPage({ params, searchParams }: PageProps) {
@@ -32,6 +67,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   const limit = 6;
   const skip = (pageNumber - 1) * limit;
   const t = await getTranslations("News");
+  const tNav = await getTranslations("Header");
 
   // Promotion banners for the top slider — curated in the admin panel, each
   // linking to its connected promotion's detail page when clicked.
@@ -77,14 +113,28 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
 
   const gridItems = allGridItems.slice(skip, skip + limit);
 
+  const breadcrumb = breadcrumbLd(
+    locale,
+    [
+      { name: t("title"), ...(type !== "all" ? { path: "/news" } : {}) },
+      ...(type === "news" ? [{ name: t("filterNews") }] : []),
+      ...(type === "promotions" ? [{ name: t("filterPromotions") }] : []),
+    ],
+    tNav("nav.home")
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
+      <JsonLd data={breadcrumb} />
       <Header />
 
       <main className="flex-1 main-content-spacer">
         {/* Top Active Promotions Slider Banner (Only visible if promotions exist) */}
         {promotionBanners.length > 0 && (
-          <section className="relative w-full overflow-hidden select-none bg-primary mb-14 md:mb-16">
+          <section
+            aria-label={t("promotionsTitle")}
+            className="relative w-full overflow-hidden select-none bg-primary mb-14 md:mb-16"
+          >
             <UniversalSlider
               slides={sliderSlides}
               locale={locale}
@@ -103,9 +153,9 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
           <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-end border-b border-[#ededf7] pb-6 mb-10">
             {/* Title & Subtitle */}
             <div className="space-y-2 border-l-4 border-primary pl-4">
-              <h2 className="font-headline-lg-mobile md:font-headline-lg font-bold text-on-surface">
+              <h1 className="font-headline-lg-mobile md:font-headline-lg font-bold text-on-surface">
                 {t("latestTitle")}
-              </h2>
+              </h1>
               <p className="font-body-sm text-muted-foreground font-light max-w-xl">
                 {t("latestSubtitle")}
               </p>
@@ -177,11 +227,11 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
                           </div>
 
                           {/* Title */}
-                          <h3 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+                          <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors leading-snug">
                             <Link href={`/news/${item.slug}`}>
                               {title}
                             </Link>
-                          </h3>
+                          </h2>
 
                           {/* Excerpt */}
                           {excerpt && (
@@ -256,11 +306,11 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
                         </div>
 
                         {/* Title */}
-                        <h3 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+                        <h2 className="font-headline-sm font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors leading-snug">
                           <Link href={`/promotions/${item.slug}`}>
                             {title}
                           </Link>
-                        </h3>
+                        </h2>
 
                         {/* Excerpt */}
                         {excerpt && (

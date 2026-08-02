@@ -4,15 +4,21 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { getTranslations } from "next-intl/server";
 import { MessageSquareQuote } from "lucide-react";
 import { QuoteRequestForm } from "@/components/quote/quote-request-form";
+import { alternatesFor } from "@/lib/seo";
+import type { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
-  await params;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("QuoteForm");
-  return { title: t("metaTitle"), description: t("description") };
+  return {
+    title: t("metaTitle"),
+    description: t("description"),
+    alternates: alternatesFor(locale, "/quote"),
+  };
 }
 
 export default async function QuotePage({ params }: PageProps) {

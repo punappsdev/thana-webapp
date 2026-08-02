@@ -14,6 +14,7 @@
     }
   },
   "Hero": {
+    "pageTitle": "Thana Glass & Aluminum Phuket — Glass, Aluminum and Gypsum Supply and Installation",
     "slides": [
       {
         "tag": "Expert in Glass & Aluminum",
@@ -372,7 +373,7 @@
     "publishedAt": "Published on",
     "home": "Home",
     "share": "Share",
-    "readingTime": "{minutes} min read"
+    "readingTime": "Estimated reading time: {minutes} min"
   },
   "News": {
     "title": "News & Promotions",

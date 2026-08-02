@@ -5,14 +5,33 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { Partners } from "@/components/homepage/partners";
 import Image from "next/image";
 import { Building2, Sparkles, ShieldCheck, Layers, Trophy, Eye } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 
 interface Branch {
   name: string;
   desc: string;
 }
 
-export default async function AboutPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("AboutPage");
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    alternates: alternatesFor(locale, "/about"),
+  };
+}
+
+export default async function AboutPage({ params }: PageProps) {
+  const { locale } = await params;
+  const t = await getTranslations("AboutPage");
+  const tNav = await getTranslations("Header");
   const branches = t.raw("branches") as Branch[];
 
   const values = [
@@ -23,6 +42,9 @@ export default async function AboutPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <JsonLd
+        data={breadcrumbLd(locale, [{ name: t("title") }], tNav("nav.home"))}
+      />
       <Header />
 
       <main className="flex-1 main-content-spacer">

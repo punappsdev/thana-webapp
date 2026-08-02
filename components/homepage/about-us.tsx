@@ -27,7 +27,7 @@ export function AboutUs() {
                 <Award className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="font-headline-md text-primary font-bold">{t("tis.title")}</h4>
+                <h3 className="font-headline-md text-primary font-bold">{t("tis.title")}</h3>
                 <p className="font-label-sm text-muted-foreground mt-1">
                   {t("tis.desc")}
                 </p>
@@ -39,7 +39,7 @@ export function AboutUs() {
                 <Wrench className="h-6 w-6" />
               </div>
               <div>
-                <h4 className="font-headline-md text-primary font-bold">{t("expert.title")}</h4>
+                <h3 className="font-headline-md text-primary font-bold">{t("expert.title")}</h3>
                 <p className="font-label-sm text-muted-foreground mt-1">
                   {t("expert.desc")}
                 </p>

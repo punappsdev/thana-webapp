@@ -14,11 +14,35 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { CategoryFilter } from "@/components/ui/category-filter";
+import { JsonLd } from "@/components/seo/json-ld";
+import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ category?: string; page?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { category, page = "1" } = await searchParams;
+  const t = await getTranslations("Portfolio");
+  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (pageNumber > 1) qs.set("page", String(pageNumber));
+  const query = qs.toString();
+
+  return {
+    title: pageNumber > 1 ? `${t("title")} — ${pageNumber}` : t("title"),
+    description: t("description"),
+    alternates: alternatesFor(locale, query ? `/portfolio?${query}` : "/portfolio"),
+  };
 }
 
 export default async function PortfolioPage({ params, searchParams }: PageProps) {
@@ -30,6 +54,7 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
 
   const t = await getTranslations("Portfolio");
   const tNews = await getTranslations("News");
+  const tNav = await getTranslations("Header");
 
   // Fetch categories — shared with products, so only show ones that
   // actually have a published work behind them
@@ -78,8 +103,21 @@ export default async function PortfolioPage({ params, searchParams }: PageProps)
     };
   });
 
+  const activeCategory = category ? categories.find((c) => c.slug === category) : undefined;
+  const breadcrumb = breadcrumbLd(
+    locale,
+    [
+      { name: t("title"), ...(activeCategory ? { path: "/portfolio" } : {}) },
+      ...(activeCategory
+        ? [{ name: locale === "en" ? activeCategory.nameEn : activeCategory.nameTh }]
+        : []),
+    ],
+    tNav("nav.home")
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <JsonLd data={breadcrumb} />
       <Header />
 
       <main className="flex-1 main-content-spacer">

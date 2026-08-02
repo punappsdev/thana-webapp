@@ -26,6 +26,9 @@ import { ProductCard } from "@/components/products/product-card";
 import { ProductSortAndFilter } from "@/components/products/product-filters";
 import { findCatalogPage } from "@/lib/product-search";
 import { searchTextWhere } from "@/lib/search";
+import { JsonLd } from "@/components/seo/json-ld";
+import { alternatesFor, breadcrumbLd } from "@/lib/seo";
+import type { Metadata } from "next";
 import type { Prisma } from "../../../generated/prisma/client";
 
 interface PageProps {
@@ -42,6 +45,66 @@ interface PageProps {
 
 const PAGE_SIZE = 9;
 
+/**
+ * Canonical path for a catalog view. Category and sub-category produce genuinely
+ * distinct listings and stay in the URL; free-text search, sorting and brand
+ * filters only re-slice the same set, so they collapse onto the clean address.
+ */
+function catalogCanonical(category?: string, sub?: string, page?: number) {
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (category && sub) qs.set("sub", sub);
+  if (page && page > 1) qs.set("page", String(page));
+  const query = qs.toString();
+  return query ? `/products?${query}` : "/products";
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const { q, category, sub, brand, sort, page = "1" } = await searchParams;
+  const t = await getTranslations("Products");
+  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+
+  // Filters that only reorder or narrow the same catalog: keep them crawlable
+  // for discovery, but out of the index so they cannot outrank the clean page.
+  const isRefinement = !!(q?.trim() || brand || sort);
+
+  const [categoryRecord, subRecord] = await Promise.all([
+    category
+      ? prisma.category.findUnique({ where: { slug: category } })
+      : Promise.resolve(null),
+    // Sub-category slugs are only unique within their parent category, so this
+    // resolves against the category currently in the URL.
+    category && sub
+      ? prisma.subCategory.findFirst({
+          where: { slug: sub, category: { slug: category } },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const scope = subRecord
+    ? pick(subRecord, "name", locale)
+    : categoryRecord
+      ? pick(categoryRecord, "name", locale)
+      : null;
+
+  const title = scope ?? t("title");
+  const canonicalPage = isRefinement ? 1 : pageNumber;
+
+  return {
+    title: canonicalPage > 1 ? `${title} — ${canonicalPage}` : title,
+    description: t("description"),
+    alternates: alternatesFor(
+      locale,
+      catalogCanonical(categoryRecord?.slug, subRecord?.slug, canonicalPage)
+    ),
+    ...(isRefinement ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
 export default async function ProductsPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const {
@@ -57,6 +120,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   const t = await getTranslations("Products");
   const tNews = await getTranslations("News");
+  const tNav = await getTranslations("Header");
 
   // Only surface categories that actually have a published product behind them
   const categories = await prisma.category.findMany({
@@ -135,8 +199,39 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   const pageHref = (p: number) => buildHref({ page: p > 1 ? String(p) : null });
 
+  // The H1 follows whatever the visitor is actually looking at, so a filtered
+  // catalog URL describes itself instead of repeating the generic page title.
+  const isFiltered = !!(searchQuery || activeCategory);
+  const heading = searchQuery
+    ? t("searchResultsFor", { query: searchQuery })
+    : activeSub
+      ? pick(activeSub, "name", locale)
+      : activeCategory
+        ? pick(activeCategory, "name", locale)
+        : t("title");
+
+  const breadcrumb = breadcrumbLd(
+    locale,
+    [
+      { name: t("title"), ...(activeCategory ? { path: "/products" } : {}) },
+      ...(activeCategory
+        ? [
+            {
+              name: pick(activeCategory, "name", locale),
+              ...(activeSub
+                ? { path: catalogCanonical(activeCategory.slug) }
+                : {}),
+            },
+          ]
+        : []),
+      ...(activeSub ? [{ name: pick(activeSub, "name", locale) }] : []),
+    ],
+    tNav("nav.home")
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <JsonLd data={breadcrumb} />
       <Header />
 
       <main className="flex-1 main-content-spacer">
@@ -168,6 +263,19 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
         {/* Catalog: sidebar + grid */}
         <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-12">
+          {/* Page heading sits above the sidebar so the H1 comes first in the
+              document outline, ahead of the sidebar's H2 and the card H3s. */}
+          <header className="mb-6 md:mb-8">
+            <h1 className="font-headline-lg-mobile md:font-headline-lg font-bold text-on-surface">
+              {heading}
+            </h1>
+            {!isFiltered && (
+              <p className="mt-2 max-w-3xl font-body-sm text-[#747684] leading-relaxed">
+                {t("description")}
+              </p>
+            )}
+          </header>
+
           <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr] gap-6 md:gap-10 items-start">
             <CategorySidebar
               categories={categories.map((c) => ({

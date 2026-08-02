@@ -9,6 +9,8 @@ import { ShareButton } from "@/components/ui/share-button";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_URL, absoluteUrl, alternatesFor, breadcrumbLd } from "@/lib/seo";
 
 interface DetailProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -29,10 +31,16 @@ export async function generateMetadata({
   const description = locale === "en" ? news.excerptEn : news.excerptTh;
 
   return {
-    title: `${title} | Thana Glass`,
+    // The layout's title template appends "| Thana Glass".
+    title,
     description: description || undefined,
+    alternates: alternatesFor(locale, `/news/${slug}`),
     openGraph: {
-      images: news.coverImage ? [news.coverImage] : [],
+      title,
+      description: description || undefined,
+      type: "article",
+      url: absoluteUrl(locale, `/news/${slug}`),
+      images: news.coverImage ? [`${SITE_URL}${news.coverImage}`] : [],
     },
   };
 }
@@ -40,6 +48,7 @@ export async function generateMetadata({
 export default async function NewsDetailPage({ params }: DetailProps) {
   const { slug, locale } = await params;
   const t = await getTranslations("News");
+  const tNav = await getTranslations("Header");
 
   const news = await prisma.news.findUnique({
     where: { slug, published: true },
@@ -60,6 +69,13 @@ export default async function NewsDetailPage({ params }: DetailProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
+      <JsonLd
+        data={breadcrumbLd(
+          locale,
+          [{ name: t("title"), path: "/news" }, { name: title }],
+          tNav("nav.home")
+        )}
+      />
       <Header />
 
       <main className="flex-1 main-content-spacer pb-16">

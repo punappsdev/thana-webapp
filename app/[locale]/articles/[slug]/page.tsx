@@ -9,6 +9,8 @@ import { ShareButton } from "@/components/ui/share-button";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_URL, absoluteUrl, alternatesFor, breadcrumbLd } from "@/lib/seo";
 
 interface DetailProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -29,10 +31,16 @@ export async function generateMetadata({
   const description = locale === "en" ? article.excerptEn : article.excerptTh;
 
   return {
-    title: `${title} | Thana Glass`,
+    // The layout's title template appends "| Thana Glass".
+    title,
     description: description || undefined,
+    alternates: alternatesFor(locale, `/articles/${slug}`),
     openGraph: {
-      images: article.coverImage ? [article.coverImage] : [],
+      title,
+      description: description || undefined,
+      type: "article",
+      url: absoluteUrl(locale, `/articles/${slug}`),
+      images: article.coverImage ? [`${SITE_URL}${article.coverImage}`] : [],
     },
   };
 }
@@ -40,6 +48,7 @@ export async function generateMetadata({
 export default async function ArticleDetailPage({ params }: DetailProps) {
   const { slug, locale } = await params;
   const t = await getTranslations("Articles");
+  const tNav = await getTranslations("Header");
 
   const article = await prisma.article.findUnique({
     where: { slug, published: true },
@@ -77,6 +86,13 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
+      <JsonLd
+        data={breadcrumbLd(
+          locale,
+          [{ name: t("title"), path: "/articles" }, { name: title }],
+          tNav("nav.home")
+        )}
+      />
       <Header />
 
       <main className="flex-1 main-content-spacer pb-16">
@@ -160,7 +176,7 @@ export default async function ArticleDetailPage({ params }: DetailProps) {
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-label-md text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-primary" />
-                    {formattedDate}
+                    {t("publishedAt")} {formattedDate}
                   </span>
                   <span className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />

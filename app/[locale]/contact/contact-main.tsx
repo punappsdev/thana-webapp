@@ -112,9 +112,9 @@ export function ContactMain() {
 
                         {/* Branch detail */}
                         <div className="flex-1 min-w-0 flex flex-col">
-                          <h3 className={`font-headline-sm mb-2 ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
+                          <h2 className={`font-headline-sm mb-2 ${isActive ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
                             {branch.name}
-                          </h3>
+                          </h2>
                           <p className="font-body-sm text-muted-foreground mb-3 flex items-start gap-1.5">
                             <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                             <span>{branch.address}</span>
@@ -190,9 +190,9 @@ export function ContactMain() {
                         <Map className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <h4 className="font-label-md font-semibold text-foreground truncate">
+                        <h3 className="font-label-md font-semibold text-foreground truncate">
                           {activeBranch.name}
-                        </h4>
+                        </h3>
                         <p className="font-label-sm text-muted-foreground uppercase tracking-wider truncate">
                           {t("locationLabel")}
                         </p>

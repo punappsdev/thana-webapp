@@ -4,15 +4,23 @@ import { ContactFab } from "@/components/ui/contact-fab";
 import { getTranslations } from "next-intl/server";
 import { ShoppingCart } from "lucide-react";
 import { CartPageContent } from "@/components/cart/cart-page-content";
+import { alternatesFor } from "@/lib/seo";
+import type { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps) {
-  await params;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("Cart");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: alternatesFor(locale, "/cart"),
+    // Per-visitor contents with nothing to rank on.
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function CartPage({ params }: PageProps) {

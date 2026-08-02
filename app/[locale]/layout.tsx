@@ -3,11 +3,21 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { CartSheet } from "@/components/cart/cart-sheet";
 import { notoSansThai, prompt } from "@/lib/fonts";
+import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: "Thana Glass | กระจกนิรภัย กระจกอลูมิเนียม ภูเก็ต",
+  // Lets every page below return relative canonical/hreflang paths.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Thana Glass | กระจกนิรภัย กระจกอลูมิเนียม ภูเก็ต",
+    template: `%s | ${SITE_NAME}`,
+  },
   description: "High-end glass and aluminum installation services in Phuket",
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+  },
 };
 
 export default async function RootLayout({

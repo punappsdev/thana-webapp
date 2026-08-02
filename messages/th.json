@@ -14,6 +14,7 @@
     }
   },
   "Hero": {
+    "pageTitle": "ธนา กลาส แอนด์ อลูมิเนียม ภูเก็ต — จำหน่ายและติดตั้งกระจก อลูมิเนียม และยิปซั่ม",
     "slides": [
       {
         "tag": "Expert in Glass & Aluminum",
@@ -372,7 +373,7 @@
     "publishedAt": "เผยแพร่เมื่อ",
     "home": "หน้าแรก",
     "share": "แชร์",
-    "readingTime": "อ่าน {minutes} นาที"
+    "readingTime": "เวลาอ่านโดยประมาณ: {minutes} นาที"
   },
   "News": {
     "title": "ข่าวสารและโปรโมชั่น",

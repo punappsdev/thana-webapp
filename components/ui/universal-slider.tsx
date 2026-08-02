@@ -271,10 +271,12 @@ export function UniversalSlider({
                         </div>
                       )}
 
-                      {/* Title */}
-                      <h2 className="font-headline-lg-mobile md:font-display-md font-bold leading-snug md:leading-tight line-clamp-2 md:line-clamp-3">
+                      {/* Title — intentionally not a heading element: slides
+                          rotate and sit above the page <h1>, so promoting them
+                          into the document outline would break the hierarchy. */}
+                      <p className="font-headline-lg-mobile md:font-display-md font-bold leading-snug md:leading-tight line-clamp-2 md:line-clamp-3">
                         {slide.title}
-                      </h2>
+                      </p>
 
                       {/* Excerpt */}
                       {slide.excerpt && (
