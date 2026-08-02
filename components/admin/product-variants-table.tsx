@@ -1,6 +1,5 @@
 "use client";
 
-import { MediaField } from "@/components/admin/media-field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MAX_COMBINATIONS } from "@/lib/admin/validation";
@@ -158,7 +157,7 @@ export function ProductVariantsTable({
         </p>
       </div>
       <p className="font-body-sm text-muted-foreground">
-        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> คือแบบที่แสดงก่อน เลือกได้เพียงแบบเดียว · รูปตัวเลือกควรเป็นสี่เหลี่ยมจัตุรัส 1:1 ระบบจะแสดงในกรอบ 1:1 และตัดส่วนที่เกินกรอบออก
+        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> คือแบบที่แสดงก่อน เลือกได้เพียงแบบเดียว
       </p>
 
       {overLimit ? (
@@ -175,7 +174,6 @@ export function ProductVariantsTable({
                 <TableHead key={axis.attributeKey} className="font-label-md">{axis.label}</TableHead>
               ))}
               <TableHead className="font-label-md">SKU</TableHead>
-              <TableHead className="font-label-md">รูป</TableHead>
               <TableHead className="text-center font-label-md">ขายอยู่</TableHead>
               <TableHead className="text-center font-label-md">ค่าเริ่มต้น</TableHead>
             </TableRow>
@@ -193,9 +191,6 @@ export function ProductVariantsTable({
                 })}
                 <TableCell>
                   <Input value={row.sku} onChange={(event) => update(row._key, { sku: event.target.value })} placeholder="ไม่บังคับ" className="w-32 font-body-sm" />
-                </TableCell>
-                <TableCell>
-                  <MediaField compact accept="image" value={row.image} onChange={(image) => update(row._key, { image })} />
                 </TableCell>
                 <TableCell className="text-center">
                   <input type="checkbox" aria-label="ขายอยู่" checked={row.isAvailable} onChange={(event) => update(row._key, { isAvailable: event.target.checked })} />
