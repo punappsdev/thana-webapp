@@ -5,7 +5,9 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // No ThemeProvider is mounted, so "system" would let an OS-level dark
+  // preference darken the toasts while the rest of the app stays light.
+  const { theme = "light" } = useTheme()
 
   return (
     <Sonner
@@ -28,14 +30,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           <Loader2Icon className="size-4 animate-spin" />
         ),
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
+      // Colors, fonts and elevation live with the design tokens in globals.css
       toastOptions={{
         classNames: {
           toast: "cn-toast",

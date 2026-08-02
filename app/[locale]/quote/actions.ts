@@ -76,6 +76,9 @@ export async function submitQuoteRequest(
           const digits = digitsOnly(value);
           return digits.length >= 9 && digits.length <= 10;
         }, t("errorPhone")),
+      contactBranch: z.enum(["headquarters", "thalang"], {
+        message: t("errorContactBranch"),
+      }),
       email: optionalText.refine(
         (value) => value === null || z.email().safeParse(value).success,
         t("errorEmail"),
@@ -164,6 +167,7 @@ export async function submitQuoteRequest(
     firstName: formData.get("firstName") ?? "",
     lastName: formData.get("lastName") ?? "",
     phone: formData.get("phone") ?? "",
+    contactBranch: formData.get("contactBranch") ?? "",
     email: formData.get("email") ?? "",
     lineId: formData.get("lineId") ?? "",
     companyName: formData.get("companyName") ?? "",
@@ -244,6 +248,7 @@ export async function submitQuoteRequest(
           firstName: d.firstName,
           lastName: d.lastName,
           phone: d.phone,
+          contactBranch: d.contactBranch,
           email: d.email,
           lineId: d.lineId,
           needTaxInvoice,

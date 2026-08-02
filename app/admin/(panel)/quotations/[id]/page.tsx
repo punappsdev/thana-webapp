@@ -147,6 +147,10 @@ export default async function QuotationDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailRow label="ชื่อ-นามสกุล" value={`${request.firstName} ${request.lastName}`} />
+              <DetailRow
+                label="สาขาที่ติดต่อ"
+                value={request.contactBranch === "thalang" ? "สาขาถลาง" : "สาขาสำนักงานใหญ่"}
+              />
               <div className="space-y-1">
                 <p className="font-label-sm text-muted-foreground">ช่องทางติดต่อ</p>
                 <p className="flex items-center gap-2 font-body-sm">

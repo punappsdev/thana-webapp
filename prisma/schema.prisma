@@ -575,6 +575,9 @@ model QuotationRequest {
   lastName  String @db.VarChar(120)
   phone     String @db.VarChar(32)
 
+  /// สาขาที่ลูกค้าเลือกให้รับผิดชอบคำขอใบเสนอราคา
+  contactBranch String @default("headquarters") @db.VarChar(32)
+
   /// ช่องทางรับใบเสนอราคา ต้องมีอย่างน้อยหนึ่งช่อง
   /// บังคับใน server action ไม่ใช่ที่ระดับ DB เพราะเป็นเงื่อนไขข้ามคอลัมน์
   email  String? @db.VarChar(191)

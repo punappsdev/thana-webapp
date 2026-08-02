@@ -303,6 +303,118 @@
   }
 }
 
+/* Sonner toast — aligned with the DESIGN.md palette and typography.
+   Sonner ships its own stylesheet built on attribute selectors
+   (`[data-sonner-toast][data-styled='true'] …`) that is injected at runtime,
+   so every rule below is prefixed with `html` to out-specify it regardless of
+   stylesheet order. */
+html [data-sonner-toaster] {
+  font-family: var(--font-noto-sans-thai), sans-serif;
+
+  --normal-bg: var(--popover);
+  --normal-text: var(--popover-foreground);
+  --normal-border: var(--border);
+  --border-radius: var(--radius);
+
+  /* richColors variants, built from the DESIGN.md container tokens */
+  --success-bg: #d7f3e2;
+  --success-border: #a5dfba;
+  --success-text: #00522e;
+
+  --info-bg: #d0e4ff;        /* secondary-fixed */
+  --info-border: #9bcaff;    /* secondary-fixed-dim */
+  --info-text: #004a7a;      /* on-secondary-fixed-variant */
+
+  --warning-bg: #ffdbd0;     /* tertiary-fixed */
+  --warning-border: #ffb59e; /* tertiary-fixed-dim */
+  --warning-text: #842500;   /* on-tertiary-fixed-variant */
+
+  --error-bg: #ffdad6;       /* error-container */
+  --error-border: #ffb4ab;
+  --error-text: #93000a;     /* on-error-container */
+}
+
+html.dark [data-sonner-toaster],
+html .dark [data-sonner-toaster] {
+  --success-bg: #04301d;
+  --success-border: #0d5134;
+  --success-text: #7ce0a4;
+
+  --info-bg: #001d35;        /* on-secondary-fixed */
+  --info-border: #004a7a;
+  --info-text: #9bcaff;
+
+  --warning-bg: #3a0b00;     /* on-tertiary-fixed */
+  --warning-border: #842500;
+  --warning-text: #ffb59e;
+
+  --error-bg: #410002;
+  --error-border: #93000a;
+  --error-text: #ffb4ab;
+}
+
+html [data-sonner-toast][data-styled="true"] {
+  gap: 8px;
+  padding: 16px;
+  /* Soft, blue-tinted elevation instead of Sonner's neutral black shadow */
+  box-shadow: 0 10px 15px -3px rgba(0, 64, 173, 0.08), 0 4px 6px -4px rgba(0, 64, 173, 0.08);
+}
+
+html [data-sonner-toast][data-styled="true"] [data-content] {
+  gap: 4px;
+}
+
+/* label-sm scale from DESIGN.md, with Thai-friendly line heights */
+html [data-sonner-toast][data-styled="true"] [data-title] {
+  font-family: var(--font-noto-sans-thai), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+html [data-sonner-toast][data-styled="true"] [data-description] {
+  font-family: var(--font-noto-sans-thai), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+/* Rich-color toasts tint the description with the variant's own text color */
+html [data-rich-colors="true"][data-sonner-toast][data-styled="true"] [data-description],
+html [data-sonner-toaster][data-sonner-theme="dark"] [data-rich-colors="true"] [data-description] {
+  color: inherit;
+  opacity: 0.9;
+}
+
+html [data-sonner-toast][data-styled="true"] [data-button] {
+  font-family: var(--font-noto-sans-thai), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html [data-sonner-toast][data-styled="true"] [data-cancel] {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+html [data-sonner-toast][data-styled="true"] [data-close-button] {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+html [data-sonner-toast][data-styled="true"]:hover [data-close-button]:hover {
+  background: var(--accent);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
 @keyframes marquee {
   0% {
     transform: translateX(0);

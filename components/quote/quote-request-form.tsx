@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, MessageSquareQuote, Package, Truck } from "luc
 import { Link } from "@/i18n/routing";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -267,6 +268,7 @@ export function QuoteRequestForm() {
 
   const [consent, setConsent] = useState(false);
   const [contact, setContact] = useState<ContactDetails>(emptyContact);
+  const [contactBranch, setContactBranch] = useState("");
   const [companyInvoice, setCompanyInvoice] = useState<CompanyInvoiceDetails>(emptyCompanyInvoice);
   const [delivery, setDelivery] = useState<DeliveryDetails>(emptyDelivery);
   const [useSameDeliveryAddress, setUseSameDeliveryAddress] = useState(false);
@@ -726,6 +728,30 @@ export function QuoteRequestForm() {
           </div>
         </Section>
 
+        <Section title={t("contactBranchSection")} description={t("contactBranchHint")}>
+          <div className="space-y-2">
+            <RadioGroup
+              id="contactBranch"
+              name="contactBranch"
+              value={contactBranch}
+              onValueChange={setContactBranch}
+              aria-label={t("contactBranchSection")}
+              aria-required="true"
+              aria-invalid={Boolean(fieldError("contactBranch"))}
+              aria-describedby={fieldError("contactBranch") ? "contactBranch-error" : undefined}
+              className="grid gap-3 sm:grid-cols-2"
+            >
+              <BranchOption value="headquarters" label={t("contactBranchHeadquarters")} />
+              <BranchOption value="thalang" label={t("contactBranchThalang")} />
+            </RadioGroup>
+            {fieldError("contactBranch") && (
+              <p id="contactBranch-error" className="font-label-sm text-[#ba1a1a]">
+                {fieldError("contactBranch")}
+              </p>
+            )}
+          </div>
+        </Section>
+
         <div className="space-y-3 border-t border-[#ededf7] pt-5">
           <CheckField name="rememberContact" checked={rememberContact} onChange={setRememberContact}>
             <span className="block">
@@ -881,6 +907,20 @@ function Field({
         <p className="font-label-sm text-[#747684]">{hint}</p>
       ) : null}
     </div>
+  );
+}
+
+function BranchOption({ value, label }: { value: string; label: string }) {
+  const id = `contactBranch-${value}`;
+
+  return (
+    <Label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-3 rounded-md border border-[#c4e2f5] bg-white px-4 py-3 font-body-sm text-[#434653] transition-colors hover:border-[#078ee4] has-data-[state=checked]:border-primary has-data-[state=checked]:bg-[#f3f3fc] has-data-[state=checked]:text-primary focus-within:ring-3 focus-within:ring-ring/50"
+    >
+      <RadioGroupItem id={id} value={value} className="size-5 border-[#c4e2f5]" />
+      <span className="font-label-md">{label}</span>
+    </Label>
   );
 }
 
