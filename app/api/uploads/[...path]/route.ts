@@ -47,12 +47,18 @@ export async function GET(
 
   const fileBuffer = await fs.readFile(absolutePath);
   const isGeneratedName = /^[0-9a-f]{8}-[0-9a-f-]{27,}\.[a-z0-9]+$/i.test(path.basename(absolutePath));
+  const headers = new Headers({
+    "Content-Type": contentType,
+    "Content-Length": stat.size.toString(),
+    "Cache-Control": isGeneratedName ? "public, max-age=31536000, immutable" : "public, max-age=3600",
+  });
+
+  if (request.nextUrl.searchParams.get("download") === "1") {
+    const filename = path.basename(absolutePath).replace(/[\u0000-\u001f\u007f"\\]/g, "_");
+    headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+  }
 
   return new NextResponse(fileBuffer, {
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": stat.size.toString(),
-      "Cache-Control": isGeneratedName ? "public, max-age=31536000, immutable" : "public, max-age=3600",
-    },
+    headers,
   });
 }

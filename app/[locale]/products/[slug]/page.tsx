@@ -73,6 +73,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const name = pick(product, "name", locale);
   const description = pick(product, "description", locale);
   const usageGuide = pick(product, "usageGuide", locale);
+  const catalogDownloadUrl = product.catalogPdf
+    ? `${product.catalogPdf}${product.catalogPdf.includes("?") ? "&" : "?"}download=1`
+    : null;
 
   const variants: VariantOption[] = product.variants.map((v) => ({
     id: v.id,
@@ -280,9 +283,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               {product.catalogPdf && (
                 <div className="flex flex-wrap gap-3">
                   <a
-                    href={product.catalogPdf}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={catalogDownloadUrl ?? undefined}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-label-md font-semibold text-primary border border-primary hover:bg-[#f3f3fc] transition-all"
                   >
                     <FileText className="h-4 w-4" />
