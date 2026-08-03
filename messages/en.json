@@ -292,43 +292,105 @@
     ]
   },
   "AboutPage": {
-    "metaDescription": "Meet Thana Glass & Aluminum Phuket — our story, our team, our branches and the standards behind every glass and aluminum installation we deliver.",
+    "metaDescription": "Meet Thana Glass & Aluminum Phuket — explore the group, shared direction, complete company profiles and contact details for all three companies.",
     "title": "About Us",
-    "subtitle": "Precision, transparency, and structural integrity — crafted in every panel of glass and aluminum we install.",
+    "subtitle": "Precision, transparency, and structural integrity — crafted into every panel of glass and aluminum we install.",
     "eyebrow": "Our Story",
+    "heroNote": "An overview of the group, its vision, mission and contact details for each company.",
+    "logoAlt": "Thana Glass Group logo",
     "groupEyebrow": "The Group",
-    "missionEyebrow": "Our Goals",
-    "missionTitle": "Mission",
-    "sloganTitle": "Slogan",
-    "sloganDesc": "\"Quality is remembered long - producing safety glass with quality to be remembered forever.\"",
-    "visionTitle": "Vision",
-    "visionDesc": "\"Striving to be the leader in the integrated glass processing business with comprehensive services.\"",
-    "partnersEyebrow": "Leading Manufacturers",
-    "partnersTitle": "Our Partners",
-    "valueQualityTitle": "Standards & Quality",
-    "valueQualityDesc": "We curate high-quality, standard products and deliver them with honesty and integrity.",
-    "valueCraftTitle": "Craftsmanship",
-    "valueCraftDesc": "Our experienced team advises and supports every client for smooth, precise installations.",
-    "valueModernTitle": "Modern Aesthetics",
-    "valueModernDesc": "A comprehensive glass processing factory built to meet high manufacturing standards.",
-    "branchesEyebrow": "Our Companies",
-    "branchesTitle": "Our Subsidiaries",
-    "branchesIntro": "Three dedicated branches across Phuket, each specialising in materials, processing, and installation.",
     "groupTitle": "Thana Glass Group",
-    "groupDesc1": "One of the leading construction material providers in Phuket, operating in the distribution of aluminum, glass, ceiling works, and installation equipment, as well as a comprehensive glass processing factory that meets high manufacturing standards.",
-    "groupDesc2": "We select standard, high-quality products and provide services with honesty and integrity. Our team is pleased to advise and take care of all clients in a friendly manner, ensuring smooth installations that truly satisfy customer needs.",
-    "branches": [
+    "groupDesc1": "One of Phuket's leading construction-material providers, operating across aluminum, glass, ceiling works and installation equipment, with a standards-compliant glass-processing factory for high-quality production.",
+    "groupDesc2": "We select high-quality, standards-compliant products and serve every client with honesty and sincerity. Our team is ready to advise and support you in a friendly manner, helping every installation run smoothly and meet your needs.",
+    "directionEyebrow": "Shared Direction",
+    "directionTitle": "Vision, mission and business type",
+    "directionIntro": "The shared information that guides the work of Thana Glass Group.",
+    "visionTitle": "Vision",
+    "visionDesc": "To become a leader in an integrated glass-processing business with continuous, comprehensive services.",
+    "missionTitle": "Mission",
+    "missionDesc": "Quality is remembered long — producing safety glass with quality to be remembered forever.",
+    "businessTypeTitle": "Business type",
+    "businessTypeDesc": "Glass processing for building work, interior decoration and furniture.",
+    "companiesEyebrow": "Companies in the Group",
+    "companiesTitle": "Three companies, one Thana Glass Group",
+    "companiesIntro": "Company profiles and contact channels for each company, shown in the group's operating order.",
+    "companyNumber": "Company {number}",
+    "profileLabel": "Company profile",
+    "contactTitle": "Contact details",
+    "contacts": {
+      "address": "Address",
+      "line": "LINE",
+      "office": "Office",
+      "sales": "Sales",
+      "accounting": "Accounting",
+      "purchasing": "Purchasing",
+      "hr": "Human resources"
+    },
+    "companies": [
       {
-        "name": "Thana Glass Aluminum Co., Ltd. (Headquarters)",
-        "desc": "A large construction materials warehouse in Phuket, providing distribution of aluminum, glass, ceiling works, and comprehensive installation accessories, focusing on standard high-quality products."
+        "name": "Thana Glass Aluminum Co., Ltd. Headquarters",
+        "profile": [
+          "Thana Glass Aluminum Co., Ltd. (Headquarters) is one of Phuket's large construction-material warehouses, supplying aluminum, glass, ceiling works and complete installation accessories. We focus on quality, standards-compliant products to support both construction and interior-decoration work.",
+          "Honesty, fairness and attentive service are at the heart of how we operate. This has earned us the continued trust of our customers. Our team provides professional advice alongside friendly service to create the highest satisfaction at every step."
+        ],
+        "contacts": {
+          "address": "46/9 Moo 6, Chalong, Mueang Phuket, Phuket 83130",
+          "line": "@thanaglass",
+          "office": "076-384-444",
+          "sales": [
+            { "number": "094-580-6622", "label": "General sales" },
+            { "number": "088-765-2642", "label": "General sales" },
+            { "number": "084-447-7979", "label": "General sales" },
+            { "number": "063-254-9474", "label": "Tempered glass sales" },
+            { "number": "093-576-2212", "label": "Tempered glass sales" },
+            { "number": "081968-5533", "label": "Tempered glass sales" }
+          ],
+          "accounting": "089-866-1157",
+          "purchasing": "065-348-6212"
+        }
       },
       {
-        "name": "Thana Glass Aluminum Co., Ltd. (Branch 00001)",
-        "desc": "A fully integrated glass processing factory, operating under the slogan \"Quality is remembered long - producing safety glass with quality to be remembered forever.\""
+        "name": "Thana Glass Thalang Co., Ltd. Headquarters",
+        "profile": [
+          "Thana Glass Thalang Co., Ltd. is a full-service construction-material warehouse in Thalang District, Phuket, supplying aluminum, glass, ceiling works and various installation accessories for exterior construction and interior decoration.",
+          "We focus on selecting materials that are high quality, durable and standards-compliant, giving customers confidence in every application. With service that is sincere, approachable and ready to help, we have become one of the trusted construction-material sources for technicians, contractors and local customers.",
+          "Here...we are not just a materials store, but a partner for technicians and homeowners, ready to walk alongside every project. Our team offers professional advice in a friendly way."
+        ],
+        "contacts": {
+          "address": "168 Moo 7, Thep Krasattri Road, Thep Krasattri, Thalang, Phuket 83110",
+          "line": "@496mcfsl",
+          "office": "076-311-222",
+          "sales": [
+            { "number": "099-565-5145", "label": "Head of sales" },
+            { "number": "062-114-1442", "label": "General sales" },
+            { "number": "062-114-1242", "label": "General sales" },
+            { "number": "062-114-1545", "label": "General sales" },
+            { "number": "062-114-1642", "label": "Processed glass sales" }
+          ],
+          "accounting": "099-595-1554",
+          "purchasing": "099-151-9556",
+          "hr": "096-545-5915"
+        }
       },
       {
-        "name": "Thana Glass Thalang Co., Ltd.",
-        "desc": "A complete construction materials warehouse in the Thalang District of Phuket, providing distribution of aluminum, glass, ceiling, and various installation hardware."
+        "name": "Thana Glass Aluminum Co., Ltd. Branch 00001",
+        "profile": [
+          "Thana Glass Aluminum Co., Ltd. (Branch 00001) is a fully integrated glass-processing factory operating under the slogan, \"Quality is remembered long — producing safety glass with quality to be remembered forever.\" We focus on producing standards-compliant, high-quality and safe products for architecture and interior decoration at every level.",
+          "Our factory is certified to the TIS standard and operates under strict quality-control systems. We also offer free delivery within designated areas to provide maximum convenience and customer satisfaction.",
+          "We bring together production technology, a professional team and close attention to detail so that every piece delivers \"quality worth remembering.\""
+        ],
+        "contacts": {
+          "address": "36 Moo 4, Chalong, Mueang Phuket, Phuket 83130",
+          "line": "@381epeys",
+          "office": "06-374-812-3",
+          "sales": [
+            { "number": "095-038-8438", "label": "Tempered glass sales — Surat Thani–Samui–Chumphon–Ranong" },
+            { "number": "098-670-6157", "label": "Hat Yai–Krabi–Trang–Phatthalung line" }
+          ],
+          "accounting": "063-078-4745",
+          "purchasing": "063-078-4707",
+          "hr": "098-671-3502"
+        }
       }
     ]
   },

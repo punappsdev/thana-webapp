@@ -1,21 +1,104 @@
 import { getTranslations } from "next-intl/server";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { ContactFab } from "@/components/ui/contact-fab";
-import { Partners } from "@/components/homepage/partners";
 import Image from "next/image";
-import { Building2, Sparkles, ShieldCheck, Layers, Trophy, Eye } from "lucide-react";
+import type { Metadata } from "next";
+import {
+  ArrowUpRight,
+  Building2,
+  Compass,
+  Eye,
+  Layers,
+  MapPin,
+  MessageCircle,
+  Phone,
+  ShoppingCart,
+  UsersRound,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+import { Partners } from "@/components/homepage/partners";
+import { Footer } from "@/components/layout/footer";
+import { Header } from "@/components/layout/header";
+import { ContactFab } from "@/components/ui/contact-fab";
+import { Card } from "@/components/ui/card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { alternatesFor, breadcrumbLd, metaDescription } from "@/lib/seo";
-import type { Metadata } from "next";
 
-interface Branch {
+interface ContactItem {
+  number: string;
+  label: string;
+}
+
+interface CompanyContacts {
+  address: string;
+  line: string;
+  office: string;
+  sales: ContactItem[];
+  accounting: string;
+  purchasing: string;
+  hr?: string;
+}
+
+interface Company {
   name: string;
-  desc: string;
+  profile: string[];
+  contacts: CompanyContacts;
 }
 
 interface PageProps {
   params: Promise<{ locale: string }>;
+}
+
+interface ContactRowProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+}
+
+function phoneHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+function lineHref(lineId: string) {
+  return `https://line.me/R/ti/p/~${encodeURIComponent(lineId.replace(/^@/, ""))}`;
+}
+
+function ContactRow({
+  icon: Icon,
+  label,
+  value,
+  href,
+  external = false,
+}: ContactRowProps) {
+  const valueContent = href ? (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      aria-label={`${label}: ${value}`}
+      className="inline-flex max-w-full items-center gap-1 font-body-sm break-words text-primary underline-offset-4 transition-colors hover:text-secondary hover:underline"
+    >
+      <span className="break-words">{value}</span>
+      {external ? <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : null}
+    </a>
+  ) : (
+    <span className="font-body-sm break-words text-foreground">{value}</span>
+  );
+
+  return (
+    <div className="flex items-start gap-3">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-primary ring-1 ring-[#c4e2f5]">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-label-sm uppercase tracking-[0.12em] text-muted-foreground">
+          {label}
+        </p>
+        <div className="mt-1">{valueContent}</div>
+      </div>
+    </div>
+  );
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,25 +115,23 @@ export default async function AboutPage({ params }: PageProps) {
   const { locale } = await params;
   const t = await getTranslations("AboutPage");
   const tNav = await getTranslations("Header");
-  const branches = t.raw("branches") as Branch[];
+  const companies = t.raw("companies") as Company[];
 
-  const values = [
-    { icon: ShieldCheck, key: "valueQuality" },
-    { icon: Layers, key: "valueCraft" },
-    { icon: Sparkles, key: "valueModern" },
-  ];
+  const direction = [
+    { icon: Eye, key: "vision", number: "01" },
+    { icon: Compass, key: "mission", number: "02" },
+    { icon: Layers, key: "businessType", number: "03" },
+  ] as const;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-[#f0f9ff] text-foreground">
       <JsonLd
         data={breadcrumbLd(locale, [{ name: t("title") }], tNav("nav.home"))}
       />
       <Header />
 
-      <main className="flex-1 main-content-spacer">
-        {/* Hero Section */}
+      <main className="main-content-spacer flex-1">
         <section className="relative overflow-hidden bg-linear-to-br from-primary to-primary-container text-white">
-          {/* Decorative dot grid */}
           <div
             className="absolute inset-0 opacity-10 pointer-events-none"
             style={{
@@ -59,12 +140,11 @@ export default async function AboutPage({ params }: PageProps) {
               backgroundSize: "32px 32px",
             }}
           />
-          {/* Soft light wash */}
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none" />
 
           <div className="max-w-[1280px] mx-auto px-4 md:px-10 subpage-banner-padding relative z-10 animate-fade-in">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 font-label-sm font-medium tracking-wide backdrop-blur-md">
-              <Building2 className="h-3.5 w-3.5" />
+              <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
               {t("eyebrow")}
             </span>
             <h1 className="font-headline-lg-mobile md:font-display-md mt-5 mb-4 max-w-3xl">
@@ -76,154 +156,225 @@ export default async function AboutPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Group Overview Section */}
-        <section className="max-w-[1280px] mx-auto px-4 md:px-10 py-12 md:py-16">
-          <div className="bg-white rounded-2xl border border-[#c4e2f5] p-6 md:p-10 shadow-blue-sm overflow-hidden relative">
-            {/* Glassmorphic reflection */}
-            <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-              {/* Left side: Logo Block */}
-              <div className="lg:col-span-4 flex justify-center">
-                <div className="relative w-56 h-56 md:w-72 md:h-72 bg-[#001d35] rounded-2xl flex items-center justify-center p-8 shadow-blue-lg border border-primary-container/20 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rotate-45 pointer-events-none" />
+        <section className="relative overflow-hidden px-4 py-14 md:px-10 md:py-20">
+          <div className="pointer-events-none absolute left-0 top-24 h-72 w-72 rounded-full bg-[#3ca6fe]/10 blur-3xl" />
+          <div className="relative mx-auto max-w-[1280px]">
+            <Card className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white !p-0 shadow-blue-lg ring-0">
+              <div className="grid lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.2fr)]">
+                <div className="relative flex min-h-64 items-center justify-center overflow-hidden bg-[#001d35] p-8 md:min-h-80 md:p-12">
+                  <div className="absolute inset-6 border border-white/20" />
+                  <div className="absolute right-8 top-8 h-16 w-16 border-r border-t border-[#3ca6fe]/80" />
+                  <div className="absolute bottom-8 left-8 h-16 w-16 border-b border-l border-[#3ca6fe]/80" />
+                  <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/10 to-transparent" />
                   <Image
                     src="/main-logo-tp.png"
-                    alt="Thana Glass Group Logo"
-                    width={220}
-                    height={220}
-                    className="w-full h-auto object-contain brightness-0 invert"
-                    style={{ width: '100%', height: 'auto' }}
+                    alt={t("logoAlt")}
+                    width={240}
+                    height={240}
+                    className="relative z-10 h-auto w-44 object-contain brightness-0 invert md:w-56"
                     priority
                   />
                 </div>
+                <div className="p-6 md:p-10 lg:p-12">
+                  <p className="font-label-md uppercase tracking-[0.18em] text-secondary">
+                    {t("groupEyebrow")}
+                  </p>
+                  <h2 className="mt-3 font-headline-lg-mobile text-primary md:font-display-md">
+                    {t("groupTitle")}
+                  </h2>
+                  <div className="mt-6 space-y-4">
+                    <p className="font-body-md text-muted-foreground md:font-body-lg">
+                      {t("groupDesc1")}
+                    </p>
+                    <p className="font-body-md text-muted-foreground md:font-body-lg">
+                      {t("groupDesc2")}
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              {/* Right side: Text Block */}
-              <div className="lg:col-span-8 flex flex-col gap-5">
-                <span className="font-label-md font-semibold uppercase tracking-[0.18em] text-secondary">
-                  {t("groupEyebrow")}
-                </span>
-                <h2 className="font-headline-lg md:font-display-md font-bold text-primary">
-                  {t("groupTitle")}
-                </h2>
-                <p className="font-body-md md:font-body-lg text-muted-foreground leading-relaxed">
-                  {t("groupDesc1")}
-                </p>
-                <p className="font-body-md md:font-body-lg text-muted-foreground leading-relaxed">
-                  {t("groupDesc2")}
-                </p>
-              </div>
-            </div>
+            </Card>
           </div>
+        </section>
 
-          {/* Value props row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-8">
-            {values.map(({ icon: Icon, key }, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-4 p-5 md:p-6 rounded-xl bg-[#faf8ff] border border-[#c4e2f5]/60"
-              >
-                <span className="shrink-0 w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="font-label-lg font-semibold text-foreground mb-1">
+        <section className="border-y border-[#c4e2f5] bg-white/60 px-4 py-14 md:px-10 md:py-20">
+          <div className="mx-auto max-w-[1280px]">
+            <div className="mb-8 max-w-2xl md:mb-12">
+              <p className="font-label-md uppercase tracking-[0.18em] text-secondary">
+                {t("directionEyebrow")}
+              </p>
+              <h2 className="mt-3 font-headline-lg-mobile text-primary md:font-display-md">
+                {t("directionTitle")}
+              </h2>
+              <p className="mt-4 font-body-md text-muted-foreground">
+                {t("directionIntro")}
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+              {direction.map(({ icon: Icon, key, number }) => (
+                <Card
+                  key={key}
+                  className="group rounded-lg border-[#c4e2f5] bg-white/85 !p-6 shadow-blue-sm ring-0 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-blue-md md:!p-7"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <span className="font-headline-sm text-primary/25">{number}</span>
+                  </div>
+                  <h3 className="mt-7 font-headline-md text-primary">
                     {t(`${key}Title`)}
                   </h3>
-                  <p className="font-body-sm text-muted-foreground leading-relaxed">
+                  <p className="mt-3 font-body-md text-muted-foreground">
                     {t(`${key}Desc`)}
                   </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Subsidiaries Grid Section */}
-        <section className="max-w-[1280px] mx-auto px-4 md:px-10 pb-16 md:pb-24">
-          <div className="flex flex-col gap-2 mb-8 md:mb-12 max-w-2xl">
-            <span className="font-label-md font-semibold uppercase tracking-[0.18em] text-secondary">
-              {t("branchesEyebrow")}
-            </span>
-            <h2 className="font-headline-lg md:font-display-md font-bold text-primary mt-1">
-              {t("branchesTitle")}
-            </h2>
-            <p className="font-body-md text-muted-foreground mt-2 leading-relaxed">
-              {t("branchesIntro")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {branches.map((branch, idx) => (
-              <article
-                key={idx}
-                className="group relative bg-white rounded-2xl border border-[#c4e2f5] p-6 md:p-8 shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden"
-              >
-                {/* Top accent bar */}
-                <span className="absolute top-0 left-0 h-1 w-0 bg-linear-to-r from-[#078ee4] to-primary group-hover:w-full transition-all duration-500" />
-
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-headline-sm font-bold">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <Building2 className="h-5 w-5 text-primary/30 group-hover:text-primary/60 transition-colors" />
-                  </div>
-                  <h3 className="font-headline-md font-bold text-primary mb-4 leading-snug group-hover:text-primary-container transition-colors">
-                    {branch.name}
-                  </h3>
-                  <p className="font-body-sm text-muted-foreground leading-relaxed">
-                    {branch.desc}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Mission & Vision Section */}
-        <section className="max-w-[1280px] mx-auto px-4 md:px-10 pb-16 md:pb-24">
-          <div className="flex flex-col items-center text-center gap-3 mb-8 md:mb-12">
-            <span className="font-label-md font-semibold uppercase tracking-[0.18em] text-secondary">
-              {t("missionEyebrow")}
-            </span>
-            <h2 className="font-headline-lg md:font-display-md font-bold text-primary mt-2">
-              {t("missionTitle")}
-            </h2>
-            <div className="w-16 h-1 bg-primary-container rounded-full mt-1" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Slogan Card */}
-            <div className="bg-white rounded-2xl border border-[#c4e2f5] p-8 shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-sky-100/60 text-sky-600 flex items-center justify-center mb-6">
-                <Trophy className="h-8 w-8" />
-              </div>
-              <h3 className="font-headline-sm font-bold text-primary mb-3">
-                {t("sloganTitle")}
-              </h3>
-              <p className="font-body-md text-muted-foreground leading-relaxed max-w-sm">
-                {t("sloganDesc")}
-              </p>
-            </div>
-
-            {/* Vision Card */}
-            <div className="bg-white rounded-2xl border border-[#c4e2f5] p-8 shadow-blue-sm hover:shadow-blue-md hover:border-primary/40 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-rose-100/60 text-rose-600 flex items-center justify-center mb-6">
-                <Eye className="h-8 w-8" />
-              </div>
-              <h3 className="font-headline-sm font-bold text-primary mb-3">
-                {t("visionTitle")}
-              </h3>
-              <p className="font-body-md text-muted-foreground leading-relaxed max-w-sm font-noto-sans-thai">
-                {t("visionDesc")}
-              </p>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Partners Section */}
+        <section className="px-4 py-14 md:px-10 md:py-24">
+          <div className="mx-auto max-w-[1280px]">
+            <div className="mb-10 max-w-3xl md:mb-14">
+              <p className="font-label-md uppercase tracking-[0.18em] text-secondary">
+                {t("companiesEyebrow")}
+              </p>
+              <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-8">
+                <h2 className="font-headline-lg-mobile text-primary md:font-display-md">
+                  {t("companiesTitle")}
+                </h2>
+                <p className="max-w-xl font-body-md text-muted-foreground">
+                  {t("companiesIntro")}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-8 md:space-y-10">
+              {companies.map((company, index) => {
+                const isReversed = index % 2 === 1;
+                const contacts = company.contacts;
+                const contactRows = [
+                  {
+                    icon: MapPin,
+                    label: t("contacts.address"),
+                    value: contacts.address,
+                  },
+                  {
+                    icon: MessageCircle,
+                    label: t("contacts.line"),
+                    value: contacts.line,
+                    href: lineHref(contacts.line),
+                    external: true,
+                  },
+                  {
+                    icon: Phone,
+                    label: t("contacts.office"),
+                    value: contacts.office,
+                    href: phoneHref(contacts.office),
+                  },
+                  {
+                    icon: Phone,
+                    label: t("contacts.accounting"),
+                    value: contacts.accounting,
+                    href: phoneHref(contacts.accounting),
+                  },
+                  {
+                    icon: ShoppingCart,
+                    label: t("contacts.purchasing"),
+                    value: contacts.purchasing,
+                    href: phoneHref(contacts.purchasing),
+                  },
+                  ...(contacts.hr
+                    ? [
+                        {
+                          icon: UsersRound,
+                          label: t("contacts.hr"),
+                          value: contacts.hr,
+                          href: phoneHref(contacts.hr),
+                        },
+                      ]
+                    : []),
+                ];
+
+                return (
+                  <Card
+                    key={company.name}
+                    className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white !p-0 shadow-blue-md ring-0"
+                  >
+                    <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(21rem,0.78fr)]">
+                      <div className={`p-6 md:p-10 lg:p-12 ${isReversed ? "lg:order-2" : ""}`}>
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary font-headline-sm text-white shadow-blue-sm">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className="font-label-sm uppercase tracking-[0.16em] text-secondary">
+                            {t("companyNumber", { number: String(index + 1).padStart(2, "0") })}
+                          </span>
+                        </div>
+                        <h3 className="mt-6 max-w-2xl font-headline-md text-primary md:font-headline-lg">
+                          {company.name}
+                        </h3>
+                        <div className="mt-7 border-l-2 border-[#3ca6fe]/50 pl-5 md:mt-8 md:pl-6">
+                          <p className="font-label-md uppercase tracking-[0.14em] text-secondary">
+                            {t("profileLabel")}
+                          </p>
+                          <div className="mt-4 space-y-5">
+                            {company.profile.map((paragraph) => (
+                              <p key={paragraph} className="font-body-md text-muted-foreground">
+                                {paragraph}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <aside
+                        className={`bg-[#f3f9ff] p-6 md:p-10 lg:p-9 ${
+                          isReversed
+                            ? "lg:order-1 lg:border-r lg:border-[#c4e2f5]"
+                            : "lg:border-l lg:border-[#c4e2f5]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 border-b border-[#c4e2f5] pb-5">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
+                            <Phone className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <h4 className="font-headline-sm text-primary">
+                            {t("contactTitle")}
+                          </h4>
+                        </div>
+                        <div className="mt-6 space-y-5">
+                          {contactRows.map((row) => (
+                            <ContactRow key={row.label} {...row} />
+                          ))}
+                        </div>
+                        <div className="mt-7 border-t border-[#c4e2f5] pt-6">
+                          <div className="mb-4 flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-secondary" aria-hidden="true" />
+                            <p className="font-label-md text-primary">{t("contacts.sales")}</p>
+                          </div>
+                          <div className="space-y-4">
+                            {contacts.sales.map((sale) => (
+                              <ContactRow
+                                key={sale.number}
+                                icon={Phone}
+                                label={sale.label}
+                                value={sale.number}
+                                href={phoneHref(sale.number)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </aside>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
         <Partners />
       </main>
 
