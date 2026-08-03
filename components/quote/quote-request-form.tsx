@@ -447,7 +447,7 @@ export function QuoteRequestForm() {
         <Section title={t("boqSection")} description={t("boqDescription")}>
           <div className="space-y-3 rounded-lg border border-dashed border-[#c4e2f5] bg-[#f3f3fc]/60 p-4 sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 sm:shrink-0 items-center gap-3">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#dbe1ff] text-primary">
                   <FileSpreadsheet className="size-5" aria-hidden="true" />
                 </span>
@@ -470,7 +470,7 @@ export function QuoteRequestForm() {
                 onChange={handleBoqFileChange}
                 aria-describedby={boqDescribedBy}
                 aria-invalid={Boolean(boqError)}
-                className="h-auto min-h-10 cursor-pointer px-3 py-2 file:mr-3 file:rounded-md file:bg-[#dbe1ff] file:px-3 file:py-1 file:font-label-sm file:font-medium file:text-primary"
+                className="h-auto min-h-10 cursor-pointer px-3 py-2 file:mr-3 file:rounded-md file:bg-[#dbe1ff] file:px-3 file:py-1 file:font-label-sm file:font-medium file:text-primary w-full sm:max-w-sm"
               />
             </div>
 
