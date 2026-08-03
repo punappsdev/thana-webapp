@@ -6,6 +6,7 @@ import { getLineConfig, lineGroupEnvKey } from "@/lib/line/config";
 import { MAX_MESSAGES_PER_PUSH, pushLineMessage } from "@/lib/line/client";
 import { buildQuotationMessages } from "@/lib/line/message";
 import { getPrisma } from "@/lib/prisma";
+import { SITE_URL } from "@/lib/seo";
 
 export type NotifyResult =
   /** ส่งเข้ากลุ่มสำเร็จ */
@@ -40,7 +41,12 @@ export async function notifyQuotationToLine(requestId: number): Promise<NotifyRe
     return { status: "skipped", reason: message };
   }
 
-  const messages = buildQuotationMessages(request);
+  const messages = buildQuotationMessages({
+    ...request,
+    boqDownloadUrl: request.boqDownloadToken
+      ? `${SITE_URL}/api/quotation-attachments/${request.boqDownloadToken}`
+      : null,
+  });
   const result = await pushInBatches(config.accessToken, groupId, messages);
 
   await getPrisma().quotationRequest.update({

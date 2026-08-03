@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { getPrisma } from "@/lib/prisma";
+import { removeStoredBoqFile } from "@/lib/quotation-boq";
+import { resolveUploadPath } from "@/lib/admin/security";
 
 /**
  * Removes a quotation request outright — used for spam and test submissions.
@@ -18,10 +20,26 @@ export async function deleteQuotationAction(formData: FormData): Promise<void> {
   const prisma = getPrisma();
   const request = await prisma.quotationRequest.findUniqueOrThrow({
     where: { id },
-    select: { code: true, firstName: true, lastName: true },
+    select: { code: true, firstName: true, lastName: true, boqStoragePath: true },
   });
 
   await prisma.quotationRequest.delete({ where: { id } });
+
+  if (request.boqStoragePath) {
+    const uploadDir = process.env.UPLOAD_DIR;
+    if (!uploadDir) {
+      console.error("BOQ file cleanup after quotation deletion skipped: UPLOAD_DIR is not set");
+    } else {
+      try {
+        await removeStoredBoqFile(resolveUploadPath(uploadDir, request.boqStoragePath));
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== "ENOENT") {
+          console.error("BOQ file cleanup after quotation deletion failed:", error);
+        }
+      }
+    }
+  }
 
   await recordActivity({
     adminId: admin.id,

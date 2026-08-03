@@ -685,6 +685,14 @@ model QuotationRequest {
   /// จำนวนครั้งที่พยายามส่ง ใช้แยก "ยังไม่เคยส่ง" ออกจาก "ส่งแล้วแต่พลาด"
   lineNotifyCount Int       @default(0)
 
+  /// BOQ attachment. The upload directory is private; access is only through
+  /// the opaque download token below.
+  boqStoragePath   String? @db.VarChar(512)
+  boqOriginalName  String? @db.VarChar(255)
+  boqMimeType      String? @db.VarChar(100)
+  boqSize          Int?
+  boqDownloadToken String? @unique @db.VarChar(64)
+
   items QuotationItem[]
 
   createdAt DateTime @default(now())

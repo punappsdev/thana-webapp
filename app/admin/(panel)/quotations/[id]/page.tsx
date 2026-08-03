@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, MessageCircle, Phone, ShieldCheck, TriangleAlert, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Mail,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  TriangleAlert,
+  Truck,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +33,14 @@ export default async function QuotationDetailPage({
   if (!request) notFound();
 
   const outsidePhuket = request.needDelivery && isOutsidePhuket(request.deliveryProvince);
+  const boqAttachment =
+    request.boqOriginalName && request.boqSize !== null && request.boqDownloadToken
+      ? {
+          originalName: request.boqOriginalName,
+          size: request.boqSize,
+          downloadToken: request.boqDownloadToken,
+        }
+      : null;
 
   return (
     <div className="space-y-6">
@@ -177,6 +195,38 @@ export default async function QuotationDetailPage({
             </CardContent>
           </Card>
 
+          {boqAttachment ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline-sm">
+                  <FileText className="size-4 text-primary" aria-hidden="true" />
+                  เอกสาร BOQ
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <dl className="space-y-3 rounded-lg border border-primary/15 bg-primary/5 p-3">
+                  <div>
+                    <dt className="font-label-sm text-muted-foreground">ชื่อไฟล์</dt>
+                    <dd className="mt-1 break-words font-body-sm font-medium">{boqAttachment.originalName}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-label-sm text-muted-foreground">ขนาดไฟล์</dt>
+                    <dd className="mt-1 font-body-sm">{formatFileSize(boqAttachment.size)}</dd>
+                  </div>
+                </dl>
+                <Button asChild variant="outline" className="w-full">
+                  <a
+                    href={`/api/quotation-attachments/${boqAttachment.downloadToken}`}
+                    download
+                  >
+                    <Download className="size-4" aria-hidden="true" />
+                    ดาวน์โหลดไฟล์ BOQ
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle className="font-headline-sm">แจ้งเตือนกลุ่มไลน์สาขา</CardTitle>
@@ -237,4 +287,19 @@ function DetailRow({ label, value }: { label: string; value: string | null }) {
       <p className="font-body-sm break-words">{value || "—"}</p>
     </div>
   );
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${value.toLocaleString("th-TH", { maximumFractionDigits: 1 })} ${units[unitIndex]}`;
 }

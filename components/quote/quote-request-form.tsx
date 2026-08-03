@@ -3,7 +3,17 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
-import { ArrowLeft, Building2, CheckCircle2, MapPin, MessageSquareQuote, Package, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  FileSpreadsheet,
+  MapPin,
+  MessageSquareQuote,
+  Package,
+  Truck,
+  X,
+} from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +40,9 @@ const initialState: QuoteFormResult = { success: false, message: "" };
 const CONTACT_STORAGE_KEY = "thana-quote-contact-v3";
 const PREVIOUS_CONTACT_STORAGE_KEY = "thana-quote-contact-v2";
 const LEGACY_CONTACT_STORAGE_KEY = "thana-quote-contact-v1";
+const MAX_BOQ_FILE_SIZE = 10 * 1024 * 1024;
+const BOQ_FILE_ACCEPT =
+  ".pdf,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 const EMPTY_CONTACT = {
   firstName: "",
@@ -259,6 +272,10 @@ function hasSavedDetails(details: RememberedDetails): boolean {
   return Object.values(details).some((value) => value === true || (typeof value === "string" && value !== ""));
 }
 
+function hasBoqFileExtension(fileName: string): boolean {
+  return /\.(pdf|xlsx)$/i.test(fileName);
+}
+
 export function QuoteRequestForm() {
   const t = useTranslations("QuoteForm");
   const tCart = useTranslations("Cart");
@@ -276,6 +293,9 @@ export function QuoteRequestForm() {
   const [rememberContact, setRememberContact] = useState(false);
   const [hasSavedData, setHasSavedData] = useState(false);
   const [contactStorageStatus, setContactStorageStatus] = useState("");
+  const [boqFile, setBoqFile] = useState<File | null>(null);
+  const [boqClientError, setBoqClientError] = useState<string>();
+  const boqFileInputRef = useRef<HTMLInputElement>(null);
   const submittedDetailsRef = useRef<RememberedDetails>(emptyRememberedDetails());
   const submittedRememberContactRef = useRef(false);
 
@@ -283,6 +303,12 @@ export function QuoteRequestForm() {
   // customer has to retype the whole form. See lib/use-no-reset-submit.ts.
   const submitWithoutReset = useNoResetSubmit(action);
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (boqClientError) {
+      event.preventDefault();
+      boqFileInputRef.current?.focus();
+      return;
+    }
+
     submittedDetailsRef.current = { ...contact, ...companyInvoice, ...delivery };
     submittedRememberContactRef.current = rememberContact;
     submitWithoutReset(event);
@@ -380,6 +406,45 @@ export function QuoteRequestForm() {
     setContactStorageStatus(t(deleted ? "savedContactDeleted" : "savedContactDeleteFailed"));
   };
 
+  const handleBoqFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0] ?? null;
+    setBoqClientError(undefined);
+
+    if (!file) {
+      setBoqFile(null);
+      return;
+    }
+
+    if (!hasBoqFileExtension(file.name)) {
+      setBoqFile(null);
+      setBoqClientError(t("errorBoqFileType"));
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (file.size > MAX_BOQ_FILE_SIZE) {
+      setBoqFile(null);
+      setBoqClientError(t("errorBoqFileTooLarge"));
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (file.size === 0) {
+      setBoqFile(null);
+      setBoqClientError(t("errorBoqFileEmpty"));
+      event.currentTarget.value = "";
+      return;
+    }
+
+    setBoqFile(file);
+  };
+
+  const handleBoqFileRemove = () => {
+    setBoqFile(null);
+    setBoqClientError(undefined);
+    if (boqFileInputRef.current) boqFileInputRef.current.value = "";
+  };
+
   // Checked before the cart branches below: emptying the cart would otherwise
   // drop straight to the empty state and hide the reference code.
   if (state.success) return <SuccessPanel code={state.code} />;
@@ -404,13 +469,25 @@ export function QuoteRequestForm() {
   }
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
+  const boqError = fieldError("boqFile") ?? boqClientError;
+  const boqDescribedBy = [
+    "boqFile-hint",
+    boqFile ? "boqFile-selected" : null,
+    boqError ? "boqFile-error" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const showDeliveryNote =
     delivery.needDelivery &&
     delivery.deliveryProvince !== "" &&
     delivery.deliveryProvince !== PHUKET_CODE;
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+    <form
+      onSubmit={handleSubmit}
+      encType="multipart/form-data"
+      className="grid grid-cols-1 gap-8 lg:grid-cols-3"
+    >
       <input type="hidden" name="locale" value={locale} />
       {/* Identity only — the action re-reads every name and SKU from the database */}
       <input
@@ -465,6 +542,67 @@ export function QuoteRequestForm() {
               autoComplete="tel"
             />
           </Field>
+        </Section>
+
+        <Section title={t("boqSection")} description={t("boqDescription")}>
+          <div className="space-y-3 rounded-lg border border-dashed border-[#c4e2f5] bg-[#f3f3fc]/60 p-4 sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#dbe1ff] text-primary">
+                  <FileSpreadsheet className="size-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="boqFile" className="font-label-md text-[#434653]">
+                    {t("boqLabel")} <span className="font-label-sm font-normal text-[#747684]">({t("optional")})</span>
+                  </Label>
+                  <p id="boqFile-hint" className="font-label-sm leading-relaxed text-[#747684]">
+                    {t("boqHint")}
+                  </p>
+                </div>
+              </div>
+
+              <Input
+                ref={boqFileInputRef}
+                id="boqFile"
+                name="boqFile"
+                type="file"
+                accept={BOQ_FILE_ACCEPT}
+                onChange={handleBoqFileChange}
+                aria-describedby={boqDescribedBy}
+                aria-invalid={Boolean(boqError)}
+                className="h-auto min-h-10 cursor-pointer px-3 py-2 file:mr-3 file:rounded-md file:bg-[#dbe1ff] file:px-3 file:py-1 file:font-label-sm file:font-medium file:text-primary"
+              />
+            </div>
+
+            {boqFile && (
+              <div
+                id="boqFile-selected"
+                role="status"
+                aria-live="polite"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-[#c4e2f5] bg-white px-3 py-2.5"
+              >
+                <p className="min-w-0 break-all font-body-sm text-[#434653]">
+                  <span className="font-label-sm font-semibold text-primary">{t("boqSelectedFile")}</span>{" "}
+                  {boqFile.name}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleBoqFileRemove}
+                  aria-label={t("boqRemoveFile")}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-label-sm font-medium text-primary transition-colors hover:bg-[#dbe1ff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <X className="size-4" aria-hidden="true" />
+                  <span>{t("boqRemoveFile")}</span>
+                </button>
+              </div>
+            )}
+
+            {boqError && (
+              <p id="boqFile-error" role="alert" className="font-label-sm text-[#ba1a1a]">
+                {boqError}
+              </p>
+            )}
+          </div>
         </Section>
 
         <Section title={t("deliverySection")} description={t("deliveryHint")}>

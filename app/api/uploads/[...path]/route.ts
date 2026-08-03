@@ -18,6 +18,13 @@ export async function GET(
   }
 
   const relativePath = path.join(...filePathArray);
+  // BOQs are bearer-token downloads only; never expose the private quote
+  // attachment directory through the generic public media route.
+  const normalizedRelativePath = relativePath.replaceAll("\\", "/").toLowerCase();
+  if (normalizedRelativePath === "quote-boq" || normalizedRelativePath.startsWith("quote-boq/")) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
   let absolutePath: string;
   try {
     absolutePath = resolveUploadPath(uploadDir, relativePath);

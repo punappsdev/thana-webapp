@@ -75,6 +75,10 @@ function allText(messages: ReturnType<typeof buildQuotationMessages>): string {
   return JSON.stringify(messages);
 }
 
+function jsonByteLength(value: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(value)).byteLength;
+}
+
 describe("buildQuotationMessages", () => {
   it("ใส่ข้อมูลของคำขอที่กรอกครบไว้ในการ์ดทุกฟิลด์", () => {
     const text = allText(buildQuotationMessages(fullRequest()));
@@ -149,7 +153,7 @@ describe("buildQuotationMessages", () => {
     expect(text).not.toContain("และอีก");
 
     for (const message of messages) {
-      expect(JSON.stringify(message).length).toBeLessThanOrEqual(
+      expect(jsonByteLength(message)).toBeLessThanOrEqual(
         LINE_MESSAGE_LIMITS.MESSAGE_JSON_LIMIT,
       );
       if (message.contents.type === "carousel") {
@@ -164,6 +168,65 @@ describe("buildQuotationMessages", () => {
     const messages = buildQuotationMessages(minimalRequest());
     expect(messages).toHaveLength(1);
     expect(messages[0].contents.type).toBe("bubble");
+  });
+
+  it("ไม่ใส่ลิงก์ดาวน์โหลดเมื่อคำขอไม่มี BOQ", () => {
+    const text = allText(buildQuotationMessages(minimalRequest()));
+    expect(text).not.toContain("quotation-attachments");
+    expect(text).not.toContain("ดาวน์โหลด BOQ");
+  });
+
+  it("ใส่ปุ่มลิงก์ดาวน์โหลด BOQ เมื่อมี URL ของไฟล์", () => {
+    const url = "https://www.thana-glass.com/api/quotation-attachments/" + "a".repeat(64);
+    const text = allText(buildQuotationMessages(minimalRequest({ boqDownloadUrl: url })));
+    expect(text).toContain(url);
+    expect(text).toContain("ดาวน์โหลด BOQ");
+  });
+
+  it("คงเพดานขนาดและการแบ่งชุดของ LINE เมื่อมีลิงก์ BOQ", () => {
+    const messages = buildQuotationMessages(
+      minimalRequest({
+        boqDownloadUrl: "https://www.thana-glass.com/api/quotation-attachments/" + "b".repeat(64),
+        items: Array.from({ length: 100 }, (_, index) =>
+          item({
+            productNameTh: `${index + 1} ${"กระจกนิรภัยเทมเปอร์ลามิเนต".repeat(8)}`,
+            sku: `BOQ-LIMIT-${index + 1}`,
+          }),
+        ),
+      }),
+    );
+
+    for (const message of messages) {
+      expect(jsonByteLength(message)).toBeLessThanOrEqual(
+        LINE_MESSAGE_LIMITS.MESSAGE_JSON_LIMIT,
+      );
+      if (message.contents.type === "carousel") {
+        expect(message.contents.contents.length).toBeLessThanOrEqual(
+          LINE_MESSAGE_LIMITS.MAX_BUBBLES_PER_CAROUSEL,
+        );
+      }
+    }
+  });
+
+  it("วัดขนาด JSON เป็นไบต์ UTF-8 เพื่อให้ข้อความภาษาไทยไม่เกิน 50,000 ไบต์", () => {
+    const messages = buildQuotationMessages(
+      minimalRequest({
+        items: Array.from({ length: 100 }, (_, index) =>
+          item({
+            productNameTh: `${index + 1} ${"กระจกนิรภัยเทมเปอร์ลามิเนตสองชั้น".repeat(10)}`,
+            optionsTh: "ความหนา: 12 มม. · สี: ชาเข้ม · การเจียร: ขอบมน · ลบมุม: 4 มุม",
+            sku: `TH-UTF8-${index + 1}`,
+          }),
+        ),
+      }),
+    );
+
+    expect(messages.length).toBeGreaterThan(1);
+    for (const message of messages) {
+      expect(jsonByteLength(message)).toBeLessThanOrEqual(
+        LINE_MESSAGE_LIMITS.MESSAGE_JSON_LIMIT,
+      );
+    }
   });
 
   it("ยังส่งได้แม้ contactBranch ในฐานข้อมูลเป็นค่าที่ไม่รู้จัก", () => {

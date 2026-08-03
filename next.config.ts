@@ -5,6 +5,10 @@ const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
+  experimental: {
+    // 10 MiB file plus multipart field/boundary overhead (Next defaults to 1 MiB).
+    serverActions: { bodySizeLimit: "11mb" },
+  },
   allowedDevOrigins: [
     '*.ngrok-free.app',
     '*.ngrok-free.dev',

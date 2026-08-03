@@ -9,6 +9,13 @@ import { BRANCH_CODES } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { isProvinceCode } from "@/lib/provinces";
+import {
+  BoqFileError,
+  isUploadFile,
+  removeStoredBoqFile,
+  storeBoqFile,
+  type StoredBoqAttachment,
+} from "@/lib/quotation-boq";
 
 /**
  * The public quotation request. This is the only server action on the customer
@@ -27,6 +34,12 @@ export type QuoteFormResult = {
 /** How many requests one IP may send per hour before we start rejecting. */
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60 * 60 * 1000;
+
+const boqErrorTranslationKey = {
+  boqFileInvalidType: "errorBoqFileType",
+  boqFileTooLarge: "errorBoqFileTooLarge",
+  boqFileUnreadable: "errorBoqFileUnreadable",
+} as const;
 
 /**
  * Only the identity of a line is trusted. Names, SKUs and images are re-read from
@@ -241,8 +254,34 @@ export async function submitQuoteRequest(
     return { success: false, message: t("errorUnavailable") };
   }
 
+  let boqAttachment: StoredBoqAttachment | null = null;
+  const rawBoqFile = formData.get("boqFile");
+  // Browsers submit an empty File object for an untouched optional file input.
+  const hasBoqFile =
+    rawBoqFile !== null &&
+    !(isUploadFile(rawBoqFile) && rawBoqFile.name === "" && rawBoqFile.size === 0) &&
+    !(typeof rawBoqFile === "string" && rawBoqFile.trim() === "");
+  if (hasBoqFile) {
+    if (!isUploadFile(rawBoqFile)) {
+      const message = t(boqErrorTranslationKey.boqFileInvalidType);
+      return { success: false, message, fieldErrors: { boqFile: [message] } };
+    }
+
+    try {
+      boqAttachment = await storeBoqFile(rawBoqFile);
+    } catch (error) {
+      const code = error instanceof BoqFileError ? error.code : "boqFileUnreadable";
+      const message = t(boqErrorTranslationKey[code]);
+      if (!(error instanceof BoqFileError)) {
+        console.error("BOQ file processing failed:", error);
+      }
+      return { success: false, message, fieldErrors: { boqFile: [message] } };
+    }
+  }
+
+  let created: { id: number; code: string };
   try {
-    const created = await prisma.$transaction(async (tx) => {
+    created = await prisma.$transaction(async (tx) => {
       const request = await tx.quotationRequest.create({
         data: {
           // Replaced immediately below; the real code needs the generated id.
@@ -272,6 +311,11 @@ export async function submitQuoteRequest(
           locale,
           ipAddress,
           userAgent,
+          boqStoragePath: boqAttachment?.storagePath ?? null,
+          boqOriginalName: boqAttachment?.originalName ?? null,
+          boqMimeType: boqAttachment?.mimeType ?? null,
+          boqSize: boqAttachment?.size ?? null,
+          boqDownloadToken: boqAttachment?.downloadToken ?? null,
           items: { create: items },
         },
       });
@@ -283,21 +327,29 @@ export async function submitQuoteRequest(
       });
     });
 
-    // แจ้งกลุ่ม LINE ของสาขาเป็น side effect: ถ้า LINE ล่มหรือ token หมดอายุ ลูกค้า
-    // ต้องยังเห็นว่าส่งคำขอสำเร็จพร้อมรหัสอ้างอิง ผลการส่งถูกบันทึกไว้ในแถวนั้นเอง
-    // และทีมงานกดส่งซ้ำได้จากหลังบ้าน (แนวเดียวกับ deleteMediaIfOrphaned ที่กลืน error)
-    try {
-      await notifyQuotationToLine(created.id);
-    } catch (error) {
-      console.error("[line] แจ้งเตือนคำขอใบเสนอราคาไม่สำเร็จ:", error);
-    }
-
-    revalidatePath("/admin/quotations");
-    return { success: true, message: t("successTitle"), code: created.code };
   } catch (error) {
+    if (boqAttachment) {
+      try {
+        await removeStoredBoqFile(boqAttachment.absolutePath);
+      } catch (cleanupError) {
+        console.error("BOQ file cleanup after DB failure failed:", cleanupError);
+      }
+    }
     console.error("Quotation request failed:", error);
     return { success: false, message: t("errorGeneric") };
   }
+
+  // แจ้งกลุ่ม LINE ของสาขาเป็น side effect: ถ้า LINE ล่มหรือ token หมดอายุ ลูกค้า
+  // ต้องยังเห็นว่าส่งคำขอสำเร็จพร้อมรหัสอ้างอิง ผลการส่งถูกบันทึกไว้ในแถวนั้นเอง
+  // และทีมงานกดส่งซ้ำได้จากหลังบ้าน (แนวเดียวกับ deleteMediaIfOrphaned ที่กลืน error)
+  try {
+    await notifyQuotationToLine(created.id);
+  } catch (error) {
+    console.error("[line] แจ้งเตือนคำขอใบเสนอราคาไม่สำเร็จ:", error);
+  }
+
+  revalidatePath("/admin/quotations");
+  return { success: true, message: t("successTitle"), code: created.code };
 }
 
 /** e.g. QT-20260801-0042 — date for scanning, id for uniqueness. */

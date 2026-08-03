@@ -33,6 +33,14 @@ type FlexSpacing = "none" | "xs" | "sm" | "md" | "lg" | "xl";
 
 type FlexSeparator = { type: "separator"; margin?: FlexSpacing; color?: string };
 
+type FlexButton = {
+  type: "button";
+  action: { type: "uri"; label: string; uri: string };
+  style?: "primary" | "secondary" | "link";
+  color?: string;
+  margin?: FlexSpacing;
+};
+
 type FlexBox = {
   type: "box";
   layout: "vertical" | "horizontal";
@@ -45,7 +53,7 @@ type FlexBox = {
   flex?: number;
 };
 
-type FlexComponent = FlexBox | FlexText | FlexSeparator;
+type FlexComponent = FlexBox | FlexText | FlexSeparator | FlexButton;
 
 type FlexBubble = {
   type: "bubble";
@@ -95,6 +103,8 @@ export type QuotationNotification = {
   deliveryDistrict: string | null;
   deliveryProvince: string | null;
   deliveryPostalCode: string | null;
+  /** Absolute URL is added by the server-only LINE notifier when a BOQ exists. */
+  boqDownloadUrl?: string | null;
   items: QuotationNotificationItem[];
 };
 
@@ -279,6 +289,29 @@ function summaryComponents(input: QuotationNotification): FlexComponent[] {
   ];
 }
 
+function boqAttachmentComponents(input: QuotationNotification): FlexComponent[] {
+  if (!input.boqDownloadUrl) return [];
+
+  return [
+    { type: "separator", margin: "lg", color: COLOR_LINE },
+    {
+      type: "box",
+      layout: "vertical",
+      spacing: "sm",
+      margin: "lg",
+      contents: [
+        sectionTitle("เอกสาร BOQ"),
+        {
+          type: "button",
+          action: { type: "uri", label: "ดาวน์โหลด BOQ", uri: input.boqDownloadUrl },
+          style: "primary",
+          color: COLOR_PRIMARY,
+        },
+      ],
+    },
+  ];
+}
+
 function itemsHeading(input: QuotationNotification): FlexComponent[] {
   const totalQty = input.items.reduce((sum, item) => sum + item.qty, 0);
   return [
@@ -301,7 +334,7 @@ function bubbleFrom(input: QuotationNotification, contents: FlexComponent[], con
 }
 
 function jsonSize(value: unknown): number {
-  return JSON.stringify(value).length;
+  return new TextEncoder().encode(JSON.stringify(value)).byteLength;
 }
 
 /**
@@ -311,7 +344,11 @@ function jsonSize(value: unknown): number {
  */
 function splitIntoBubbles(input: QuotationNotification): FlexBubble[] {
   const bubbles: FlexBubble[] = [];
-  let contents: FlexComponent[] = [...summaryComponents(input), ...itemsHeading(input)];
+  let contents: FlexComponent[] = [
+    ...summaryComponents(input),
+    ...boqAttachmentComponents(input),
+    ...itemsHeading(input),
+  ];
   let itemsOnBubble = 0;
 
   for (const [index, item] of input.items.entries()) {
