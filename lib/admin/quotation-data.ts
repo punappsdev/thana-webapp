@@ -51,6 +51,21 @@ export async function getAdminQuotations(input: {
 export async function getQuotationDetail(id: number) {
   return getPrisma().quotationRequest.findUnique({
     where: { id },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
+    include: {
+      items: {
+        orderBy: { sortOrder: "asc" },
+        // หมวดหมู่ปัจจุบันของสินค้า ใช้เลือกกลุ่ม LINE ปลายทาง (lib/line/routing.ts)
+        // `product` เป็น null เองเมื่อสินค้าถูกลบ เพราะ productId ตั้งเป็น SetNull
+        include: {
+          product: {
+            select: {
+              nameTh: true,
+              category: { select: { slug: true } },
+              subCategory: { select: { slug: true } },
+            },
+          },
+        },
+      },
+    },
   });
 }

@@ -13,6 +13,17 @@ export const BRANCH_CODES = ["headquarters", "thalang"] as const;
 
 export type BranchCode = (typeof BRANCH_CODES)[number];
 
+/**
+ * ปลายทางกลุ่ม LINE ของทีมขาย เป็นซูเปอร์เซตของ `BRANCH_CODES`
+ *
+ * "factory" ไม่ใช่จุดที่ลูกค้าไปรับสินค้าเองได้ จึงไม่อยู่ใน `BRANCH_CODES` และ
+ * ไม่มีลิงก์แผนที่ — มันโผล่ได้เฉพาะตอนระบบเลือกกลุ่มปลายทางให้เท่านั้น
+ * (ดู `lib/line/routing.ts`)
+ */
+export const SALE_GROUP_CODES = ["headquarters", "thalang", "factory"] as const;
+
+export type SaleGroupCode = (typeof SALE_GROUP_CODES)[number];
+
 /** Google Maps links shown for the branches that can handle quote requests. */
 export const QUOTE_BRANCH_MAP_URLS: Record<BranchCode, string> = {
   headquarters:
@@ -32,9 +43,10 @@ export function toBranchCode(value: string): BranchCode {
   return isBranchCode(value) ? value : DEFAULT_BRANCH_CODE;
 }
 
-const branchLabelsTh: Record<BranchCode, string> = {
+const saleGroupLabelsTh: Record<SaleGroupCode, string> = {
   headquarters: "สาขาสำนักงานใหญ่",
   thalang: "สาขาถลาง",
+  factory: "สาขาโรงงาน",
 };
 
 /**
@@ -42,5 +54,10 @@ const branchLabelsTh: Record<BranchCode, string> = {
  * ฝั่งเว็บสาธารณะยังใช้ next-intl (`QuoteForm.contactBranch*`) ตามเดิม
  */
 export function branchLabelTh(code: string): string {
-  return branchLabelsTh[toBranchCode(code)];
+  return saleGroupLabelsTh[toBranchCode(code)];
+}
+
+/** ป้ายภาษาไทยของกลุ่มปลายทาง ครอบสาขาโรงงานที่ลูกค้าเลือกเองไม่ได้ด้วย */
+export function saleGroupLabelTh(code: SaleGroupCode): string {
+  return saleGroupLabelsTh[code];
 }

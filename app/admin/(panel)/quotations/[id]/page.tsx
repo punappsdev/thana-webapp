@@ -18,7 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { ResendLineNotificationButton } from "@/components/admin/resend-line-notification-button";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
-import { branchLabelTh } from "@/lib/branches";
+import { branchLabelTh, saleGroupLabelTh } from "@/lib/branches";
+import { resolveSaleGroup } from "@/lib/line/routing";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
 
 export default async function QuotationDetailPage({
@@ -33,6 +34,22 @@ export default async function QuotationDetailPage({
   if (!request) notFound();
 
   const outsidePhuket = request.needDelivery && isOutsidePhuket(request.deliveryProvince);
+  // คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา จึงต้องพูดถึงวิธีรับสินค้าแทนชื่อสาขา
+  const fulfillmentLabel = request.needDelivery
+    ? "จัดส่งไปยังที่อยู่หน้างาน"
+    : `รับสินค้าเองที่${branchLabelTh(request.contactBranch)}`;
+  // คำนวณสดด้วยกฎเดียวกับตอนส่งจริง เพื่อให้ปุ่มส่งซ้ำบอกได้ว่าจะเข้ากลุ่มไหน
+  const lineRouting = resolveSaleGroup({
+    needDelivery: request.needDelivery,
+    contactBranch: request.contactBranch,
+    deliveryProvince: request.deliveryProvince,
+    deliveryDistrict: request.deliveryDistrict,
+    items: request.items.map((item) => ({
+      categorySlug: item.product?.category?.slug ?? null,
+      subCategorySlug: item.product?.subCategory?.slug ?? null,
+      productNameTh: item.product?.nameTh ?? null,
+    })),
+  });
   const boqAttachment =
     request.boqOriginalName && request.boqSize !== null && request.boqDownloadToken
       ? {
@@ -121,7 +138,7 @@ export default async function QuotationDetailPage({
               <CardTitle className="font-headline-sm">ข้อมูลการจัดส่ง</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <DetailRow label="สถานะ" value={request.needDelivery ? "ต้องการจัดส่ง" : "ไม่ต้องการจัดส่ง"} />
+              <DetailRow label="วิธีรับสินค้า" value={fulfillmentLabel} />
               {request.needDelivery ? (
                 <>
                   <DetailRow label="ที่อยู่สำหรับจัดส่ง" value={request.deliveryAddressLine} />
@@ -167,7 +184,10 @@ export default async function QuotationDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailRow label="ชื่อ-นามสกุล" value={`${request.firstName} ${request.lastName}`} />
-              <DetailRow label="สาขาที่ติดต่อ" value={branchLabelTh(request.contactBranch)} />
+              {/* คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา แถวนี้จึงมีความหมายเฉพาะตอนรับเอง */}
+              {request.needDelivery ? null : (
+                <DetailRow label="สาขาที่รับสินค้า" value={branchLabelTh(request.contactBranch)} />
+              )}
               <div className="space-y-1">
                 <p className="font-label-sm text-muted-foreground">ช่องทางติดต่อ</p>
                 <p className="flex items-center gap-2 font-body-sm">
@@ -229,9 +249,14 @@ export default async function QuotationDetailPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline-sm">แจ้งเตือนกลุ่มไลน์สาขา</CardTitle>
+              <CardTitle className="font-headline-sm">แจ้งเตือนกลุ่มไลน์ทีมขาย</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div className="space-y-0.5">
+                <p className="font-label-sm text-muted-foreground">กลุ่มปลายทาง</p>
+                <p className="font-body-sm break-words">{saleGroupLabelTh(lineRouting.group)}</p>
+                <p className="font-body-sm text-muted-foreground">{lineRouting.reason}</p>
+              </div>
               {request.lineNotifiedAt ? (
                 <>
                   <Badge>ส่งเข้ากลุ่มแล้ว</Badge>
@@ -251,7 +276,7 @@ export default async function QuotationDetailPage({
                 <>
                   <Badge variant="secondary">ยังไม่ได้ส่ง</Badge>
                   <p className="font-body-sm text-muted-foreground">
-                    คำขอนี้ยังไม่เคยถูกแจ้งเข้ากลุ่มไลน์ของ{branchLabelTh(request.contactBranch)}
+                    คำขอนี้ยังไม่เคยถูกแจ้งเข้ากลุ่มไลน์ของ{saleGroupLabelTh(lineRouting.group)}
                   </p>
                 </>
               )}

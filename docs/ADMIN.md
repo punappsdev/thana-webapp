@@ -15,6 +15,7 @@ LINE_CHANNEL_ACCESS_TOKEN=long-lived-messaging-api-token
 LINE_CHANNEL_SECRET=messaging-api-channel-secret
 LINE_GROUP_ID_HEADQUARTERS=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 LINE_GROUP_ID_THALANG=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+LINE_GROUP_ID_FACTORY=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 `ADMIN_PASSWORD` must contain at least 12 characters, lowercase and uppercase letters, a number, and a symbol. Remove `ADMIN_PASSWORD` from the VPS environment after the bootstrap command succeeds.
@@ -54,17 +55,17 @@ LINE_GROUP_ID_THALANG=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## LINE quotation notifications
 
-Every quotation request is pushed to the sales LINE group of the branch the customer picked (`contactBranch`). The four `LINE_*` variables are optional: when they are missing the site still accepts quotations and only logs a warning.
+Every quotation request is pushed to one of three sales LINE groups. Which group receives it is decided by the delivery address and the categories in the cart, not by anything the customer selects — see **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) → กลุ่มไหนได้รับใบไหน** for the rules. The five `LINE_*` variables are optional: when they are missing the site still accepts quotations and only logs a warning.
 
 **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) is the full Thai walkthrough** — creating the bot, every console toggle, obtaining group ids, and the failure table. The summary below is only a checklist for someone who has done it before.
 
 1. Create a **Messaging API** channel in the LINE Developers Console, then in the LINE Official Account Manager disable auto-reply and greeting messages and enable **Allow bot to join group chats** — without it the bot cannot be invited to a group.
 2. Issue a long-lived channel access token and copy the channel secret into `LINE_CHANNEL_ACCESS_TOKEN` / `LINE_CHANNEL_SECRET`.
 3. Set the channel's Webhook URL to `https://<domain>/api/line/webhook`, enable **Use webhook**, and press **Verify** — it must report success.
-4. Invite the bot into each branch's sales group. The application log then prints one line per event, e.g. `[line webhook] event=join source=group groupId=Cxxxx ...`. LINE never shows group ids in the app, so this log is the only way to obtain them.
-5. Put each group id into `LINE_GROUP_ID_HEADQUARTERS` / `LINE_GROUP_ID_THALANG` and restart the application. Branches whose group id is missing are skipped individually; the others still receive notifications.
+4. Invite the bot into all three sales groups (headquarters, Thalang, factory). The application log then prints one line per event, e.g. `[line webhook] event=join source=group groupId=Cxxxx ...`. LINE never shows group ids in the app, so this log is the only way to obtain them.
+5. Put each group id into `LINE_GROUP_ID_HEADQUARTERS` / `LINE_GROUP_ID_THALANG` / `LINE_GROUP_ID_FACTORY` and restart the application. Groups whose id is missing are skipped individually; the others still receive notifications.
 
-Delivery status is stored on the request itself and shown under **แจ้งเตือนกลุ่มไลน์สาขา** on `/admin/quotations/<id>`, together with a resend button for requests that failed. The quotations list marks failed rows with a warning icon.
+Delivery status is stored on the request itself and shown under **แจ้งเตือนกลุ่มไลน์ทีมขาย** on `/admin/quotations/<id>`, together with the routed group, the reason it was chosen, and a resend button for requests that failed. The quotations list marks failed rows with a warning icon.
 
 ## Promotions on product pages
 

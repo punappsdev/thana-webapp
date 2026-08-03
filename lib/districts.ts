@@ -104,17 +104,32 @@ export function getDistrictsForProvince(
   return districtsByProvinceCode.get(provinceCode) ?? EMPTY_DISTRICTS;
 }
 
+/**
+ * Resolves a stored district back to its record. `QuotationRequest.deliveryDistrict`
+ * keeps the *display name* rather than a code, and which language that name is in
+ * depends on the locale the customer filled the form in — so anything that needs a
+ * stable identity for a district has to come back through here.
+ */
+export function findDistrict(
+  provinceCode: string | null | undefined,
+  district: string | null | undefined,
+): District | null {
+  if (typeof district !== "string") return null;
+  const selectedName = district.trim();
+  if (!selectedName) return null;
+
+  return (
+    getDistrictsForProvince(provinceCode).find(
+      (candidate) => candidate.nameTh === selectedName || candidate.nameEn === selectedName,
+    ) ?? null
+  );
+}
+
 export function isDistrictForProvince(
   provinceCode: string | null | undefined,
   district: string | null | undefined,
 ): boolean {
-  if (typeof district !== "string") return false;
-  const selectedName = district.trim();
-  if (!selectedName) return false;
-
-  return getDistrictsForProvince(provinceCode).some(
-    (candidate) => candidate.nameTh === selectedName || candidate.nameEn === selectedName,
-  );
+  return findDistrict(provinceCode, district) !== null;
 }
 
 /** True when a value is any district name in the source data, regardless of province. */

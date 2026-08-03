@@ -22,6 +22,8 @@ function minimalRequest(overrides: Partial<QuotationNotification> = {}): Quotati
   return {
     code: "QT-20260803-0042",
     contactBranch: "thalang",
+    saleGroup: "thalang",
+    routingReason: "จัดส่งนอก อ.เมืองภูเก็ต / อ.กะทู้",
     firstName: "สมชาย",
     lastName: "ใจดี",
     phone: "0812345678",
@@ -108,6 +110,25 @@ describe("buildQuotationMessages", () => {
     ]) {
       expect(text).toContain(expected);
     }
+  });
+
+  it("บอกกลุ่มปลายทางพร้อมเหตุผลที่ระบบเลือกไว้", () => {
+    const text = allText(
+      buildQuotationMessages(
+        fullRequest({ saleGroup: "factory", routingReason: "สินค้าทั้งใบเป็นกระจกที่โรงงานรับทำ" }),
+      ),
+    );
+    expect(text).toContain("กลุ่มที่รับเรื่อง: สาขาโรงงาน");
+    expect(text).toContain("สินค้าทั้งใบเป็นกระจกที่โรงงานรับทำ");
+  });
+
+  it("บอกวิธีรับสินค้าแทนสาขาที่ติดต่อ เพราะคำขอแบบจัดส่งลูกค้าไม่ได้เลือกสาขา", () => {
+    expect(allText(buildQuotationMessages(fullRequest()))).toContain("จัดส่งไปยังที่อยู่หน้างาน");
+
+    const pickup = allText(
+      buildQuotationMessages(minimalRequest({ needDelivery: false, contactBranch: "thalang" })),
+    );
+    expect(pickup).toContain("รับสินค้าเองที่สาขาถลาง");
   });
 
   it("เตือนค่าจัดส่งเมื่อจังหวัดปลายทางไม่ใช่ภูเก็ต", () => {

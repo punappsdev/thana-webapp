@@ -1,10 +1,10 @@
 import "server-only";
 
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
-import { toBranchCode } from "@/lib/branches";
 import { getLineConfig, lineGroupEnvKey } from "@/lib/line/config";
 import { MAX_MESSAGES_PER_PUSH, pushLineMessage } from "@/lib/line/client";
 import { buildQuotationMessages } from "@/lib/line/message";
+import { resolveSaleGroup } from "@/lib/line/routing";
 import { getPrisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/seo";
 
@@ -33,16 +33,29 @@ export async function notifyQuotationToLine(requestId: number): Promise<NotifyRe
   const request = await getQuotationDetail(requestId);
   if (!request) return { status: "failed", error: "ไม่พบคำขอใบเสนอราคานี้" };
 
-  const branch = toBranchCode(request.contactBranch);
-  const groupId = config.groupIds[branch];
+  const decision = resolveSaleGroup({
+    needDelivery: request.needDelivery,
+    contactBranch: request.contactBranch,
+    deliveryProvince: request.deliveryProvince,
+    deliveryDistrict: request.deliveryDistrict,
+    items: request.items.map((item) => ({
+      categorySlug: item.product?.category?.slug ?? null,
+      subCategorySlug: item.product?.subCategory?.slug ?? null,
+      productNameTh: item.product?.nameTh ?? null,
+    })),
+  });
+
+  const groupId = config.groupIds[decision.group];
   if (!groupId) {
-    const message = `ยังไม่ได้ตั้งค่า ${lineGroupEnvKey(branch)} สำหรับสาขานี้`;
+    const message = `ยังไม่ได้ตั้งค่า ${lineGroupEnvKey(decision.group)} สำหรับสาขานี้`;
     console.warn(`[line] ${message}`);
     return { status: "skipped", reason: message };
   }
 
   const messages = buildQuotationMessages({
     ...request,
+    saleGroup: decision.group,
+    routingReason: decision.reason,
     boqDownloadUrl: request.boqDownloadToken
       ? `${SITE_URL}/api/quotation-attachments/${request.boqDownloadToken}`
       : null,
@@ -59,7 +72,10 @@ export async function notifyQuotationToLine(requestId: number): Promise<NotifyRe
   });
 
   if (!result.ok) {
-    console.error(`[line] แจ้งเตือน ${request.code} เข้ากลุ่มสาขา ${branch} ไม่สำเร็จ:`, result.error);
+    console.error(
+      `[line] แจ้งเตือน ${request.code} เข้ากลุ่มสาขา ${decision.group} ไม่สำเร็จ:`,
+      result.error,
+    );
     return { status: "failed", error: result.error };
   }
   return { status: "sent" };

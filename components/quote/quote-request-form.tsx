@@ -30,6 +30,26 @@ import { CartEmptyState } from "@/components/cart/cart-empty-state";
 import { useCart } from "@/components/cart/use-cart";
 import { DistrictCombobox } from "./district-combobox";
 import { QUOTE_BRANCH_MAP_URLS, type BranchCode } from "@/lib/branches";
+import {
+  CONTACT_STORAGE_KEY,
+  CONTACT_STORAGE_KEYS,
+  OBSOLETE_CONTACT_STORAGE_KEYS,
+  emptyCompanyInvoice,
+  emptyContact,
+  emptyDelivery,
+  emptyRememberedDetails,
+  hasSavedDetails,
+  parseSavedDetails,
+  serializeRememberedDetails,
+  type CompanyInvoiceDetails,
+  type CompanyInvoiceField,
+  type ContactDetails,
+  type ContactField,
+  type DeliveryDetails,
+  type DeliveryField,
+  type FulfillmentMethod,
+  type RememberedDetails,
+} from "@/lib/quote-remembered-details";
 import { lineKey } from "@/lib/cart";
 import { getDistrictsForProvince } from "@/lib/districts";
 import { pick } from "@/lib/products";
@@ -40,70 +60,9 @@ import { LegalDialog } from "@/components/legal/legal-dialog";
 import { CheckField } from "./check-field";
 
 const initialState: QuoteFormResult = { success: false, message: "" };
-const CONTACT_STORAGE_KEY = "thana-quote-contact-v3";
-const PREVIOUS_CONTACT_STORAGE_KEY = "thana-quote-contact-v2";
-const LEGACY_CONTACT_STORAGE_KEY = "thana-quote-contact-v1";
 const MAX_BOQ_FILE_SIZE = 10 * 1024 * 1024;
 const BOQ_FILE_ACCEPT =
   ".pdf,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-const EMPTY_CONTACT = {
-  firstName: "",
-  lastName: "",
-  phone: "",
-  email: "",
-  lineId: "",
-};
-
-const EMPTY_COMPANY_INVOICE = {
-  needTaxInvoice: false,
-  companyName: "",
-  taxId: "",
-  addressLine: "",
-  subDistrict: "",
-  district: "",
-  province: "",
-  postalCode: "",
-};
-
-const EMPTY_DELIVERY = {
-  needDelivery: false,
-  deliveryAddressLine: "",
-  deliverySubDistrict: "",
-  deliveryDistrict: "",
-  deliveryProvince: "",
-  deliveryPostalCode: "",
-};
-
-type FulfillmentMethod = "delivery" | "pickup";
-
-type ContactDetails = typeof EMPTY_CONTACT;
-type ContactField = keyof ContactDetails;
-type CompanyInvoiceDetails = typeof EMPTY_COMPANY_INVOICE;
-type CompanyInvoiceField = Exclude<keyof CompanyInvoiceDetails, "needTaxInvoice">;
-type DeliveryDetails = typeof EMPTY_DELIVERY;
-type DeliveryField = Exclude<keyof DeliveryDetails, "needDelivery">;
-type RememberedDetails = ContactDetails & CompanyInvoiceDetails & DeliveryDetails;
-
-function emptyContact(): ContactDetails {
-  return { ...EMPTY_CONTACT };
-}
-
-function emptyCompanyInvoice(): CompanyInvoiceDetails {
-  return { ...EMPTY_COMPANY_INVOICE };
-}
-
-function emptyDelivery(): DeliveryDetails {
-  return { ...EMPTY_DELIVERY };
-}
-
-function emptyRememberedDetails(): RememberedDetails {
-  return { ...EMPTY_CONTACT, ...EMPTY_COMPANY_INVOICE, ...EMPTY_DELIVERY };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function readStorageValue(key: string): string | null {
   try {
@@ -113,142 +72,27 @@ function readStorageValue(key: string): string | null {
   }
 }
 
-function parseSavedDetails(
-  raw: string | null,
-  includesCompanyInvoice: boolean,
-  includesDelivery: boolean,
-): RememberedDetails | null {
-  try {
-    if (!raw) return null;
-
-    const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed)) return null;
-
-    if (
-      typeof parsed.firstName !== "string" ||
-      typeof parsed.lastName !== "string" ||
-      typeof parsed.phone !== "string" ||
-      typeof parsed.email !== "string" ||
-      typeof parsed.lineId !== "string"
-    ) {
-      return null;
-    }
-
-    if (!includesCompanyInvoice) {
-      return {
-        firstName: parsed.firstName,
-        lastName: parsed.lastName,
-        phone: parsed.phone,
-        email: parsed.email,
-        lineId: parsed.lineId,
-        ...emptyCompanyInvoice(),
-        ...emptyDelivery(),
-      };
-    }
-
-    if (
-      typeof parsed.needTaxInvoice !== "boolean" ||
-      typeof parsed.companyName !== "string" ||
-      typeof parsed.taxId !== "string" ||
-      typeof parsed.addressLine !== "string" ||
-      typeof parsed.subDistrict !== "string" ||
-      typeof parsed.district !== "string" ||
-      typeof parsed.province !== "string" ||
-      typeof parsed.postalCode !== "string"
-    ) {
-      return null;
-    }
-
-    const details = {
-      firstName: parsed.firstName,
-      lastName: parsed.lastName,
-      phone: parsed.phone,
-      email: parsed.email,
-      lineId: parsed.lineId,
-      needTaxInvoice: parsed.needTaxInvoice,
-      companyName: parsed.companyName,
-      taxId: parsed.taxId,
-      addressLine: parsed.addressLine,
-      subDistrict: parsed.subDistrict,
-      district: parsed.district,
-      province: parsed.province,
-      postalCode: parsed.postalCode,
-    };
-
-    if (!includesDelivery) return { ...details, ...emptyDelivery() };
-
-    if (
-      typeof parsed.needDelivery !== "boolean" ||
-      typeof parsed.deliveryAddressLine !== "string" ||
-      typeof parsed.deliverySubDistrict !== "string" ||
-      typeof parsed.deliveryDistrict !== "string" ||
-      typeof parsed.deliveryProvince !== "string" ||
-      typeof parsed.deliveryPostalCode !== "string"
-    ) {
-      return null;
-    }
-
-    return {
-      ...details,
-      needDelivery: parsed.needDelivery,
-      deliveryAddressLine: parsed.deliveryAddressLine,
-      deliverySubDistrict: parsed.deliverySubDistrict,
-      deliveryDistrict: parsed.deliveryDistrict,
-      deliveryProvince: parsed.deliveryProvince,
-      deliveryPostalCode: parsed.deliveryPostalCode,
-    };
-  } catch {
-    return null;
-  }
-}
-
 function readSavedDetails(): RememberedDetails {
-  const currentDetails = parseSavedDetails(readStorageValue(CONTACT_STORAGE_KEY), true, true);
-  if (currentDetails) return currentDetails;
+  for (const key of CONTACT_STORAGE_KEYS) {
+    const details = parseSavedDetails(readStorageValue(key), key);
+    if (details) return details;
+  }
 
-  const previousDetails = parseSavedDetails(
-    readStorageValue(PREVIOUS_CONTACT_STORAGE_KEY),
-    true,
-    false,
-  );
-  if (previousDetails) return previousDetails;
-
-  const legacyContact = parseSavedDetails(readStorageValue(LEGACY_CONTACT_STORAGE_KEY), false, false);
-  return legacyContact ?? emptyRememberedDetails();
+  return emptyRememberedDetails();
 }
 
 function saveRememberedDetails(details: RememberedDetails): boolean {
   try {
     window.localStorage.setItem(
       CONTACT_STORAGE_KEY,
-      JSON.stringify({
-        firstName: details.firstName,
-        lastName: details.lastName,
-        phone: details.phone,
-        email: details.email,
-        lineId: details.lineId,
-        needTaxInvoice: details.needTaxInvoice,
-        companyName: details.companyName,
-        taxId: details.taxId,
-        addressLine: details.addressLine,
-        subDistrict: details.subDistrict,
-        district: details.district,
-        province: details.province,
-        postalCode: details.postalCode,
-        needDelivery: details.needDelivery,
-        deliveryAddressLine: details.deliveryAddressLine,
-        deliverySubDistrict: details.deliverySubDistrict,
-        deliveryDistrict: details.deliveryDistrict,
-        deliveryProvince: details.deliveryProvince,
-        deliveryPostalCode: details.deliveryPostalCode,
-      }),
+      serializeRememberedDetails(details),
     );
   } catch {
     return false;
   }
 
   let obsoleteKeysRemoved = true;
-  for (const key of [PREVIOUS_CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
+  for (const key of OBSOLETE_CONTACT_STORAGE_KEYS) {
     try {
       window.localStorage.removeItem(key);
     } catch {
@@ -262,7 +106,7 @@ function saveRememberedDetails(details: RememberedDetails): boolean {
 function deleteSavedDetails(): boolean {
   let deleted = true;
 
-  for (const key of [CONTACT_STORAGE_KEY, PREVIOUS_CONTACT_STORAGE_KEY, LEGACY_CONTACT_STORAGE_KEY]) {
+  for (const key of CONTACT_STORAGE_KEYS) {
     try {
       window.localStorage.removeItem(key);
     } catch {
@@ -271,10 +115,6 @@ function deleteSavedDetails(): boolean {
   }
 
   return deleted;
-}
-
-function hasSavedDetails(details: RememberedDetails): boolean {
-  return Object.values(details).some((value) => value === true || (typeof value === "string" && value !== ""));
 }
 
 function hasBoqFileExtension(fileName: string): boolean {
@@ -338,7 +178,8 @@ export function QuoteRequestForm() {
       ...contact,
       ...companyInvoice,
       ...delivery,
-      needDelivery: fulfillmentMethod === "delivery",
+      fulfillmentMethod,
+      contactBranch,
     };
     submittedRememberContactRef.current = rememberContact;
     submitWithoutReset(event);
@@ -371,7 +212,6 @@ export function QuoteRequestForm() {
         postalCode: savedDetails.postalCode,
       });
       setDelivery({
-        needDelivery: savedDetails.needDelivery,
         deliveryAddressLine: savedDetails.deliveryAddressLine,
         deliverySubDistrict: savedDetails.deliverySubDistrict,
         deliveryDistrict: localizedDistrictValue(
@@ -382,7 +222,8 @@ export function QuoteRequestForm() {
         deliveryProvince: savedDetails.deliveryProvince,
         deliveryPostalCode: savedDetails.deliveryPostalCode,
       });
-      setFulfillmentMethod(savedDetails.needDelivery ? "delivery" : "");
+      setFulfillmentMethod(savedDetails.fulfillmentMethod);
+      setContactBranch(savedDetails.contactBranch);
       setHasSavedData(hasSavedDetails(savedDetails));
       setRememberContact(hasSavedDetails(savedDetails));
     });
@@ -435,7 +276,6 @@ export function QuoteRequestForm() {
 
     setFulfillmentMethod(value);
     setFulfillmentMethodError(undefined);
-    setDelivery((current) => ({ ...current, needDelivery: value === "delivery" }));
     if (value === "pickup") setUseSameDeliveryAddress(false);
   };
 

@@ -1,4 +1,4 @@
-import { branchLabelTh } from "@/lib/branches";
+import { branchLabelTh, saleGroupLabelTh, type SaleGroupCode } from "@/lib/branches";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
 
 /**
@@ -81,7 +81,11 @@ export type QuotationNotificationItem = {
 
 export type QuotationNotification = {
   code: string;
+  /** สาขาที่ลูกค้าเลือกไปรับสินค้าเอง มีความหมายเฉพาะเมื่อ needDelivery เป็น false */
   contactBranch: string;
+  /** กลุ่มที่ระบบเลือกให้รับเรื่องใบนี้ พร้อมเหตุผล — มาจาก lib/line/routing.ts */
+  saleGroup: SaleGroupCode;
+  routingReason: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -173,6 +177,16 @@ function formatAddress(parts: (string | null)[]): string | null {
   return filled.length > 0 ? filled.join(" ") : null;
 }
 
+/**
+ * คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา (`contactBranch` ถูกตั้งเป็นค่า default
+ * ตอนบันทึก) จึงต้องพูดถึงวิธีรับสินค้าแทน ไม่ใช่ "สาขาที่ติดต่อ" ซึ่งไม่จริง
+ */
+function fulfillmentLabel(input: QuotationNotification): string {
+  return input.needDelivery
+    ? "จัดส่งไปยังที่อยู่หน้างาน"
+    : `รับสินค้าเองที่${branchLabelTh(input.contactBranch)}`;
+}
+
 function itemComponent(item: QuotationNotificationItem, index: number): FlexBox {
   const details = compact([
     { type: "text", text: item.productNameTh, size: "sm", weight: "bold", color: COLOR_TEXT, wrap: true },
@@ -214,9 +228,17 @@ function header(input: QuotationNotification, continuedLabel: string | null): Fl
       { type: "text", text: input.code, size: "lg", weight: "bold", color: COLOR_ON_PRIMARY, wrap: true },
       {
         type: "text",
-        text: branchLabelTh(input.contactBranch),
+        text: `กลุ่มที่รับเรื่อง: ${saleGroupLabelTh(input.saleGroup)}`,
         size: "sm",
         color: COLOR_ON_PRIMARY_SOFT,
+        wrap: true,
+      },
+      // บอกเหตุผลไว้ในการ์ดเลย เพื่อให้ทีมขายรู้ทันทีว่าทำไมใบนี้ถึงมาเข้ากลุ่มตัวเอง
+      {
+        type: "text",
+        text: input.routingReason,
+        size: "xs",
+        color: COLOR_ON_PRIMARY_MUTED,
         wrap: true,
       },
     ]),
@@ -227,6 +249,7 @@ function header(input: QuotationNotification, continuedLabel: string | null): Fl
 function summaryComponents(input: QuotationNotification): FlexComponent[] {
   const contact = compact([
     detailRow("ส่งเมื่อ", dateFormatter.format(input.createdAt)),
+    detailRow("วิธีรับสินค้า", fulfillmentLabel(input)),
     detailRow("ชื่อ-นามสกุล", `${input.firstName} ${input.lastName}`.trim()),
     detailRow("โทรศัพท์", input.phone),
     detailRow("อีเมล", input.email),
@@ -275,7 +298,7 @@ function summaryComponents(input: QuotationNotification): FlexComponent[] {
             } satisfies FlexText)
           : null,
       ])
-    : [detailRow("จัดส่ง", "ไม่ต้องการ")].filter((row): row is FlexBox => row !== null);
+    : [detailRow("จัดส่ง", fulfillmentLabel(input))].filter((row): row is FlexBox => row !== null);
 
   return [
     sectionTitle("ข้อมูลผู้ติดต่อ"),
@@ -375,7 +398,7 @@ export function buildQuotationAltText(input: QuotationNotification): string {
   const parts = [
     "คำขอใบเสนอราคาใหม่",
     input.code,
-    branchLabelTh(input.contactBranch),
+    saleGroupLabelTh(input.saleGroup),
     `${input.firstName} ${input.lastName}`.trim(),
     `${input.items.length} รายการ`,
   ];
