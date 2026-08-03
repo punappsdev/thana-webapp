@@ -21,14 +21,25 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
   return items.map((item) => ({ ...item, category: item.category?.nameTh ?? null }));
 }
 
-/** Published products not yet featured — the pool the picker adds from. */
-export async function getFeaturableProducts(input: { query?: string; page?: number }) {
+/**
+ * Which products a picker may choose from.
+ * - `featurable`: published products not yet featured — the homepage picker.
+ * - `all`: the whole catalog, drafts included. Promotions bind to products
+ *   ahead of launch, so a draft has to be selectable; the picker labels it.
+ */
+export type ProductPickerPool = "featurable" | "all";
+
+export function isProductPickerPool(value: string | null): value is ProductPickerPool {
+  return value === "featurable" || value === "all";
+}
+
+/** Search pool backing the admin product pickers. */
+export async function getPickerProducts(input: { query?: string; page?: number; pool?: ProductPickerPool }) {
   const page = Math.max(1, input.page || 1);
   const take = 24;
   const query = input.query?.trim();
   const where = {
-    published: true,
-    featured: false,
+    ...(input.pool === "all" ? {} : { published: true, featured: false }),
     ...(query ? { OR: [{ nameTh: { contains: query } }, { nameEn: { contains: query } }, { sku: { contains: query } }] } : {}),
   };
   const [items, total] = await Promise.all([
@@ -37,12 +48,12 @@ export async function getFeaturableProducts(input: { query?: string; page?: numb
       skip: (page - 1) * take,
       take,
       orderBy: { updatedAt: "desc" },
-      select: { id: true, nameTh: true, nameEn: true, sku: true, coverImage: true, category: { select: { nameTh: true } } },
+      select: { id: true, nameTh: true, nameEn: true, sku: true, coverImage: true, published: true, category: { select: { nameTh: true } } },
     }),
     getPrisma().product.count({ where }),
   ]);
   return {
-    items: items.map((item) => ({ id: item.id, nameTh: item.nameTh, nameEn: item.nameEn, sku: item.sku, coverImage: item.coverImage, category: item.category?.nameTh ?? null })),
+    items: items.map((item) => ({ id: item.id, nameTh: item.nameTh, nameEn: item.nameEn, sku: item.sku, coverImage: item.coverImage, published: item.published, category: item.category?.nameTh ?? null })),
     total,
     page,
     totalPages: Math.max(1, Math.ceil(total / take)),

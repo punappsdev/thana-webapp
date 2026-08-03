@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { CartEmptyState } from "@/components/cart/cart-empty-state";
 import { useCart } from "@/components/cart/use-cart";
+import { type BranchCode } from "@/lib/branches";
 import { lineKey } from "@/lib/cart";
 import { pick } from "@/lib/products";
 import { PHUKET_CODE, PROVINCES } from "@/lib/provinces";
@@ -977,7 +978,8 @@ function Field({
   );
 }
 
-function BranchOption({ value, label }: { value: string; label: string }) {
+/** `value` เป็น BranchCode เพื่อให้พิมพ์ผิดแล้วคำขอถูกส่งไปผิดสาขาไม่ผ่าน type check */
+function BranchOption({ value, label }: { value: BranchCode; label: string }) {
   const id = `contactBranch-${value}`;
 
   return (

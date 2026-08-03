@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
+import { BRANCH_CODES } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
+import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { isProvinceCode } from "@/lib/provinces";
 
 /**
@@ -76,7 +78,7 @@ export async function submitQuoteRequest(
           const digits = digitsOnly(value);
           return digits.length >= 9 && digits.length <= 10;
         }, t("errorPhone")),
-      contactBranch: z.enum(["headquarters", "thalang"], {
+      contactBranch: z.enum(BRANCH_CODES, {
         message: t("errorContactBranch"),
       }),
       email: optionalText.refine(
@@ -277,9 +279,18 @@ export async function submitQuoteRequest(
       return tx.quotationRequest.update({
         where: { id: request.id },
         data: { code: buildCode(request.id, request.createdAt) },
-        select: { code: true },
+        select: { id: true, code: true },
       });
     });
+
+    // แจ้งกลุ่ม LINE ของสาขาเป็น side effect: ถ้า LINE ล่มหรือ token หมดอายุ ลูกค้า
+    // ต้องยังเห็นว่าส่งคำขอสำเร็จพร้อมรหัสอ้างอิง ผลการส่งถูกบันทึกไว้ในแถวนั้นเอง
+    // และทีมงานกดส่งซ้ำได้จากหลังบ้าน (แนวเดียวกับ deleteMediaIfOrphaned ที่กลืน error)
+    try {
+      await notifyQuotationToLine(created.id);
+    } catch (error) {
+      console.error("[line] แจ้งเตือนคำขอใบเสนอราคาไม่สำเร็จ:", error);
+    }
 
     revalidatePath("/admin/quotations");
     return { success: true, message: t("successTitle"), code: created.code };

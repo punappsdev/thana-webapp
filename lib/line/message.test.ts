@@ -1,0 +1,188 @@
+import { describe, expect, it } from "vitest";
+import {
+  LINE_MESSAGE_LIMITS,
+  buildQuotationAltText,
+  buildQuotationMessages,
+  type QuotationNotification,
+  type QuotationNotificationItem,
+} from "@/lib/line/message";
+
+function item(overrides: Partial<QuotationNotificationItem> = {}): QuotationNotificationItem {
+  return {
+    productNameTh: "กระจกเทมเปอร์",
+    optionsTh: "ความหนา: 6 มม. · สี: ใส",
+    sku: "TG-6-CL",
+    qty: 2,
+    ...overrides,
+  };
+}
+
+/** คำขอขั้นต่ำสุดที่ฟอร์มยอมรับ: ไม่มีอีเมล ไม่ออกใบกำกับ ไม่ต้องการจัดส่ง */
+function minimalRequest(overrides: Partial<QuotationNotification> = {}): QuotationNotification {
+  return {
+    code: "QT-20260803-0042",
+    contactBranch: "thalang",
+    firstName: "สมชาย",
+    lastName: "ใจดี",
+    phone: "0812345678",
+    email: null,
+    lineId: "@somchai",
+    locale: "th",
+    createdAt: new Date("2026-08-03T09:30:00.000Z"),
+    needTaxInvoice: false,
+    companyName: null,
+    taxId: null,
+    addressLine: null,
+    subDistrict: null,
+    district: null,
+    province: null,
+    postalCode: null,
+    needDelivery: false,
+    deliveryAddressLine: null,
+    deliverySubDistrict: null,
+    deliveryDistrict: null,
+    deliveryProvince: null,
+    deliveryPostalCode: null,
+    items: [item()],
+    ...overrides,
+  };
+}
+
+/** คำขอที่กรอกครบทุกช่อง — ใบกำกับภาษีในนามบริษัท และจัดส่งนอกภูเก็ต */
+function fullRequest(overrides: Partial<QuotationNotification> = {}): QuotationNotification {
+  return minimalRequest({
+    email: "somchai@example.com",
+    needTaxInvoice: true,
+    companyName: "บริษัท ตัวอย่าง จำกัด",
+    taxId: "0105551234567",
+    addressLine: "99/1 หมู่ 4",
+    subDistrict: "ฉลอง",
+    district: "เมือง",
+    province: "phuket",
+    postalCode: "83130",
+    needDelivery: true,
+    deliveryAddressLine: "12 ถนนเพชรเกษม",
+    deliverySubDistrict: "โคกกลอย",
+    deliveryDistrict: "ตะกั่วทุ่ง",
+    deliveryProvince: "phang-nga",
+    deliveryPostalCode: "82140",
+    ...overrides,
+  });
+}
+
+/** ข้อความทุกก้อนที่ปรากฏในการ์ด ใช้ยืนยันว่าข้อมูลถูกส่งไปครบ */
+function allText(messages: ReturnType<typeof buildQuotationMessages>): string {
+  return JSON.stringify(messages);
+}
+
+describe("buildQuotationMessages", () => {
+  it("ใส่ข้อมูลของคำขอที่กรอกครบไว้ในการ์ดทุกฟิลด์", () => {
+    const text = allText(buildQuotationMessages(fullRequest()));
+
+    for (const expected of [
+      "QT-20260803-0042",
+      "สาขาถลาง",
+      "สมชาย ใจดี",
+      "0812345678",
+      "somchai@example.com",
+      "@somchai",
+      "บริษัท ตัวอย่าง จำกัด",
+      "0105551234567",
+      "99/1 หมู่ 4",
+      "ฉลอง",
+      "เมือง",
+      "ภูเก็ต",
+      "83130",
+      "12 ถนนเพชรเกษม",
+      "โคกกลอย",
+      "ตะกั่วทุ่ง",
+      "พังงา",
+      "82140",
+      "กระจกเทมเปอร์",
+      "ความหนา: 6 มม. · สี: ใส",
+      "TG-6-CL",
+    ]) {
+      expect(text).toContain(expected);
+    }
+  });
+
+  it("เตือนค่าจัดส่งเมื่อจังหวัดปลายทางไม่ใช่ภูเก็ต", () => {
+    expect(allText(buildQuotationMessages(fullRequest()))).toContain("จัดส่งนอกจังหวัดภูเก็ต");
+    expect(
+      allText(buildQuotationMessages(fullRequest({ deliveryProvince: "phuket" }))),
+    ).not.toContain("จัดส่งนอกจังหวัดภูเก็ต");
+  });
+
+  it("ตัดแถวที่ลูกค้าไม่ได้กรอกทิ้ง ไม่ปล่อยให้มีค่าว่างหรือ null โผล่ในการ์ด", () => {
+    const text = allText(buildQuotationMessages(minimalRequest({ lineId: null })));
+
+    expect(text).not.toContain("null");
+    expect(text).not.toContain("อีเมล");
+    expect(text).not.toContain("LINE ID");
+    // ระบุให้ชัดว่าไม่ต้องการ ดีกว่าเงียบไปเฉย ๆ แล้วทีมงานเดาเอง
+    expect(text).toContain("ใบกำกับภาษี");
+    expect(text).toContain("ไม่ต้องการ");
+  });
+
+  it("แสดงยอดรวมจำนวนรายการและจำนวนชิ้น", () => {
+    const messages = buildQuotationMessages(
+      minimalRequest({ items: [item({ qty: 2 }), item({ qty: 5 }), item({ qty: 1 })] }),
+    );
+    expect(allText(messages)).toContain("รายการสินค้า (3 รายการ · รวม 8 ชิ้น)");
+  });
+
+  it("ส่งรายการครบทุกบรรทัดแม้จะเต็มเพดาน 100 รายการ โดยแบ่งการ์ดแทนการตัดทิ้ง", () => {
+    const items = Array.from({ length: 100 }, (_, index) =>
+      item({
+        // ชื่อและตัวเลือกยาวสุด ๆ ตามที่ schema ยอมให้เก็บ เพื่อบีบให้ต้องแบ่งหลายใบ
+        productNameTh: `${index + 1} ${"กระจกนิรภัยเทมเปอร์ลามิเนตสองชั้น".repeat(6)}`,
+        optionsTh: "ความหนา: 12 มม. · สี: ชาเข้ม · การเจียร: ขอบมน · ลบมุม: 4 มุม",
+        sku: `TG-LONG-SKU-${index + 1}`,
+        qty: index + 1,
+      }),
+    );
+    const messages = buildQuotationMessages(minimalRequest({ items }));
+    const text = allText(messages);
+
+    // ทุกรายการต้องถึงกลุ่ม ไม่มีคำว่า "และอีก N รายการ"
+    for (const line of items) expect(text).toContain(line.sku!);
+    expect(text).not.toContain("และอีก");
+
+    for (const message of messages) {
+      expect(JSON.stringify(message).length).toBeLessThanOrEqual(
+        LINE_MESSAGE_LIMITS.MESSAGE_JSON_LIMIT,
+      );
+      if (message.contents.type === "carousel") {
+        expect(message.contents.contents.length).toBeLessThanOrEqual(
+          LINE_MESSAGE_LIMITS.MAX_BUBBLES_PER_CAROUSEL,
+        );
+      }
+    }
+  });
+
+  it("ใช้การ์ดใบเดียวเมื่อรายการไม่เยอะ", () => {
+    const messages = buildQuotationMessages(minimalRequest());
+    expect(messages).toHaveLength(1);
+    expect(messages[0].contents.type).toBe("bubble");
+  });
+
+  it("ยังส่งได้แม้ contactBranch ในฐานข้อมูลเป็นค่าที่ไม่รู้จัก", () => {
+    const text = allText(buildQuotationMessages(minimalRequest({ contactBranch: "ปิดไปแล้ว" })));
+    expect(text).toContain("สาขาสำนักงานใหญ่");
+  });
+});
+
+describe("buildQuotationAltText", () => {
+  it("สรุปคำขอไว้ในบรรทัดเดียวสำหรับ preview ในลิสต์แชท", () => {
+    expect(buildQuotationAltText(fullRequest())).toBe(
+      "คำขอใบเสนอราคาใหม่ · QT-20260803-0042 · สาขาถลาง · สมชาย ใจดี · 1 รายการ",
+    );
+  });
+
+  it("ไม่ยาวเกินเพดาน 400 ตัวอักษรของ LINE", () => {
+    const altText = buildQuotationAltText(
+      fullRequest({ firstName: "ก".repeat(400), lastName: "ข".repeat(400) }),
+    );
+    expect(altText.length).toBeLessThanOrEqual(LINE_MESSAGE_LIMITS.ALT_TEXT_LIMIT);
+  });
+});

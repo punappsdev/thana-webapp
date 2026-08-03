@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, Mail, MessageCircle, ReceiptText, Search } from "lucide-react";
+import { Eye, Mail, MessageCircle, ReceiptText, Search, TriangleAlert } from "lucide-react";
 import { AdminSelect } from "@/components/admin/admin-select";
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +92,17 @@ export default async function AdminQuotationsPage({
                 {result.items.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell className="font-label-md font-semibold whitespace-nowrap">
-                      {request.code}
+                      <span className="flex items-center gap-1.5">
+                        {request.code}
+                        {/* เตือนเฉพาะใบที่เคยพยายามส่งแล้วพลาด ใบที่ยังไม่เคยส่งเลย
+                            (เช่นคำขอเก่าก่อนมีระบบนี้) ไม่ควรขึ้นเตือนทั้งตาราง */}
+                        {request.lineNotifiedAt === null && request.lineNotifyCount > 0 ? (
+                          <TriangleAlert
+                            className="size-4 text-destructive"
+                            aria-label="แจ้งเตือนเข้ากลุ่มไลน์ไม่สำเร็จ"
+                          />
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <p className="font-label-md font-semibold">

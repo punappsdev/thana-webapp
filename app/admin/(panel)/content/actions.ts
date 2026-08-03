@@ -16,6 +16,35 @@ const gallerySchema = z
   .array(z.object({ url: z.string().trim().min(1, "ข้อมูลรูปภาพไม่ถูกต้อง"), altTh: z.string().optional().default(""), altEn: z.string().optional().default("") }))
   .max(WORK_GALLERY_MAX, `ใส่รูปในแกลเลอรีได้สูงสุด ${WORK_GALLERY_MAX} รูป`);
 
+/**
+ * Caps on the catalog bindings. The lists are rewritten wholesale on every save,
+ * so an unbounded payload would turn one edit into thousands of inserts.
+ */
+const TARGET_PRODUCTS_MAX = 200;
+const TARGET_CATEGORIES_MAX = 100;
+
+/** `[1,2,3]` from a hidden input → a clean id list, or an issue if it is junk. */
+function idListSchema(max: number, label: string) {
+  return z
+    .string()
+    .transform((value, ctx) => {
+      try {
+        return JSON.parse(value || "[]") as unknown;
+      } catch {
+        ctx.addIssue({ code: "custom", message: `ข้อมูล${label}ไม่ถูกต้อง` });
+        return z.NEVER;
+      }
+    })
+    .pipe(
+      z
+        .array(z.coerce.number().int().positive())
+        .max(max, `เลือก${label}ได้สูงสุด ${max} รายการ`)
+        // The picker already prevents duplicates; dedupe anyway so a replayed
+        // payload cannot trip the join table's unique constraint.
+        .transform((ids) => Array.from(new Set(ids))),
+    );
+}
+
 const formSchema = z.object({
   resource: z.string(),
   id: z.coerce.number().int().positive().optional().or(z.literal("")),
@@ -34,6 +63,11 @@ const formSchema = z.object({
   categoryId: z.preprocess((value) => value === "none" || value === "" ? undefined : value, z.coerce.number().int().positive().optional()),
   startDate: z.string().optional().default(""),
   endDate: z.string().optional().default(""),
+  // Catalog bindings — parsed separately, and only for `hasProductTargeting`.
+  showOnAllProducts: z.string().optional().default(""),
+  targetProductIdsJson: z.string().optional().default("[]"),
+  targetCategoryIdsJson: z.string().optional().default("[]"),
+  targetSubCategoryIdsJson: z.string().optional().default("[]"),
   intent: z.enum(["draft", "publish"]),
 });
 
@@ -46,6 +80,13 @@ function refreshResource(resource: keyof typeof contentConfigs, slug?: string) {
     const detailBase = resource === "promotions" ? "/promotions" : config.publicPath;
     revalidatePath(`${detailBase}/${slug}`);
     revalidatePath(`/en${detailBase}/${slug}`);
+  }
+  // Promotions surface on product detail pages too, and which ones is decided by
+  // bindings that may have just changed — the affected slugs are not knowable
+  // here, so refresh the catalog wholesale.
+  if (config.hasProductTargeting) {
+    revalidatePath("/products");
+    revalidatePath("/en/products");
   }
 }
 
@@ -78,6 +119,36 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
   }
 
   const prisma = getPrisma();
+
+  // Same guard as the gallery above: only targeting-capable resources read these
+  // fields, so a stray payload cannot write bindings for news or articles.
+  let targeting = { showOnAllProducts: false, productIds: [] as number[], categoryIds: [] as number[], subCategoryIds: [] as number[] };
+  if (config.hasProductTargeting) {
+    const lists = z
+      .object({
+        targetProductIdsJson: idListSchema(TARGET_PRODUCTS_MAX, "สินค้า"),
+        targetCategoryIdsJson: idListSchema(TARGET_CATEGORIES_MAX, "หมวดหมู่หลัก"),
+        targetSubCategoryIdsJson: idListSchema(TARGET_CATEGORIES_MAX, "หมวดหมู่ย่อย"),
+      })
+      .safeParse(parsed.data);
+    if (!lists.success) return { success: false, message: lists.error.issues[0]?.message || "ข้อมูลการผูกสินค้าไม่ถูกต้อง" };
+
+    // Drop ids that no longer exist — a category deleted in another tab would
+    // otherwise fail the whole save on a foreign-key error. Done before the
+    // transaction because every statement inside one costs ~45ms here.
+    const [validProducts, validCategories, validSubCategories] = await Promise.all([
+      prisma.product.findMany({ where: { id: { in: lists.data.targetProductIdsJson } }, select: { id: true } }),
+      prisma.category.findMany({ where: { id: { in: lists.data.targetCategoryIdsJson } }, select: { id: true } }),
+      prisma.subCategory.findMany({ where: { id: { in: lists.data.targetSubCategoryIdsJson } }, select: { id: true } }),
+    ]);
+    targeting = {
+      showOnAllProducts: parsed.data.showOnAllProducts === "1",
+      productIds: validProducts.map((row) => row.id),
+      categoryIds: validCategories.map((row) => row.id),
+      subCategoryIds: validSubCategories.map((row) => row.id),
+    };
+  }
+
   const id = typeof parsed.data.id === "number" ? parsed.data.id : undefined;
   // Snapshot current media (cover + images embedded in the body) before the write
   // so anything dropped on this edit can be cleaned up if nothing else uses it.
@@ -137,8 +208,23 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
               return id ? tx.news.update({ where: { id }, data }) : tx.news.create({ data });
             }
             case "promotions": {
-              const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null, endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null };
-              return id ? tx.promotion.update({ where: { id }, data }) : tx.promotion.create({ data });
+              const data = { ...common, contentTh: sanitizeRichHtml(parsed.data.bodyTh), contentEn: sanitizeRichHtml(parsed.data.bodyEn), excerptTh: parsed.data.excerptTh || null, excerptEn: parsed.data.excerptEn || null, startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null, endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null, showOnAllProducts: targeting.showOnAllProducts };
+              const row = id ? await tx.promotion.update({ where: { id }, data }) : await tx.promotion.create({ data });
+              // Replace the bindings wholesale — the form always submits the full
+              // lists, so diffing would cost more statements than it saves.
+              await tx.promotionProduct.deleteMany({ where: { promotionId: row.id } });
+              await tx.promotionCategory.deleteMany({ where: { promotionId: row.id } });
+              await tx.promotionSubCategory.deleteMany({ where: { promotionId: row.id } });
+              if (targeting.productIds.length) {
+                await tx.promotionProduct.createMany({ data: targeting.productIds.map((productId) => ({ promotionId: row.id, productId })) });
+              }
+              if (targeting.categoryIds.length) {
+                await tx.promotionCategory.createMany({ data: targeting.categoryIds.map((categoryId) => ({ promotionId: row.id, categoryId })) });
+              }
+              if (targeting.subCategoryIds.length) {
+                await tx.promotionSubCategory.createMany({ data: targeting.subCategoryIds.map((subCategoryId) => ({ promotionId: row.id, subCategoryId })) });
+              }
+              return row;
             }
           }
         });

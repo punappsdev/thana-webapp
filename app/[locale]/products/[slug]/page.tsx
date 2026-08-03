@@ -8,6 +8,8 @@ import { Link } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Lightbulb } from "lucide-react";
 import { ProductGallery } from "@/components/products/product-gallery";
+import { ProductPromotions } from "@/components/products/product-promotions";
+import { getPromotionsForProduct } from "@/lib/promotions";
 import {
   VariantSelector,
   type AttributeGroup,
@@ -83,6 +85,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   });
 
   if (!product || !product.published) notFound();
+
+  const promotions = await getPromotionsForProduct(product);
 
   const name = pick(product, "name", locale);
   const description = pick(product, "description", locale);
@@ -308,6 +312,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
               )}
             </div>
           </div>
+
+          {/* Promotions bound to this product from the admin panel */}
+          <ProductPromotions promotions={promotions} locale={locale} />
 
           {/* Details below the fold */}
           <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -96,6 +96,7 @@
     "selectAllPrompt": "กรุณาเลือกคุณสมบัติให้ครบก่อนเพิ่มลงในรายการ",
     "unavailableCombination": "ไม่มีสินค้าตามคุณสมบัติที่เลือก",
     "downloadCatalog": "ดาวน์โหลดแคตตาล็อก (PDF)",
+    "promotionsHeading": "โปรโมชั่นสำหรับสินค้านี้",
     "backToProducts": "กลับไปหน้าสินค้า",
     "requestQuote": "ขอใบเสนอราคา",
     "notFound": "ไม่พบสินค้าที่ต้องการ",

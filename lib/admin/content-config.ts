@@ -15,13 +15,18 @@ export type ContentConfig = {
   hasPromotionDates?: boolean;
   /** Shows the multi-image gallery editor in the shared content form. */
   hasGallery?: boolean;
+  /**
+   * Shows the "bind to catalog" editor — which products, categories or
+   * sub-categories should surface this item on their detail page.
+   */
+  hasProductTargeting?: boolean;
 };
 
 export const contentConfigs: Record<ContentResource, ContentConfig> = {
   works: { resource: "works", singular: "ผลงาน", plural: "ผลงาน", publicPath: "/portfolio", bodyKind: "plain", hasExcerpt: false, categoryKind: "catalog", hasGallery: true },
   articles: { resource: "articles", singular: "บทความ", plural: "บทความ", publicPath: "/articles", bodyKind: "rich", hasExcerpt: true, categoryKind: "article" },
   news: { resource: "news", singular: "ข่าว", plural: "ข่าว", publicPath: "/news", bodyKind: "rich", hasExcerpt: true },
-  promotions: { resource: "promotions", singular: "โปรโมชั่น", plural: "โปรโมชั่น", publicPath: "/news", bodyKind: "rich", hasExcerpt: true, hasPromotionDates: true },
+  promotions: { resource: "promotions", singular: "โปรโมชั่น", plural: "โปรโมชั่น", publicPath: "/news", bodyKind: "rich", hasExcerpt: true, hasPromotionDates: true, hasProductTargeting: true },
 };
 
 export function isContentResource(value: string): value is ContentResource {

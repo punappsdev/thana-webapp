@@ -11,6 +11,10 @@ ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=replace-with-a-strong-one-time-password
 ADMIN_NAME=ผู้ดูแลระบบ
 NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=base64-encoded-32-byte-key
+LINE_CHANNEL_ACCESS_TOKEN=long-lived-messaging-api-token
+LINE_CHANNEL_SECRET=messaging-api-channel-secret
+LINE_GROUP_ID_HEADQUARTERS=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+LINE_GROUP_ID_THALANG=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 `ADMIN_PASSWORD` must contain at least 12 characters, lowercase and uppercase letters, a number, and a symbol. Remove `ADMIN_PASSWORD` from the VPS environment after the bootstrap command succeeds.
@@ -47,6 +51,31 @@ NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=base64-encoded-32-byte-key
 - Forward the real client address in `X-Forwarded-For` or `X-Real-IP` so login throttling works per IP.
 - Keep `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` stable across deploys and instances.
 - Back up MySQL and `UPLOAD_DIR` together so media records and files remain consistent.
+
+## LINE quotation notifications
+
+Every quotation request is pushed to the sales LINE group of the branch the customer picked (`contactBranch`). The four `LINE_*` variables are optional: when they are missing the site still accepts quotations and only logs a warning.
+
+**[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) is the full Thai walkthrough** — creating the bot, every console toggle, obtaining group ids, and the failure table. The summary below is only a checklist for someone who has done it before.
+
+1. Create a **Messaging API** channel in the LINE Developers Console, then in the LINE Official Account Manager disable auto-reply and greeting messages and enable **Allow bot to join group chats** — without it the bot cannot be invited to a group.
+2. Issue a long-lived channel access token and copy the channel secret into `LINE_CHANNEL_ACCESS_TOKEN` / `LINE_CHANNEL_SECRET`.
+3. Set the channel's Webhook URL to `https://<domain>/api/line/webhook`, enable **Use webhook**, and press **Verify** — it must report success.
+4. Invite the bot into each branch's sales group. The application log then prints one line per event, e.g. `[line webhook] event=join source=group groupId=Cxxxx ...`. LINE never shows group ids in the app, so this log is the only way to obtain them.
+5. Put each group id into `LINE_GROUP_ID_HEADQUARTERS` / `LINE_GROUP_ID_THALANG` and restart the application. Branches whose group id is missing are skipped individually; the others still receive notifications.
+
+Delivery status is stored on the request itself and shown under **แจ้งเตือนกลุ่มไลน์สาขา** on `/admin/quotations/<id>`, together with a resend button for requests that failed. The quotations list marks failed rows with a warning icon.
+
+## Promotions on product pages
+
+A promotion edited under **โปรโมชั่น** (`/admin/content/promotions`) can be bound to the catalog, in which case it also appears as a card band on the detail page of every product it matches.
+
+- The **ผูกกับสินค้า** card offers four independent rules: a **แสดงกับสินค้าทุกตัว** switch, plus lists of main categories, sub-categories, and individual products. A product shows the promotion if it matches **any one** of them, so a whole category and a stray product outside it can be covered by the same promotion.
+- Turning the switch on only dims the three lists — they are still saved, so switching back restores the previous selection.
+- Bindings are optional. A promotion with none behaves exactly as before: visible under `/news` and at `/promotions/<slug>`, absent from product pages. Promotions created before this feature start unbound.
+- The product page enforces `startDate` / `endDate`: a promotion that has ended or has not started yet is hidden there, while the `/news` listing still shows it as an archive.
+- Products can be bound while still drafts; the promotion appears once the product is published.
+- Deleting a product, category, or sub-category clears its bindings automatically.
 
 ## Operations
 

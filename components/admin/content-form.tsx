@@ -10,6 +10,7 @@ import { saveContentAction } from "@/app/admin/(panel)/content/actions";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
 import { GalleryField, type GalleryRow } from "@/components/admin/gallery-field";
 import { MediaField } from "@/components/admin/media-field";
+import { PromotionTargetingField } from "@/components/admin/promotion-targeting-field";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
@@ -21,14 +22,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { WORK_GALLERY_MAX, type ContentConfig } from "@/lib/admin/content-config";
-import type { ContentRecord } from "@/lib/admin/content-data";
+import type { ContentRecord, TargetCategoryOption } from "@/lib/admin/content-data";
 import { cn } from "@/lib/utils";
 import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
 const initialState: ActionResult = { success: false, message: "" };
 const formatDateTime = (date: Date | null) => date ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 
-export function ContentForm({ config, record, categories }: { config: ContentConfig; record: ContentRecord | null; categories: { id: number; nameTh: string; nameEn: string }[] }) {
+export function ContentForm({ config, record, categories, targetCategories = [] }: { config: ContentConfig; record: ContentRecord | null; categories: { id: number; nameTh: string; nameEn: string }[]; targetCategories?: TargetCategoryOption[] }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveContentAction, initialState);
   const handleSubmit = useNoResetSubmit(action);
@@ -126,6 +127,29 @@ export function ContentForm({ config, record, categories }: { config: ContentCon
               </Tabs>
             </CardContent>
           </Card>
+
+          {config.hasProductTargeting ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline-sm">ผูกกับสินค้า</CardTitle>
+                <CardDescription className="font-body-sm">
+                  เลือกว่าโปรโมชั่นนี้จะไปแสดงในหน้ารายละเอียดสินค้าชิ้นไหนบ้าง — สินค้าจะเห็นโปรโมชั่นเมื่อเข้าเงื่อนไขข้อใดข้อหนึ่งด้านล่าง
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PromotionTargetingField
+                  categories={targetCategories}
+                  initial={{
+                    showOnAllProducts: record?.showOnAllProducts ?? false,
+                    targetProducts: record?.targetProducts ?? [],
+                    targetCategoryIds: record?.targetCategoryIds ?? [],
+                    targetSubCategoryIds: record?.targetSubCategoryIds ?? [],
+                  }}
+                  onDirty={markDirty}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
           {config.hasGallery ? (
             <Card>

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, MessageCircle, Phone, ShieldCheck, Truck } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircle, Phone, ShieldCheck, TriangleAlert, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
+import { ResendLineNotificationButton } from "@/components/admin/resend-line-notification-button";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
+import { branchLabelTh } from "@/lib/branches";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
 
 export default async function QuotationDetailPage({
@@ -147,10 +149,7 @@ export default async function QuotationDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailRow label="ชื่อ-นามสกุล" value={`${request.firstName} ${request.lastName}`} />
-              <DetailRow
-                label="สาขาที่ติดต่อ"
-                value={request.contactBranch === "thalang" ? "สาขาถลาง" : "สาขาสำนักงานใหญ่"}
-              />
+              <DetailRow label="สาขาที่ติดต่อ" value={branchLabelTh(request.contactBranch)} />
               <div className="space-y-1">
                 <p className="font-label-sm text-muted-foreground">ช่องทางติดต่อ</p>
                 <p className="flex items-center gap-2 font-body-sm">
@@ -175,6 +174,41 @@ export default async function QuotationDetailPage({
                 ) : null}
               </div>
               <DetailRow label="ภาษาที่ลูกค้าใช้" value={request.locale === "en" ? "English" : "ไทย"} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline-sm">แจ้งเตือนกลุ่มไลน์สาขา</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {request.lineNotifiedAt ? (
+                <>
+                  <Badge>ส่งเข้ากลุ่มแล้ว</Badge>
+                  <p className="font-body-sm text-muted-foreground">
+                    ส่งสำเร็จเมื่อ {request.lineNotifiedAt.toLocaleString("th-TH")}
+                  </p>
+                </>
+              ) : request.lineNotifyCount > 0 ? (
+                <>
+                  <Badge variant="destructive">ส่งไม่สำเร็จ</Badge>
+                  <p className="flex items-start gap-2.5 rounded-md border border-destructive/20 bg-destructive/5 p-3 font-body-sm break-words">
+                    <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+                    {request.lineNotifyError || "ไม่ทราบสาเหตุ"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Badge variant="secondary">ยังไม่ได้ส่ง</Badge>
+                  <p className="font-body-sm text-muted-foreground">
+                    คำขอนี้ยังไม่เคยถูกแจ้งเข้ากลุ่มไลน์ของ{branchLabelTh(request.contactBranch)}
+                  </p>
+                </>
+              )}
+              <ResendLineNotificationButton
+                id={request.id}
+                sent={request.lineNotifiedAt !== null}
+              />
             </CardContent>
           </Card>
 

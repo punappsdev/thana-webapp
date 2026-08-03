@@ -211,7 +211,53 @@ model Promotion {
   updatedAt  DateTime  @updatedAt
   banners    Banner[]
 
+  /// true = โปรโมชั่นนี้แสดงบนหน้ารายละเอียดสินค้าทุกตัว โดยไม่ต้องผูกรายการด้านล่าง
+  /// ค่าเริ่มต้นเป็น false เพื่อให้โปรโมชั่นที่มีอยู่เดิมไม่โผล่ขึ้นมาเองหลัง migrate
+  showOnAllProducts   Boolean                @default(false)
+  targetProducts      PromotionProduct[]
+  targetCategories    PromotionCategory[]
+  targetSubCategories PromotionSubCategory[]
+
   @@index([slug])
+}
+
+// ---------------------------------------------------------------------------
+// การผูกโปรโมชั่นเข้ากับแคตตาล็อก — สินค้าจะเห็นโปรโมชั่นเมื่อเข้าเงื่อนไข "ข้อใด
+// ข้อหนึ่ง" (OR) ระหว่าง showOnAllProducts, หมวดหมู่หลัก, หมวดหมู่ย่อย และสินค้า
+// เจาะจง แอดมินจึงผสมได้อิสระ เช่น ผูกทั้งหมวดหนึ่งแล้วเพิ่มสินค้านอกหมวดอีกตัว
+// ---------------------------------------------------------------------------
+
+model PromotionProduct {
+  id          Int       @id @default(autoincrement())
+  promotionId Int
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  productId   Int
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, productId])
+  @@index([productId])
+}
+
+model PromotionCategory {
+  id          Int       @id @default(autoincrement())
+  promotionId Int
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, categoryId])
+  @@index([categoryId])
+}
+
+model PromotionSubCategory {
+  id            Int         @id @default(autoincrement())
+  promotionId   Int
+  promotion     Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  subCategoryId Int
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, subCategoryId])
+  @@index([subCategoryId])
 }
 
 // ---------------------------------------------------------------------------
@@ -318,9 +364,10 @@ model Category {
   sortOrder     Int     @default(0)
   published     Boolean @default(true)
 
-  subCategories SubCategory[]
-  products      Product[]
-  works         Work[]
+  subCategories  SubCategory[]
+  products       Product[]
+  works          Work[]
+  promotionLinks PromotionCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -338,9 +385,10 @@ model SubCategory {
   published  Boolean @default(true)
 
   // Relations
-  categoryId Int
-  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  products   Product[]
+  categoryId     Int
+  category       Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products       Product[]
+  promotionLinks PromotionSubCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -431,6 +479,7 @@ model Product {
   attributes     ProductAttribute[]
   attributeLinks ProductAttributeValue[]
   quotationItems QuotationItem[]
+  promotionLinks PromotionProduct[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -627,6 +676,14 @@ model QuotationRequest {
 
   /// บันทึกภายในของทีมงาน ลูกค้าไม่เห็น
   adminNote String? @db.Text
+
+  /// ผลการแจ้งเตือนเข้ากลุ่ม LINE ของสาขาที่ลูกค้าเลือก
+  /// การส่งเป็น side effect ที่ล้มเหลวได้โดยไม่ทำให้คำขอของลูกค้าเสีย จึงต้องเก็บ
+  /// สถานะไว้ที่นี่เพื่อให้ทีมงานเห็นว่าใบไหนยังไม่ถึงกลุ่มและกดส่งซ้ำได้
+  lineNotifiedAt  DateTime?
+  lineNotifyError String?   @db.VarChar(500)
+  /// จำนวนครั้งที่พยายามส่ง ใช้แยก "ยังไม่เคยส่ง" ออกจาก "ส่งแล้วแต่พลาด"
+  lineNotifyCount Int       @default(0)
 
   items QuotationItem[]
 
