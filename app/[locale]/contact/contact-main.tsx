@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Phone, Mail, MapPin, Map } from "lucide-react";
 import Image from "next/image";
+import { QUOTE_BRANCH_MAP_URLS } from "@/lib/branches";
 
 interface Branch {
   name: string;
@@ -36,9 +37,9 @@ export function ContactMain() {
   ];
 
   const branchMapLinks = [
-    "https://www.google.com/maps?cid=4933196602655605409&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+    QUOTE_BRANCH_MAP_URLS.headquarters,
     "https://www.google.com/maps?cid=18211558462240548800&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
-    "https://www.google.com/maps?cid=9677844337688656532&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+    QUOTE_BRANCH_MAP_URLS.thalang,
   ];
 
   return (

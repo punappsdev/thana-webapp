@@ -13,6 +13,14 @@ export const BRANCH_CODES = ["headquarters", "thalang"] as const;
 
 export type BranchCode = (typeof BRANCH_CODES)[number];
 
+/** Google Maps links shown for the branches that can handle quote requests. */
+export const QUOTE_BRANCH_MAP_URLS: Record<BranchCode, string> = {
+  headquarters:
+    "https://www.google.com/maps?cid=4933196602655605409&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+  thalang:
+    "https://www.google.com/maps?cid=9677844337688656532&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=th&gl=TH&source=embed",
+};
+
 /** สาขาที่ใช้เมื่อค่าในฐานข้อมูลอ่านไม่ออก — ตรงกับ default ของคอลัมน์ */
 export const DEFAULT_BRANCH_CODE: BranchCode = "headquarters";
 

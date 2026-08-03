@@ -7,12 +7,13 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
+  ExternalLink,
   FileSpreadsheet,
-  MapPin,
   MessageSquareQuote,
   Package,
   Truck,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Input } from "@/components/ui/input";
@@ -27,8 +28,10 @@ import {
 } from "@/components/ui/select";
 import { CartEmptyState } from "@/components/cart/cart-empty-state";
 import { useCart } from "@/components/cart/use-cart";
-import { type BranchCode } from "@/lib/branches";
+import { DistrictCombobox } from "./district-combobox";
+import { QUOTE_BRANCH_MAP_URLS, type BranchCode } from "@/lib/branches";
 import { lineKey } from "@/lib/cart";
+import { getDistrictsForProvince } from "@/lib/districts";
 import { pick } from "@/lib/products";
 import { PHUKET_CODE, PROVINCES } from "@/lib/provinces";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
@@ -71,6 +74,8 @@ const EMPTY_DELIVERY = {
   deliveryProvince: "",
   deliveryPostalCode: "",
 };
+
+type FulfillmentMethod = "delivery" | "pickup";
 
 type ContactDetails = typeof EMPTY_CONTACT;
 type ContactField = keyof ContactDetails;
@@ -276,6 +281,17 @@ function hasBoqFileExtension(fileName: string): boolean {
   return /\.(pdf|xlsx)$/i.test(fileName);
 }
 
+function localizedDistrictValue(value: string, provinceCode: string, locale: "th" | "en"): string {
+  if (!value) return "";
+
+  const district = getDistrictsForProvince(provinceCode).find(
+    (item) => item.code === value || item.nameTh === value || item.nameEn === value,
+  );
+
+  if (!district) return value;
+  return locale === "en" ? district.nameEn : district.nameTh;
+}
+
 export function QuoteRequestForm() {
   const t = useTranslations("QuoteForm");
   const tCart = useTranslations("Cart");
@@ -287,6 +303,8 @@ export function QuoteRequestForm() {
   const [consent, setConsent] = useState(false);
   const [contact, setContact] = useState<ContactDetails>(emptyContact);
   const [contactBranch, setContactBranch] = useState("");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod | "">("");
+  const [fulfillmentMethodError, setFulfillmentMethodError] = useState<string>();
   const [companyInvoice, setCompanyInvoice] = useState<CompanyInvoiceDetails>(emptyCompanyInvoice);
   const [delivery, setDelivery] = useState<DeliveryDetails>(emptyDelivery);
   const [useSameDeliveryAddress, setUseSameDeliveryAddress] = useState(false);
@@ -309,7 +327,19 @@ export function QuoteRequestForm() {
       return;
     }
 
-    submittedDetailsRef.current = { ...contact, ...companyInvoice, ...delivery };
+    if (!fulfillmentMethod) {
+      event.preventDefault();
+      setFulfillmentMethodError(t("errorFulfillmentMethod"));
+      document.getElementById("fulfillment-delivery")?.focus();
+      return;
+    }
+
+    submittedDetailsRef.current = {
+      ...contact,
+      ...companyInvoice,
+      ...delivery,
+      needDelivery: fulfillmentMethod === "delivery",
+    };
     submittedRememberContactRef.current = rememberContact;
     submitWithoutReset(event);
   };
@@ -332,7 +362,11 @@ export function QuoteRequestForm() {
         taxId: savedDetails.taxId,
         addressLine: savedDetails.addressLine,
         subDistrict: savedDetails.subDistrict,
-        district: savedDetails.district,
+        district: localizedDistrictValue(
+          savedDetails.district,
+          savedDetails.province,
+          locale === "en" ? "en" : "th",
+        ),
         province: savedDetails.province,
         postalCode: savedDetails.postalCode,
       });
@@ -340,14 +374,19 @@ export function QuoteRequestForm() {
         needDelivery: savedDetails.needDelivery,
         deliveryAddressLine: savedDetails.deliveryAddressLine,
         deliverySubDistrict: savedDetails.deliverySubDistrict,
-        deliveryDistrict: savedDetails.deliveryDistrict,
+        deliveryDistrict: localizedDistrictValue(
+          savedDetails.deliveryDistrict,
+          savedDetails.deliveryProvince,
+          locale === "en" ? "en" : "th",
+        ),
         deliveryProvince: savedDetails.deliveryProvince,
         deliveryPostalCode: savedDetails.deliveryPostalCode,
       });
+      setFulfillmentMethod(savedDetails.needDelivery ? "delivery" : "");
       setHasSavedData(hasSavedDetails(savedDetails));
       setRememberContact(hasSavedDetails(savedDetails));
     });
-  }, []);
+  }, [locale]);
 
   // The request is recorded server side, so the browser copy has done its job.
   // `clear` is a module-level store function, so its identity never changes.
@@ -375,9 +414,29 @@ export function QuoteRequestForm() {
     setDelivery((current) => ({ ...current, [field]: value }));
   };
 
-  const handleDeliveryToggle = (checked: boolean) => {
-    setDelivery((current) => ({ ...current, needDelivery: checked }));
-    if (!checked) setUseSameDeliveryAddress(false);
+  const handleDeliveryProvinceChange = (value: string) => {
+    setDelivery((current) => ({
+      ...current,
+      deliveryProvince: value,
+      deliveryDistrict: "",
+    }));
+  };
+
+  const handleCompanyProvinceChange = (value: string) => {
+    setCompanyInvoice((current) => ({
+      ...current,
+      province: value,
+      district: "",
+    }));
+  };
+
+  const handleFulfillmentMethodChange = (value: string) => {
+    if (value !== "delivery" && value !== "pickup") return;
+
+    setFulfillmentMethod(value);
+    setFulfillmentMethodError(undefined);
+    setDelivery((current) => ({ ...current, needDelivery: value === "delivery" }));
+    if (value === "pickup") setUseSameDeliveryAddress(false);
   };
 
   const handleTaxInvoiceToggle = (checked: boolean) => {
@@ -469,6 +528,7 @@ export function QuoteRequestForm() {
   }
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
+  const fulfillmentError = fieldError("fulfillmentMethod") ?? fulfillmentMethodError;
   const boqError = fieldError("boqFile") ?? boqClientError;
   const boqDescribedBy = [
     "boqFile-hint",
@@ -478,7 +538,7 @@ export function QuoteRequestForm() {
     .filter(Boolean)
     .join(" ");
   const showDeliveryNote =
-    delivery.needDelivery &&
+    fulfillmentMethod === "delivery" &&
     delivery.deliveryProvince !== "" &&
     delivery.deliveryProvince !== PHUKET_CODE;
 
@@ -606,26 +666,97 @@ export function QuoteRequestForm() {
         </Section>
 
         <Section title={t("deliverySection")} description={t("deliveryHint")}>
-          <CheckField name="needDelivery" checked={delivery.needDelivery} onChange={handleDeliveryToggle}>
-            {t("needDelivery")}
-          </CheckField>
+          <fieldset className="space-y-3">
+            <legend id="fulfillment-method-label" className="sr-only">
+              {t("fulfillmentMethodLabel")} <span className="text-[#ba1a1a]" aria-hidden="true">*</span>
+            </legend>
+            <p id="fulfillment-method-hint" className="sr-only">
+              {t("fulfillmentMethodHint")}
+            </p>
+            <RadioGroup
+              id="fulfillmentMethod"
+              name="fulfillmentMethod"
+              value={fulfillmentMethod}
+              onValueChange={handleFulfillmentMethodChange}
+              required
+              aria-labelledby="fulfillment-method-label"
+              aria-describedby={
+                fulfillmentError
+                  ? "fulfillment-method-hint fulfillment-method-error"
+                  : "fulfillment-method-hint"
+              }
+              aria-invalid={Boolean(fulfillmentError)}
+              className="grid gap-3 sm:grid-cols-2"
+            >
+              <FulfillmentOption
+                id="fulfillment-delivery"
+                value="delivery"
+                label={t("fulfillmentDelivery")}
+                description={t("fulfillmentDeliveryHint")}
+                icon={Truck}
+              />
+              <FulfillmentOption
+                id="fulfillment-pickup"
+                value="pickup"
+                label={t("fulfillmentPickup")}
+                description={t("fulfillmentPickupHint")}
+                icon={Building2}
+              />
+            </RadioGroup>
+            {fulfillmentError && (
+              <p id="fulfillment-method-error" role="alert" className="font-label-sm text-[#ba1a1a]">
+                {fulfillmentError}
+              </p>
+            )}
+          </fieldset>
 
-          {delivery.needDelivery && (
+          {fulfillmentMethod === "delivery" && (
             <div className="space-y-4 border-t border-[#ededf7] pt-5">
-              <Field
-                label={t("deliveryAddressLine")}
-                name="deliveryAddressLine"
-                error={fieldError("deliveryAddressLine")}
-                required
-              >
-                <Input
-                  id="deliveryAddressLine"
-                  name="deliveryAddressLine"
-                  value={delivery.deliveryAddressLine}
-                  onChange={(event) => updateDelivery("deliveryAddressLine", event.target.value)}
-                  autoComplete="street-address"
-                />
-              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("deliveryProvince")}
+                  name="deliveryProvince"
+                  error={fieldError("deliveryProvince")}
+                  required
+                >
+                  <Select
+                    name="deliveryProvince"
+                    value={delivery.deliveryProvince}
+                    onValueChange={handleDeliveryProvinceChange}
+                  >
+                    <SelectTrigger id="deliveryProvince" className="w-full">
+                      <SelectValue placeholder={t("deliveryProvincePlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {PROVINCES.map((item) => (
+                        <SelectItem key={item.code} value={item.code} className="font-body-sm">
+                          {locale === "en" ? item.nameEn : item.nameTh}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field
+                  label={t("deliveryDistrict")}
+                  name="deliveryDistrict"
+                  error={fieldError("deliveryDistrict")}
+                  required
+                >
+                  <DistrictCombobox
+                    id="deliveryDistrict"
+                    name="deliveryDistrict"
+                    label={t("deliveryDistrict")}
+                    provinceCode={delivery.deliveryProvince}
+                    value={delivery.deliveryDistrict}
+                    locale={locale === "en" ? "en" : "th"}
+                    placeholder={t("districtPlaceholder")}
+                    chooseProvinceText={t("districtChooseProvince")}
+                    describedBy={fieldError("deliveryDistrict") ? "deliveryDistrict-error" : undefined}
+                    invalid={Boolean(fieldError("deliveryDistrict"))}
+                    onValueChange={(value) => updateDelivery("deliveryDistrict", value)}
+                  />
+                </Field>
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -640,45 +771,6 @@ export function QuoteRequestForm() {
                     value={delivery.deliverySubDistrict}
                     onChange={(event) => updateDelivery("deliverySubDistrict", event.target.value)}
                   />
-                </Field>
-                <Field
-                  label={t("deliveryDistrict")}
-                  name="deliveryDistrict"
-                  error={fieldError("deliveryDistrict")}
-                  required
-                >
-                  <Input
-                    id="deliveryDistrict"
-                    name="deliveryDistrict"
-                    value={delivery.deliveryDistrict}
-                    onChange={(event) => updateDelivery("deliveryDistrict", event.target.value)}
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label={t("deliveryProvince")}
-                  name="deliveryProvince"
-                  error={fieldError("deliveryProvince")}
-                  required
-                >
-                  <Select
-                    name="deliveryProvince"
-                    value={delivery.deliveryProvince}
-                    onValueChange={(value) => updateDelivery("deliveryProvince", value)}
-                  >
-                    <SelectTrigger id="deliveryProvince" className="w-full">
-                      <SelectValue placeholder={t("deliveryProvincePlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {PROVINCES.map((item) => (
-                        <SelectItem key={item.code} value={item.code} className="font-body-sm">
-                          {locale === "en" ? item.nameEn : item.nameTh}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </Field>
                 <Field
                   label={t("deliveryPostalCode")}
@@ -697,6 +789,21 @@ export function QuoteRequestForm() {
                 </Field>
               </div>
 
+              <Field
+                label={t("deliveryAddressLine")}
+                name="deliveryAddressLine"
+                error={fieldError("deliveryAddressLine")}
+                required
+              >
+                <Input
+                  id="deliveryAddressLine"
+                  name="deliveryAddressLine"
+                  value={delivery.deliveryAddressLine}
+                  onChange={(event) => updateDelivery("deliveryAddressLine", event.target.value)}
+                  autoComplete="street-address"
+                />
+              </Field>
+
               {showDeliveryNote && (
                 <div
                   role="status"
@@ -712,6 +819,48 @@ export function QuoteRequestForm() {
               )}
             </div>
           )}
+
+          {fulfillmentMethod === "pickup" && (
+            <div className="space-y-4 border-t border-[#ededf7] pt-5">
+              <fieldset className="space-y-3">
+                <legend id="pickup-branch-label" className="font-label-lg text-[#434653]">
+                  {t("pickupBranchLabel")} <span className="text-[#ba1a1a]" aria-hidden="true">*</span>
+                </legend>
+                <p id="pickup-branch-hint" className="font-body-sm text-[#747684]">
+                  {t("pickupBranchHint")}
+                </p>
+                <RadioGroup
+                  id="contactBranch"
+                  name="contactBranch"
+                  value={contactBranch}
+                  onValueChange={setContactBranch}
+                  aria-labelledby="pickup-branch-label"
+                  aria-describedby={fieldError("contactBranch") ? "pickup-branch-hint contactBranch-error" : "pickup-branch-hint"}
+                  aria-required="true"
+                  aria-invalid={Boolean(fieldError("contactBranch"))}
+                  className="grid gap-4 sm:grid-cols-2"
+                >
+                  <BranchOption
+                    value="headquarters"
+                    label={t("contactBranchHeadquarters")}
+                    mapUrl={QUOTE_BRANCH_MAP_URLS.headquarters}
+                    mapLinkLabel={t("viewBranchOnMaps", { branch: t("contactBranchHeadquarters") })}
+                  />
+                  <BranchOption
+                    value="thalang"
+                    label={t("contactBranchThalang")}
+                    mapUrl={QUOTE_BRANCH_MAP_URLS.thalang}
+                    mapLinkLabel={t("viewBranchOnMaps", { branch: t("contactBranchThalang") })}
+                  />
+                </RadioGroup>
+                {fieldError("contactBranch") && (
+                  <p id="contactBranch-error" role="alert" className="font-label-sm text-[#ba1a1a]">
+                    {fieldError("contactBranch")}
+                  </p>
+                )}
+              </fieldset>
+            </div>
+          )}
         </Section>
 
         <Section title={t("companySection")}>
@@ -725,7 +874,7 @@ export function QuoteRequestForm() {
 
           {companyInvoice.needTaxInvoice && (
             <div className="space-y-4 border-t border-[#ededf7] pt-5">
-              {delivery.needDelivery && (
+              {fulfillmentMethod === "delivery" && (
                 <CheckField
                   name="useDeliveryAddress"
                   checked={useSameDeliveryAddress}
@@ -765,20 +914,46 @@ export function QuoteRequestForm() {
                   maxLength={20}
                 />
               </Field>
-              <Field
-                label={t("addressLine")}
-                name="addressLine"
-                error={fieldError("addressLine")}
-                required
-              >
-                <Input
-                  id="addressLine"
-                  name="addressLine"
-                  value={companyInvoice.addressLine}
-                  onChange={(event) => updateCompanyInvoice("addressLine", event.target.value)}
-                  autoComplete="street-address"
-                />
-              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("province")}
+                  name="province"
+                  error={fieldError("province")}
+                  required
+                >
+                  <Select
+                    name="province"
+                    value={companyInvoice.province}
+                    onValueChange={handleCompanyProvinceChange}
+                  >
+                    <SelectTrigger id="province" className="w-full">
+                      <SelectValue placeholder={t("provincePlaceholder")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {PROVINCES.map((item) => (
+                        <SelectItem key={item.code} value={item.code} className="font-body-sm">
+                          {locale === "en" ? item.nameEn : item.nameTh}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label={t("district")} name="district" error={fieldError("district")} required>
+                  <DistrictCombobox
+                    id="district"
+                    name="district"
+                    label={t("district")}
+                    provinceCode={companyInvoice.province}
+                    value={companyInvoice.district}
+                    locale={locale === "en" ? "en" : "th"}
+                    placeholder={t("districtPlaceholder")}
+                    chooseProvinceText={t("districtChooseProvince")}
+                    describedBy={fieldError("district") ? "district-error" : undefined}
+                    invalid={Boolean(fieldError("district"))}
+                    onValueChange={(value) => updateCompanyInvoice("district", value)}
+                  />
+                </Field>
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -793,40 +968,6 @@ export function QuoteRequestForm() {
                     value={companyInvoice.subDistrict}
                     onChange={(event) => updateCompanyInvoice("subDistrict", event.target.value)}
                   />
-                </Field>
-                <Field label={t("district")} name="district" error={fieldError("district")} required>
-                  <Input
-                    id="district"
-                    name="district"
-                    value={companyInvoice.district}
-                    onChange={(event) => updateCompanyInvoice("district", event.target.value)}
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label={t("province")}
-                  name="province"
-                  error={fieldError("province")}
-                  required
-                >
-                  <Select
-                    name="province"
-                    value={companyInvoice.province}
-                    onValueChange={(value) => updateCompanyInvoice("province", value)}
-                  >
-                    <SelectTrigger id="province" className="w-full">
-                      <SelectValue placeholder={t("provincePlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {PROVINCES.map((item) => (
-                        <SelectItem key={item.code} value={item.code} className="font-body-sm">
-                          {locale === "en" ? item.nameEn : item.nameTh}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </Field>
                 <Field
                   label={t("postalCode")}
@@ -844,6 +985,21 @@ export function QuoteRequestForm() {
                   />
                 </Field>
               </div>
+
+              <Field
+                label={t("addressLine")}
+                name="addressLine"
+                error={fieldError("addressLine")}
+                required
+              >
+                <Input
+                  id="addressLine"
+                  name="addressLine"
+                  value={companyInvoice.addressLine}
+                  onChange={(event) => updateCompanyInvoice("addressLine", event.target.value)}
+                  autoComplete="street-address"
+                />
+              </Field>
             </div>
           )}
         </Section>
@@ -868,93 +1024,6 @@ export function QuoteRequestForm() {
                 onChange={(event) => updateContact("lineId", event.target.value)}
               />
             </Field>
-          </div>
-        </Section>
-
-        <Section title={t("contactBranchSection")} description={t("contactBranchHint")}>
-          <div className="space-y-4">
-            <RadioGroup
-              id="contactBranch"
-              name="contactBranch"
-              value={contactBranch}
-              onValueChange={setContactBranch}
-              aria-label={t("contactBranchSection")}
-              aria-required="true"
-              aria-invalid={Boolean(fieldError("contactBranch"))}
-              aria-describedby={fieldError("contactBranch") ? "contactBranch-error" : undefined}
-              className="grid gap-3 sm:grid-cols-2"
-            >
-              <BranchOption value="headquarters" label={t("contactBranchHeadquarters")} />
-              <BranchOption value="thalang" label={t("contactBranchThalang")} />
-            </RadioGroup>
-            {fieldError("contactBranch") && (
-              <p id="contactBranch-error" className="font-label-sm text-[#ba1a1a]">
-                {fieldError("contactBranch")}
-              </p>
-            )}
-            <div
-              role="note"
-              aria-labelledby="contactBranch-coverage-title"
-              className="rounded-xl border border-[#dbe6f5] bg-linear-to-br from-[#f8fafc] via-[#f3f6fc] to-[#eef3fb] p-5 sm:p-6 shadow-blue-sm transition-all hover:shadow-blue-md"
-            >
-              <div className="flex items-center gap-3.5 border-b border-[#e2e8f0]/80 pb-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary to-[#0040ad] text-white shadow-blue-sm">
-                  <MapPin className="size-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h3 id="contactBranch-coverage-title" className="font-label-lg font-bold text-foreground">
-                    {t("contactBranchCoverageTitle")}
-                  </h3>
-                  <p className="font-label-sm text-[#747684]">
-                    {t("contactBranchCoverageSubtitle")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
-                <div className="group flex flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white/90 p-4 transition-all duration-200 hover:border-[#a0b6ff] hover:bg-white hover:shadow-blue-sm">
-                  <div>
-                    <div className="flex items-center gap-2 border-b border-[#f0f4f9] pb-2.5">
-                      <Building2 className="size-4 text-primary shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
-                      <span className="font-label-md font-bold text-primary">
-                        {t("contactBranchCoverageHeadquarters")}
-                      </span>
-                    </div>
-                    <ul className="mt-3 space-y-2 font-body-sm text-[#434653]">
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
-                        <span>{t("contactBranchCoverageHeadquartersArea1")}</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
-                        <span>{t("contactBranchCoverageHeadquartersArea2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="group flex flex-col justify-between rounded-lg border border-[#e2e8f0] bg-white/90 p-4 transition-all duration-200 hover:border-[#a0b6ff] hover:bg-white hover:shadow-blue-sm">
-                  <div>
-                    <div className="flex items-center gap-2 border-b border-[#f0f4f9] pb-2.5">
-                      <Building2 className="size-4 text-primary shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
-                      <span className="font-label-md font-bold text-primary">
-                        {t("contactBranchCoverageThalang")}
-                      </span>
-                    </div>
-                    <ul className="mt-3 space-y-2 font-body-sm text-[#434653]">
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
-                        <span>{t("contactBranchCoverageThalangArea1")}</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0062a0]" aria-hidden="true" />
-                        <span className="leading-snug">{t("contactBranchCoverageThalangArea2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </Section>
 
@@ -1108,7 +1177,9 @@ function Field({
       </Label>
       {children}
       {error ? (
-        <p className="font-label-sm text-[#ba1a1a]">{error}</p>
+        <p id={`${name}-error`} className="font-label-sm text-[#ba1a1a]">
+          {error}
+        </p>
       ) : hint ? (
         <p className="font-label-sm text-[#747684]">{hint}</p>
       ) : null}
@@ -1116,25 +1187,81 @@ function Field({
   );
 }
 
-/** `value` เป็น BranchCode เพื่อให้พิมพ์ผิดแล้วคำขอถูกส่งไปผิดสาขาไม่ผ่าน type check */
-function BranchOption({ value, label }: { value: BranchCode; label: string }) {
-  const id = `contactBranch-${value}`;
-
+function FulfillmentOption({
+  id,
+  value,
+  label,
+  description,
+  icon: Icon,
+}: {
+  id: string;
+  value: FulfillmentMethod;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}) {
   return (
     <Label
       htmlFor={id}
-      className="flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border border-[#c4e2f5] bg-white px-4 py-4 font-body-sm text-[#434653] shadow-blue-sm transition-[border-color,background-color,box-shadow] hover:border-[#078ee4] hover:bg-[#faf8ff] hover:shadow-blue-md has-data-[state=checked]:border-primary has-data-[state=checked]:bg-linear-to-r has-data-[state=checked]:from-[#f0f4ff] has-data-[state=checked]:to-[#f8fafc] has-data-[state=checked]:text-primary has-data-[state=checked]:shadow-blue-md focus-within:ring-3 focus-within:ring-ring/50"
+      className="flex min-h-24 cursor-pointer items-start gap-3 rounded-lg border border-[#c4e2f5] bg-white px-4 py-4 text-[#434653] shadow-blue-sm transition-[border-color,background-color,box-shadow] hover:border-[#078ee4] hover:bg-[#faf8ff] hover:shadow-blue-md has-data-[state=checked]:border-primary has-data-[state=checked]:bg-linear-to-r has-data-[state=checked]:from-[#f0f4ff] has-data-[state=checked]:to-[#f8fafc] has-data-[state=checked]:text-primary has-data-[state=checked]:shadow-blue-md focus-within:ring-3 focus-within:ring-ring/50"
     >
       <RadioGroupItem
         id={id}
         value={value}
-        className="size-5 border-2 border-[#c4e2f5] shadow-none data-[state=checked]:border-primary"
+        className="mt-0.5 size-5 border-2 border-[#c4e2f5] shadow-none data-[state=checked]:border-primary"
       />
-      <span className="flex items-center gap-2 min-w-0 font-label-md font-semibold">
-        <Building2 className="size-4 shrink-0 text-primary/70" aria-hidden="true" />
-        {label}
+      <span className="min-w-0">
+        <span className="flex items-center gap-2 font-label-md font-semibold">
+          <Icon className="size-4 shrink-0 text-primary/70" aria-hidden="true" />
+          {label}
+        </span>
+        <span className="mt-1 block font-label-sm leading-relaxed text-[#747684]">{description}</span>
       </span>
     </Label>
+  );
+}
+
+/** `value` เป็น BranchCode เพื่อให้พิมพ์ผิดแล้วคำขอถูกส่งไปผิดสาขาไม่ผ่าน type check */
+function BranchOption({
+  value,
+  label,
+  mapUrl,
+  mapLinkLabel,
+}: {
+  value: BranchCode;
+  label: string;
+  mapUrl: string;
+  mapLinkLabel: string;
+}) {
+  const id = `contactBranch-${value}`;
+
+  return (
+    <div className="space-y-2">
+      <Label
+        htmlFor={id}
+        className="flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border border-[#c4e2f5] bg-white px-4 py-4 font-body-sm text-[#434653] shadow-blue-sm transition-[border-color,background-color,box-shadow] hover:border-[#078ee4] hover:bg-[#faf8ff] hover:shadow-blue-md has-data-[state=checked]:border-primary has-data-[state=checked]:bg-linear-to-r has-data-[state=checked]:from-[#f0f4ff] has-data-[state=checked]:to-[#f8fafc] has-data-[state=checked]:text-primary has-data-[state=checked]:shadow-blue-md focus-within:ring-3 focus-within:ring-ring/50"
+      >
+        <RadioGroupItem
+          id={id}
+          value={value}
+          className="size-5 border-2 border-[#c4e2f5] shadow-none data-[state=checked]:border-primary"
+        />
+        <span className="flex min-w-0 items-center gap-2 font-label-md font-semibold">
+          <Building2 className="size-4 shrink-0 text-primary/70" aria-hidden="true" />
+          {label}
+        </span>
+      </Label>
+      <a
+        href={mapUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={mapLinkLabel}
+        className="inline-flex items-center gap-1.5 pl-4 font-label-sm font-medium text-primary underline decoration-primary/40 underline-offset-2 transition-colors hover:text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <ExternalLink className="size-3.5" aria-hidden="true" />
+        {mapLinkLabel}
+      </a>
+    </div>
   );
 }
 

@@ -4,8 +4,9 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
+import { isDistrictForProvince, isKnownDistrictName } from "@/lib/districts";
 import { getPrisma } from "@/lib/prisma";
-import { BRANCH_CODES } from "@/lib/branches";
+import { BRANCH_CODES, DEFAULT_BRANCH_CODE } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { isProvinceCode } from "@/lib/provinces";
@@ -76,7 +77,6 @@ export async function submitQuoteRequest(
   const t = await getTranslations({ locale, namespace: "QuoteForm" });
 
   const needTaxInvoice = formData.get("needTaxInvoice") === "on";
-  const needDelivery = formData.has("needDelivery");
 
   // Built per request because every message is translated at this point.
   const schema = z
@@ -91,9 +91,10 @@ export async function submitQuoteRequest(
           const digits = digitsOnly(value);
           return digits.length >= 9 && digits.length <= 10;
         }, t("errorPhone")),
-      contactBranch: z.enum(BRANCH_CODES, {
-        message: t("errorContactBranch"),
+      fulfillmentMethod: z.enum(["delivery", "pickup"], {
+        message: t("errorFulfillmentMethod"),
       }),
+      contactBranch: optionalText,
       email: optionalText.refine(
         (value) => value === null || z.email().safeParse(value).success,
         t("errorEmail"),
@@ -120,6 +121,19 @@ export async function submitQuoteRequest(
       message: t("errorChannel"),
     })
     .superRefine((data, ctx) => {
+      if (
+        data.fulfillmentMethod === "pickup" &&
+        (data.contactBranch === null ||
+          !(BRANCH_CODES as readonly string[]).includes(data.contactBranch))
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["contactBranch"],
+          message: t("errorContactBranch"),
+        });
+      }
+
+      const needDelivery = data.fulfillmentMethod === "delivery";
       if (needDelivery) {
         const requiredDelivery = [
           ["deliveryAddressLine", data.deliveryAddressLine],
@@ -150,6 +164,19 @@ export async function submitQuoteRequest(
             message: t("errorProvince"),
           });
         }
+        if (
+          data.deliveryProvince !== null &&
+          data.deliveryDistrict !== null &&
+          isProvinceCode(data.deliveryProvince) &&
+          isKnownDistrictName(data.deliveryDistrict) &&
+          !isDistrictForProvince(data.deliveryProvince, data.deliveryDistrict)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["deliveryDistrict"],
+            message: t("errorDistrict"),
+          });
+        }
       }
 
       if (!needTaxInvoice) return;
@@ -176,12 +203,22 @@ export async function submitQuoteRequest(
       if (data.province === null || !isProvinceCode(data.province)) {
         ctx.addIssue({ code: "custom", path: ["province"], message: t("errorProvince") });
       }
+      if (
+        data.province !== null &&
+        data.district !== null &&
+        isProvinceCode(data.province) &&
+        isKnownDistrictName(data.district) &&
+        !isDistrictForProvince(data.province, data.district)
+      ) {
+        ctx.addIssue({ code: "custom", path: ["district"], message: t("errorDistrict") });
+      }
     });
 
   const parsed = schema.safeParse({
     firstName: formData.get("firstName") ?? "",
     lastName: formData.get("lastName") ?? "",
     phone: formData.get("phone") ?? "",
+    fulfillmentMethod: formData.get("fulfillmentMethod") ?? "",
     contactBranch: formData.get("contactBranch") ?? "",
     email: formData.get("email") ?? "",
     lineId: formData.get("lineId") ?? "",
@@ -209,6 +246,8 @@ export async function submitQuoteRequest(
     };
   }
   const d = parsed.data;
+  const needDelivery = d.fulfillmentMethod === "delivery";
+  const contactBranch = needDelivery ? DEFAULT_BRANCH_CODE : d.contactBranch!;
 
   const itemsResult = z
     .string()
@@ -289,7 +328,7 @@ export async function submitQuoteRequest(
           firstName: d.firstName,
           lastName: d.lastName,
           phone: d.phone,
-          contactBranch: d.contactBranch,
+          contactBranch,
           email: d.email,
           lineId: d.lineId,
           needTaxInvoice,
