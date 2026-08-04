@@ -117,8 +117,14 @@ function deleteSavedDetails(): boolean {
   return deleted;
 }
 
-function hasBoqFileExtension(fileName: string): boolean {
-  return /\.(pdf|xlsx)$/i.test(fileName);
+// Mirrors the magic-byte detection the server does in lib/quotation-boq.ts, so
+// the browser never rejects a file the server would have accepted. XLSX is a
+// zip, so this is deliberately looser than the server: anything that slips
+// through is rejected server-side and reported through fieldErrors.boqFile.
+async function hasBoqFileSignature(file: File): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+  const matches = (signature: number[]) => signature.every((byte, i) => header[i] === byte);
+  return matches([0x25, 0x50, 0x44, 0x46]) || matches([0x50, 0x4b, 0x03, 0x04]);
 }
 
 function localizedDistrictValue(value: string, provinceCode: string, locale: "th" | "en"): string {
@@ -154,6 +160,8 @@ export function QuoteRequestForm() {
   const [boqFile, setBoqFile] = useState<File | null>(null);
   const [boqClientError, setBoqClientError] = useState<string>();
   const boqFileInputRef = useRef<HTMLInputElement>(null);
+  // Signature reading is async, so a stale check must not overwrite a newer pick.
+  const boqCheckIdRef = useRef(0);
   const submittedDetailsRef = useRef<RememberedDetails>(emptyRememberedDetails());
   const submittedRememberContactRef = useRef(false);
 
@@ -161,12 +169,8 @@ export function QuoteRequestForm() {
   // customer has to retype the whole form. See lib/use-no-reset-submit.ts.
   const submitWithoutReset = useNoResetSubmit(action);
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (boqClientError) {
-      event.preventDefault();
-      boqFileInputRef.current?.focus();
-      return;
-    }
-
+    // A BOQ error never blocks submitting: the attachment is optional and the
+    // file input was already cleared, so the request just goes out without one.
     if (!fulfillmentMethod) {
       event.preventDefault();
       setFulfillmentMethodError(t("errorFulfillmentMethod"));
@@ -305,8 +309,11 @@ export function QuoteRequestForm() {
     setContactStorageStatus(t(deleted ? "savedContactDeleted" : "savedContactDeleteFailed"));
   };
 
-  const handleBoqFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0] ?? null;
+  const handleBoqFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // React clears currentTarget once the handler returns, so keep the node.
+    const input = event.currentTarget;
+    const file = input.files?.[0] ?? null;
+    const checkId = ++boqCheckIdRef.current;
     setBoqClientError(undefined);
 
     if (!file) {
@@ -314,24 +321,35 @@ export function QuoteRequestForm() {
       return;
     }
 
-    if (!hasBoqFileExtension(file.name)) {
+    const reject = (message: string) => {
       setBoqFile(null);
-      setBoqClientError(t("errorBoqFileType"));
-      event.currentTarget.value = "";
-      return;
-    }
+      setBoqClientError(message);
+      input.value = "";
+    };
 
     if (file.size > MAX_BOQ_FILE_SIZE) {
-      setBoqFile(null);
-      setBoqClientError(t("errorBoqFileTooLarge"));
-      event.currentTarget.value = "";
+      reject(t("errorBoqFileTooLarge"));
       return;
     }
 
     if (file.size === 0) {
-      setBoqFile(null);
-      setBoqClientError(t("errorBoqFileEmpty"));
-      event.currentTarget.value = "";
+      reject(t("errorBoqFileEmpty"));
+      return;
+    }
+
+    let hasSignature: boolean;
+    try {
+      hasSignature = await hasBoqFileSignature(file);
+    } catch {
+      if (checkId !== boqCheckIdRef.current) return;
+      reject(t("errorBoqFileUnreadable"));
+      return;
+    }
+
+    if (checkId !== boqCheckIdRef.current) return;
+
+    if (!hasSignature) {
+      reject(t("errorBoqFileType"));
       return;
     }
 
@@ -339,6 +357,7 @@ export function QuoteRequestForm() {
   };
 
   const handleBoqFileRemove = () => {
+    boqCheckIdRef.current += 1;
     setBoqFile(null);
     setBoqClientError(undefined);
     if (boqFileInputRef.current) boqFileInputRef.current.value = "";
