@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PHUKET_CODE, PROVINCES } from "@/lib/provinces";
 import {
+  findDistrictByCode,
   getDistrictsForProvince,
   isDistrictForProvince,
   isKnownDistrictName,
@@ -30,6 +31,21 @@ describe("Thai district data", () => {
     expect(isKnownDistrictName("Mueang Krabi")).toBe(true);
     expect(isDistrictForProvince(PHUKET_CODE, "เมืองกระบี่")).toBe(false);
     expect(isDistrictForProvince(PHUKET_CODE, "Mueang Krabi")).toBe(false);
+  });
+
+  // กฎเลือกกลุ่มไลน์เก็บ "รหัสอำเภอ" ไว้ในฐานข้อมูล จึงต้องแปลงกลับเป็นชื่อและจังหวัดได้
+  it("resolves a district code back to its district and province", () => {
+    // 8301 = อ.เมืองภูเก็ต ตามค่าตั้งต้นของกฎเลือกกลุ่มไลน์ทีมขาย
+    const found = findDistrictByCode("8301");
+
+    expect(found?.district.nameTh).toBe("เมืองภูเก็ต");
+    expect(found?.provinceCode).toBe(PHUKET_CODE);
+  });
+
+  it("returns null for codes that do not exist", () => {
+    expect(findDistrictByCode("0000")).toBeNull();
+    expect(findDistrictByCode("")).toBeNull();
+    expect(findDistrictByCode(null)).toBeNull();
   });
 
   it("distinguishes unknown legacy text from known district names", () => {

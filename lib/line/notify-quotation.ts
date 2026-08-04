@@ -1,10 +1,12 @@
 import "server-only";
 
+import { getLineRoutingConfig } from "@/lib/admin/line-routing-data";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
 import { getLineConfig, lineGroupEnvKey } from "@/lib/line/config";
 import { MAX_MESSAGES_PER_PUSH, pushLineMessage } from "@/lib/line/client";
 import { buildQuotationMessages } from "@/lib/line/message";
 import { resolveSaleGroup } from "@/lib/line/routing";
+import { toRoutingInput } from "@/lib/line/routing-input";
 import { getPrisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/seo";
 
@@ -30,20 +32,13 @@ export async function notifyQuotationToLine(requestId: number): Promise<NotifyRe
     return { status: "skipped", reason: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ LINE" };
   }
 
-  const request = await getQuotationDetail(requestId);
+  const [request, routingConfig] = await Promise.all([
+    getQuotationDetail(requestId),
+    getLineRoutingConfig(),
+  ]);
   if (!request) return { status: "failed", error: "ไม่พบคำขอใบเสนอราคานี้" };
 
-  const decision = resolveSaleGroup({
-    needDelivery: request.needDelivery,
-    contactBranch: request.contactBranch,
-    deliveryProvince: request.deliveryProvince,
-    deliveryDistrict: request.deliveryDistrict,
-    items: request.items.map((item) => ({
-      categorySlug: item.product?.category?.slug ?? null,
-      subCategorySlug: item.product?.subCategory?.slug ?? null,
-      productNameTh: item.product?.nameTh ?? null,
-    })),
-  });
+  const decision = resolveSaleGroup(toRoutingInput(request), routingConfig);
 
   const groupId = config.groupIds[decision.group];
   if (!groupId) {

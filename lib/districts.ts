@@ -95,6 +95,16 @@ for (const province of PROVINCES) {
   districtsByProvinceCode.set(province.code, Object.freeze(districts));
 }
 
+/** ค้นย้อนจากรหัสอำเภอกลับไปหาจังหวัด ใช้ตอนแสดงอำเภอที่เลือกไว้ในหน้าหลังบ้าน */
+const provinceCodeByDistrictCode = new Map<string, string>();
+const districtByCode = new Map<string, District>();
+for (const [provinceCode, districts] of districtsByProvinceCode) {
+  for (const district of districts) {
+    provinceCodeByDistrictCode.set(district.code, provinceCode);
+    districtByCode.set(district.code, district);
+  }
+}
+
 const EMPTY_DISTRICTS: readonly District[] = Object.freeze([]);
 
 export function getDistrictsForProvince(
@@ -130,6 +140,23 @@ export function isDistrictForProvince(
   district: string | null | undefined,
 ): boolean {
   return findDistrict(provinceCode, district) !== null;
+}
+
+/**
+ * ค้นอำเภอจากรหัส พร้อมรหัสจังหวัดของแอปที่อำเภอนั้นสังกัด
+ *
+ * กฎเลือกกลุ่มไลน์ทีมขายเก็บ "รหัสอำเภอ" ไว้ในฐานข้อมูล (`LineRoutingSetting`)
+ * หน้าตั้งค่าจึงต้องแปลงกลับเป็นชื่อเพื่อแสดง และตรวจว่ารหัสที่ส่งมามีอยู่จริง
+ */
+export function findDistrictByCode(
+  code: string | null | undefined,
+): { district: District; provinceCode: string } | null {
+  if (typeof code !== "string") return null;
+  const trimmed = code.trim();
+  const district = districtByCode.get(trimmed);
+  const provinceCode = provinceCodeByDistrictCode.get(trimmed);
+  if (!district || !provinceCode) return null;
+  return { district, provinceCode };
 }
 
 /** True when a value is any district name in the source data, regardless of province. */

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { LineQuotaCard } from "@/components/admin/line-quota-card";
+import { LineRoutingCard } from "@/components/admin/line-routing-card";
 import { MourningModeToggle } from "@/components/admin/mourning-mode-toggle";
 import { StorageCard } from "@/components/admin/storage-card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,10 @@ export default async function SiteSettingsPage() {
       <Suspense fallback={<LineQuotaCardSkeleton />}>
         <LineQuotaCard />
       </Suspense>
+
+      <Suspense fallback={<LineRoutingCardSkeleton />}>
+        <LineRoutingCard />
+      </Suspense>
     </div>
   );
 }
@@ -88,6 +93,22 @@ function LineQuotaCardSkeleton() {
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-2 w-full" />
         <Skeleton className="h-5 w-64" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function LineRoutingCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>กฎการส่งแจ้งเตือนกลุ่มไลน์ทีมขาย</CardTitle>
+        <CardDescription>กำลังอ่านกฎที่ตั้งไว้...</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="h-9 w-40" />
       </CardContent>
     </Card>
   );

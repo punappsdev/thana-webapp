@@ -349,6 +349,66 @@ model SiteSetting {
   updatedAt    DateTime @updatedAt
 }
 
+/// พารามิเตอร์ของกฎเลือกกลุ่มไลน์ทีมขาย แก้ได้จาก /admin/settings/line-routing
+///
+/// ลำดับและตรรกะของกฎยังอยู่ในโค้ดที่ lib/line/routing.ts — ตารางชุดนี้เก็บเฉพาะ
+/// "ค่า" ที่ทีมขายตกลงกันใหม่ได้เรื่อย ๆ จึงไม่ควรต้อง deploy ใหม่ทุกครั้ง
+model LineRoutingSetting {
+  id Int @id @default(1)
+
+  /// รหัสอำเภอที่สำนักงานใหญ่ดูแล อ้างอิง lib/data/thai-districts.json
+  /// เก็บเป็น JSON เพราะอำเภอเป็นข้อมูลไฟล์ ไม่มีตารางให้ผูก foreign key
+  hqDistrictCodes Json
+
+  updatedAt DateTime @updatedAt
+
+  factoryCategories        LineRoutingFactoryCategory[]
+  factoryExcludedSubs      LineRoutingFactoryExcludedSubCategory[]
+  factoryProducts          LineRoutingFactoryProduct[]
+}
+
+/// หมวดหลักที่โรงงานรับทำ
+model LineRoutingFactoryCategory {
+  settingId Int
+  setting   LineRoutingSetting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([settingId, categoryId])
+  @@index([categoryId])
+}
+
+/// หมวดย่อยที่ยกเว้น แม้หมวดหลักจะอยู่ในรายการที่โรงงานรับทำ
+model LineRoutingFactoryExcludedSubCategory {
+  settingId Int
+  setting   LineRoutingSetting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+
+  subCategoryId Int
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+
+  @@id([settingId, subCategoryId])
+  @@index([subCategoryId])
+}
+
+/// ข้อยกเว้นรายสินค้า ทับผลของหมวดหลักและหมวดย่อยอีกชั้น
+///
+/// อ้างด้วย id ไม่ใช่ชื่อสินค้า การเปลี่ยนชื่อสินค้าในหลังบ้านจึงไม่ทำให้ใบวิ่งผิดกลุ่ม
+/// และ onDelete: Cascade ทำให้ลบสินค้าแล้วข้อยกเว้นหายตามไปเอง ไม่มี id ค้าง
+model LineRoutingFactoryProduct {
+  settingId Int
+  setting   LineRoutingSetting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// true = โรงงานรับทำเสมอ, false = ไม่รับทำเสมอ (ชนะ true เมื่อขัดกัน)
+  include Boolean
+
+  @@id([settingId, productId])
+  @@index([productId])
+}
+
 // ---------------------------------------------------------------------------
 // Categories — shared by Product and Work (portfolio)
 // ---------------------------------------------------------------------------
@@ -368,6 +428,7 @@ model Category {
   products       Product[]
   works          Work[]
   promotionLinks PromotionCategory[]
+  lineRouting    LineRoutingFactoryCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -389,6 +450,7 @@ model SubCategory {
   category       Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   products       Product[]
   promotionLinks PromotionSubCategory[]
+  lineRouting    LineRoutingFactoryExcludedSubCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -480,6 +542,7 @@ model Product {
   attributeLinks ProductAttributeValue[]
   quotationItems QuotationItem[]
   promotionLinks PromotionProduct[]
+  lineRouting    LineRoutingFactoryProduct[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

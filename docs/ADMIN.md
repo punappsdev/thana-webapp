@@ -80,6 +80,8 @@ Disk headroom, the size of both upload trees, and how many requests have already
 
 Every quotation request is pushed to one of three sales LINE groups. Which group receives it is decided by the delivery address and the categories in the cart, not by anything the customer selects — see **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) → กลุ่มไหนได้รับใบไหน** for the rules. The five `LINE_*` variables are optional: when they are missing the site still accepts quotations and only logs a warning.
 
+The **criteria** those rules test — which districts headquarters covers, which categories the factory produces, and the per-product exceptions — are stored in the database and edited at **`/admin/settings/line-routing`** (reachable from the **กฎการส่งแจ้งเตือนกลุ่มไลน์ทีมขาย** card on `/admin/settings`). Changes apply to both automatic sends and the resend button immediately, with no restart. The **order** of the four rules stays in `lib/line/routing.ts`, and group ids stay in `.env`. Product exceptions are keyed by product id, so renaming a product in the admin panel can no longer misroute anything.
+
 **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) is the full Thai walkthrough** — creating the bot, every console toggle, obtaining group ids, and the failure table. The summary below is only a checklist for someone who has done it before.
 
 1. Create a **Messaging API** channel in the LINE Developers Console, then in the LINE Official Account Manager disable auto-reply and greeting messages and enable **Allow bot to join group chats** — without it the bot cannot be invited to a group.

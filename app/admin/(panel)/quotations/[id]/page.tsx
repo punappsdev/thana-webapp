@@ -18,10 +18,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { ResendLineNotificationButton } from "@/components/admin/resend-line-notification-button";
 import { RetentionHoldToggle } from "@/components/admin/retention-hold-toggle";
+import { getLineRoutingConfig } from "@/lib/admin/line-routing-data";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
 import { quotationDeleteAt, QUOTATION_RETENTION_YEARS } from "@/lib/admin/retention";
 import { branchLabelTh, saleGroupLabelTh } from "@/lib/branches";
 import { resolveSaleGroup } from "@/lib/line/routing";
+import { toRoutingInput } from "@/lib/line/routing-input";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
 
 export default async function QuotationDetailPage({
@@ -32,7 +34,10 @@ export default async function QuotationDetailPage({
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
 
-  const request = await getQuotationDetail(Number(id));
+  const [request, routingConfig] = await Promise.all([
+    getQuotationDetail(Number(id)),
+    getLineRoutingConfig(),
+  ]);
   if (!request) notFound();
 
   const outsidePhuket = request.needDelivery && isOutsidePhuket(request.deliveryProvince);
@@ -41,17 +46,7 @@ export default async function QuotationDetailPage({
     ? "จัดส่งไปยังที่อยู่หน้างาน"
     : `รับสินค้าเองที่${branchLabelTh(request.contactBranch)}`;
   // คำนวณสดด้วยกฎเดียวกับตอนส่งจริง เพื่อให้ปุ่มส่งซ้ำบอกได้ว่าจะเข้ากลุ่มไหน
-  const lineRouting = resolveSaleGroup({
-    needDelivery: request.needDelivery,
-    contactBranch: request.contactBranch,
-    deliveryProvince: request.deliveryProvince,
-    deliveryDistrict: request.deliveryDistrict,
-    items: request.items.map((item) => ({
-      categorySlug: item.product?.category?.slug ?? null,
-      subCategorySlug: item.product?.subCategory?.slug ?? null,
-      productNameTh: item.product?.nameTh ?? null,
-    })),
-  });
+  const lineRouting = resolveSaleGroup(toRoutingInput(request), routingConfig);
   const boqAttachment =
     request.boqOriginalName && request.boqSize !== null && request.boqDownloadToken
       ? {
