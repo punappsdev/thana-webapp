@@ -1,8 +1,11 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { LineQuotaCard } from "@/components/admin/line-quota-card";
 import { MourningModeToggle } from "@/components/admin/mourning-mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getSiteSettings } from "@/lib/admin/site-settings";
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" });
@@ -43,6 +46,27 @@ export default async function SiteSettingsPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      {/* LINE API ช้าหรือ timeout ได้ถึง 10 วินาที กันไม่ให้ไปหน่วงการ์ดอื่นทั้งหน้า */}
+      <Suspense fallback={<LineQuotaCardSkeleton />}>
+        <LineQuotaCard />
+      </Suspense>
     </div>
+  );
+}
+
+function LineQuotaCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>โควต้าข้อความ LINE</CardTitle>
+        <CardDescription>กำลังอ่านโควต้าจาก LINE...</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-2 w-full" />
+        <Skeleton className="h-5 w-64" />
+      </CardContent>
+    </Card>
   );
 }

@@ -67,6 +67,8 @@ Every quotation request is pushed to one of three sales LINE groups. Which group
 
 Delivery status is stored on the request itself and shown under **แจ้งเตือนกลุ่มไลน์ทีมขาย** on `/admin/quotations/<id>`, together with the routed group, the reason it was chosen, and a resend button for requests that failed. The quotations list marks failed rows with a warning icon.
 
+Remaining monthly message quota is shown on `/admin/settings` under **โควต้าข้อความ LINE**, read live from LINE on every page load with a refresh button. The card also reports how many quotation requests this site notified this month, counted in Thai time — that figure counts requests, not messages, so it will never match LINE's own total. See **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) → ข้อควรรู้** for why.
+
 ## Promotions on product pages
 
 A promotion edited under **โปรโมชั่น** (`/admin/content/promotions`) can be bound to the catalog, in which case it also appears as a card band on the detail page of every product it matches.

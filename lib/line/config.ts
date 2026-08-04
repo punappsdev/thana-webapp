@@ -25,8 +25,18 @@ export function lineGroupEnvKey(group: SaleGroupCode): string {
   return GROUP_ID_ENV_KEYS[group];
 }
 
+/**
+ * อ่านเฉพาะ access token
+ *
+ * แยกจาก `getLineConfig()` เพราะการอ่านโควต้าคุยกับ LINE ด้วย token อย่างเดียว
+ * ไม่ต้องรู้จักกลุ่มปลายทาง จึงต้องใช้ได้แม้ยังไม่ได้ตั้ง LINE_GROUP_ID_* สักตัว
+ */
+export function getLineAccessToken(): string | null {
+  return process.env.LINE_CHANNEL_ACCESS_TOKEN?.trim() || null;
+}
+
 export function getLineConfig(): LineConfig | null {
-  const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN?.trim();
+  const accessToken = getLineAccessToken();
   if (!accessToken) return null;
 
   const groupIds: Partial<Record<SaleGroupCode, string>> = {};
