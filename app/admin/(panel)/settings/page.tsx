@@ -8,11 +8,15 @@ import { StorageCard } from "@/components/admin/storage-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requireAdminPage } from "@/lib/admin/auth";
 import { getSiteSettings } from "@/lib/admin/site-settings";
 
 const dateFormatter = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function SiteSettingsPage() {
+  // getSiteSettings also feeds the public homepage, so it cannot carry the
+  // check itself.
+  await requireAdminPage();
   const settings = await getSiteSettings();
 
   return (

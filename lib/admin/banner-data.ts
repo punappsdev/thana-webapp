@@ -1,12 +1,14 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 import type { Banner, BannerType } from "@/generated/prisma/client";
 
 export type PromotionOption = { id: number; titleTh: string; titleEn: string; slug: string };
 
 /** Banners of one type for the admin list, ordered as they appear in the carousel. */
 export async function getBannerList(type: BannerType): Promise<Banner[]> {
+  await requireAdmin();
   return getPrisma().banner.findMany({
     where: { type },
     orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
@@ -15,6 +17,7 @@ export async function getBannerList(type: BannerType): Promise<Banner[]> {
 
 /** A single banner for the edit form (any type; null when missing). */
 export async function getBannerRecord(id: number): Promise<Banner | null> {
+  await requireAdmin();
   return getPrisma().banner.findUnique({ where: { id } });
 }
 
@@ -40,6 +43,7 @@ export async function getActivePromotionBanners() {
 
 /** Promotions offered in the banner form's "linked promotion" selector. */
 export async function getPromotionOptions(): Promise<PromotionOption[]> {
+  await requireAdmin();
   return getPrisma().promotion.findMany({
     orderBy: { updatedAt: "desc" },
     select: { id: true, titleTh: true, titleEn: true, slug: true },

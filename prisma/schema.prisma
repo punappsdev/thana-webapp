@@ -67,6 +67,11 @@ model AdminLoginAttempt {
   createdAt DateTime @default(now())
 
   @@index([email, ipAddress, createdAt])
+  // The login throttle counts failures per account and per address separately.
+  // The composite index above only serves the email-led query; without this one
+  // the per-IP count degrades to a table scan exactly when a brute-force run is
+  // filling the table.
+  @@index([ipAddress, createdAt])
   @@index([createdAt])
 }
 

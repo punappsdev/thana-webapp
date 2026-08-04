@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { activityActionLabel, activityActionVariant, entityTypeLabel } from "@/lib/admin/activity-labels";
+import { requireAdminPage } from "@/lib/admin/auth";
 import { getPrisma } from "@/lib/prisma";
 
 export default async function AdminDashboardPage() {
+  // Queried straight off Prisma rather than through a guarded lib/admin/*-data
+  // module, so the check has to live here.
+  await requireAdminPage();
   const prisma = getPrisma();
   const now = new Date();
   const [products, productDrafts, contentDrafts, activePromotions, activities] = await Promise.all([

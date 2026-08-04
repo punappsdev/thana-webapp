@@ -1,5 +1,6 @@
 import "server-only";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 
 export type FeaturedProduct = {
   id: number;
@@ -13,6 +14,7 @@ export type FeaturedProduct = {
 
 /** Products chosen for the homepage "สินค้าแนะนำ" section, in display order. */
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
+  await requireAdmin();
   const items = await getPrisma().product.findMany({
     where: { featured: true },
     orderBy: [{ featuredOrder: "asc" }, { createdAt: "desc" }],
@@ -35,6 +37,7 @@ export function isProductPickerPool(value: string | null): value is ProductPicke
 
 /** Search pool backing the admin product pickers. */
 export async function getPickerProducts(input: { query?: string; page?: number; pool?: ProductPickerPool }) {
+  await requireAdmin();
   const page = Math.max(1, input.page || 1);
   const take = 24;
   const query = input.query?.trim();

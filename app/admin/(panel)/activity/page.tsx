@@ -3,9 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { activityActionLabel, activityActionVariant, entityTypeLabel } from "@/lib/admin/activity-labels";
+import { requireAdminPage } from "@/lib/admin/auth";
 import { getPrisma } from "@/lib/prisma";
 
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  // Queried straight off Prisma rather than through a guarded lib/admin/*-data
+  // module, so the check has to live here.
+  await requireAdminPage();
   const page = Math.max(1, Number((await searchParams).page) || 1);
   const take = 25;
   const [items, total] = await Promise.all([

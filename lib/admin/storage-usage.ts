@@ -2,6 +2,7 @@ import "server-only";
 
 import fs from "node:fs/promises";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 
 /**
  * ภาพรวมพื้นที่จัดเก็บสำหรับการ์ดในหน้าตั้งค่า
@@ -44,6 +45,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export async function getStorageUsage(): Promise<StorageUsage> {
+  await requireAdmin();
   const prisma = getPrisma();
 
   const [volume, media, boq, oldest, anonymizedCount] = await Promise.all([

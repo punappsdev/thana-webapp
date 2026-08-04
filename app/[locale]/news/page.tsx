@@ -73,7 +73,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
   const { type = "all", page = "1" } = await searchParams;
   const pageNumber = parseInt(page, 10) || 1;
-  const limit = 6;
+  const limit = 9;
   const skip = (pageNumber - 1) * limit;
   const t = await getTranslations("News");
   const tNav = await getTranslations("Header");

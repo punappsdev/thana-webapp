@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { createAdminSession, requireAdmin } from "@/lib/admin/auth";
+import { getClientIp } from "@/lib/admin/client-ip";
 import { recordActivity } from "@/lib/admin/audit";
 import { getPrisma } from "@/lib/prisma";
 import { hashAdminPassword, validateAdminPassword, verifyAdminPassword } from "@/lib/admin/security";
@@ -26,7 +27,7 @@ export async function changePasswordAction(_state: ActionResult, formData: FormD
     getPrisma().adminSession.deleteMany({ where: { userId: admin.id } }),
   ]);
   const headerStore = await headers();
-  await createAdminSession(admin.id, { ipAddress: headerStore.get("x-forwarded-for")?.split(",")[0]?.trim(), userAgent: headerStore.get("user-agent") || undefined });
+  await createAdminSession(admin.id, { ipAddress: (await getClientIp()) ?? undefined, userAgent: headerStore.get("user-agent") || undefined });
   await recordActivity({ adminId: admin.id, action: "PASSWORD_CHANGE", entityType: "AdminUser", entityId: admin.id, label: admin.email });
   return { success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ และออกจากระบบในอุปกรณ์อื่นแล้ว" };
 }

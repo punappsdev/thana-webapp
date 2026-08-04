@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileTypeFromBuffer } from "file-type";
 import { NextRequest, NextResponse } from "next/server";
 import type { MediaKind } from "@/generated/prisma/client";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { optimizeImage } from "@/lib/admin/image-optimize";
 import { countMediaReferences, unlinkMediaAsset } from "@/lib/admin/media";
@@ -15,7 +15,7 @@ const extensionByMime: Record<string, string> = { "image/jpeg": "jpg", "image/pn
 
 export async function POST(request: NextRequest) {
   let admin;
-  try { admin = await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
+  try { admin = await requireAdminApi(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
   const uploadDir = process.env.UPLOAD_DIR;
   if (!uploadDir) return NextResponse.json({ message: "UPLOAD_DIR is not configured" }, { status: 500 });
   const formData = await request.formData();
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  try { await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
+  try { await requireAdminApi(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
   const { searchParams } = new URL(request.url);
   const kindParam = searchParams.get("kind");
   const query = searchParams.get("query")?.trim() || "";
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   let admin;
-  try { admin = await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
+  try { admin = await requireAdminApi(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
   const body = await request.json().catch(() => ({})) as { id?: string };
   if (!body.id) return NextResponse.json({ message: "Invalid media id" }, { status: 400 });
   const asset = await getPrisma().mediaAsset.findUnique({ where: { id: body.id } });

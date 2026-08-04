@@ -1,8 +1,10 @@
 import "server-only";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 import type { CatalogResource } from "@/lib/admin/catalog-config";
 
 export async function getCatalogRows(resource: CatalogResource, input: { query?: string; page?: number } = {}) {
+  await requireAdmin();
   const prisma = getPrisma(); const page = Math.max(1, input.page || 1); const take = 20; const paging = { skip: (page - 1) * take, take };
   const result = await (async () => {
   switch (resource) {
@@ -19,6 +21,7 @@ export async function getCatalogRows(resource: CatalogResource, input: { query?:
 }
 
 export async function getCatalogCounts(): Promise<Record<CatalogResource, number>> {
+  await requireAdmin();
   const prisma = getPrisma();
   const [categories, subcategories, brands, units, attributes, attributeValues, articleCategories] = await Promise.all([
     prisma.category.count(),
@@ -33,6 +36,7 @@ export async function getCatalogCounts(): Promise<Record<CatalogResource, number
 }
 
 export async function getCatalogOptions() {
+  await requireAdmin();
   const prisma = getPrisma();
   const [categories, attributes] = await Promise.all([
     prisma.category.findMany({ orderBy: { nameTh: "asc" }, select: { id: true, nameTh: true } }),

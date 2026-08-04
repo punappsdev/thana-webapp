@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 import type { ContentResource } from "@/lib/admin/content-config";
 
 export type ContentListItem = {
@@ -64,6 +65,7 @@ const NO_TARGETING = {
 };
 
 export async function getContentList(resource: ContentResource, input: { query?: string; status?: string; page?: number }) {
+  await requireAdmin();
   const prisma = getPrisma();
   const page = Math.max(1, input.page || 1);
   const take = 10;
@@ -94,6 +96,7 @@ export async function getContentList(resource: ContentResource, input: { query?:
 }
 
 export async function getContentRecord(resource: ContentResource, id: number): Promise<ContentRecord | null> {
+  await requireAdmin();
   const prisma = getPrisma();
   switch (resource) {
     case "works": {
@@ -150,6 +153,7 @@ export async function getContentRecord(resource: ContentResource, id: number): P
  * a promotion can be prepared against a category that is not live yet.
  */
 export async function getPromotionTargetOptions(): Promise<TargetCategoryOption[]> {
+  await requireAdmin();
   return getPrisma().category.findMany({
     orderBy: { sortOrder: "asc" },
     select: {
@@ -162,6 +166,7 @@ export async function getPromotionTargetOptions(): Promise<TargetCategoryOption[
 }
 
 export async function getContentCategoryOptions(kind?: "catalog" | "article") {
+  await requireAdmin();
   const prisma = getPrisma();
   if (kind === "catalog") return prisma.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, nameTh: true, nameEn: true } });
   if (kind === "article") return prisma.articleCategory.findMany({ orderBy: { nameTh: "asc" }, select: { id: true, nameTh: true, nameEn: true } });

@@ -2,6 +2,7 @@ import "server-only";
 
 import { startOfThaiMonth } from "@/lib/line/quota";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 
 /**
  * สถิติการแจ้งเตือนเข้ากลุ่ม LINE ฝั่งเรา อ่านจาก QuotationRequest โดยตรง
@@ -18,6 +19,7 @@ export type LineSendStats = {
 };
 
 export async function getLineSendStats(): Promise<LineSendStats> {
+  await requireAdmin();
   const monthStart = startOfThaiMonth();
   const prisma = getPrisma();
 

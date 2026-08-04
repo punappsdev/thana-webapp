@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 import type { RoutingConfig } from "@/lib/line/routing";
 
 /** ตารางตั้งค่าเป็นแถวเดียว เหมือน `SiteSetting` */
@@ -91,6 +92,7 @@ export type LineRoutingSettings = {
  * ใช้ในการ์ดสรุปหน้าตั้งค่าและฟอร์มแก้ไข ซึ่งต้องแสดงชื่อ ไม่ใช่ id
  */
 export async function getLineRoutingSettings(): Promise<LineRoutingSettings> {
+  await requireAdmin();
   const setting = await getPrisma().lineRoutingSetting.findUnique({
     where: { id: LINE_ROUTING_SETTING_ID },
     include: {
@@ -150,6 +152,7 @@ export async function getLineRoutingSettings(): Promise<LineRoutingSettings> {
 
 /** ตัวเลือกทั้งหมดที่ให้เลือกในฟอร์ม — หมวดพร้อมหมวดย่อย และรายชื่อสินค้า */
 export async function getLineRoutingOptions() {
+  await requireAdmin();
   const prisma = getPrisma();
   const [categories, products] = await Promise.all([
     prisma.category.findMany({

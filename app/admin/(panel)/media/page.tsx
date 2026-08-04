@@ -6,9 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { requireAdminPage } from "@/lib/admin/auth";
 import { getPrisma } from "@/lib/prisma";
 
 export default async function MediaPage({ searchParams }: { searchParams: Promise<{ query?: string; page?: string }> }) {
+  // Queried straight off Prisma rather than through a guarded lib/admin/*-data
+  // module, so the check has to live here.
+  await requireAdminPage();
   const filters = await searchParams;
   const page = Math.max(1, Number(filters.page) || 1);
   const take = 24;

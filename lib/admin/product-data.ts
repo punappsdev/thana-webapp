@@ -1,7 +1,9 @@
 import "server-only";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 
 export async function getAdminProducts(input: { query?: string; status?: string; categoryId?: number; page?: number }) {
+  await requireAdmin();
   const page = Math.max(1, input.page || 1);
   const take = 10;
   const where = {
@@ -21,6 +23,7 @@ export async function getAdminProducts(input: { query?: string; status?: string;
 }
 
 export async function getProductEditorRecord(id: number) {
+  await requireAdmin();
   const product = await getPrisma().product.findUnique({
     where: { id },
     // The editor no longer shows a price, and this record is handed to a client
@@ -73,6 +76,7 @@ export async function getProductEditorRecord(id: number) {
 }
 
 export async function getProductEditorOptions() {
+  await requireAdmin();
   const prisma = getPrisma();
   const [categories, attributes, brands, units] = await Promise.all([
     prisma.category.findMany({ orderBy: { sortOrder: "asc" }, include: { subCategories: { orderBy: { sortOrder: "asc" } } } }),

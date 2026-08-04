@@ -1,5 +1,6 @@
 import "server-only";
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 
 export type QuotationCustomerType = "all" | "company" | "individual";
 
@@ -8,6 +9,7 @@ export async function getAdminQuotations(input: {
   customerType?: string;
   page?: number;
 }) {
+  await requireAdmin();
   const page = Math.max(1, input.page || 1);
   const take = 10;
   const query = input.query?.trim();

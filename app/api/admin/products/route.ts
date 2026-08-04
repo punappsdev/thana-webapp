@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/auth";
 import { getPickerProducts, isProductPickerPool } from "@/lib/admin/featured-data";
 
 /**
@@ -8,7 +8,7 @@ import { getPickerProducts, isProductPickerPool } from "@/lib/admin/featured-dat
  * (`?pool=all`, which includes drafts and already-featured products).
  */
 export async function GET(request: NextRequest) {
-  try { await requireAdmin(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
+  try { await requireAdminApi(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query") || undefined;
   const page = Number(searchParams.get("page")) || 1;

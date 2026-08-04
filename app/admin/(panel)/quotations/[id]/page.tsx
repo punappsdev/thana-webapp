@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { ResendLineNotificationButton } from "@/components/admin/resend-line-notification-button";
 import { RetentionHoldToggle } from "@/components/admin/retention-hold-toggle";
+import { requireAdminPage } from "@/lib/admin/auth";
 import { getLineRoutingConfig } from "@/lib/admin/line-routing-data";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
 import { quotationDeleteAt, QUOTATION_RETENTION_YEARS } from "@/lib/admin/retention";
@@ -31,6 +32,12 @@ export default async function QuotationDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // getQuotationDetail and getLineRoutingConfig are both reused by the public
+  // quote flow (lib/line/notify-quotation.ts), so neither can hold the check.
+  // This page shows the customer's name, address and phone number — it asserts
+  // the session itself.
+  await requireAdminPage();
+
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
 

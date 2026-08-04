@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin/auth";
 import type { PopupFrequency, PromotionPopup } from "@/generated/prisma/client";
 
 /**
@@ -33,11 +34,13 @@ const POPUP_ORDER = [{ sortOrder: "asc" }, { updatedAt: "desc" }] as const;
 
 /** All popups for the admin list, in the same order the homepage picks from. */
 export async function getPopupList(): Promise<PromotionPopup[]> {
+  await requireAdmin();
   return getPrisma().promotionPopup.findMany({ orderBy: [...POPUP_ORDER] });
 }
 
 /** A single popup for the edit form (null when missing). */
 export async function getPopupRecord(id: number): Promise<PromotionPopup | null> {
+  await requireAdmin();
   return getPrisma().promotionPopup.findUnique({ where: { id } });
 }
 
