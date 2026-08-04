@@ -53,6 +53,29 @@ LINE_GROUP_ID_FACTORY=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 - Keep `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` stable across deploys and instances.
 - Back up MySQL and `UPLOAD_DIR` together so media records and files remain consistent.
 
+## Scheduled maintenance
+
+Nothing deletes data on a timer by itself. Two scripts do that work and the server's own cron has to call them — without them `UPLOAD_DIR` only ever grows and the site keeps personal data past the retention period it publishes on `/privacy`.
+
+```cron
+# Sunday 03:00 — delete data past its retention period
+0 3 * * 0 cd /srv/thana-webapp && npm run retention:run >> /var/log/thana-retention.log 2>&1
+# Daily 04:00 — remove orphaned uploads and crash leftovers
+0 4 * * * cd /srv/thana-webapp && npm run uploads:sweep -- --delete >> /var/log/thana-sweep.log 2>&1
+```
+
+**`npm run retention:run`** — anonymizes quotation requests older than three years (deleting the BOQ file first, then overwriting every personal column and clearing the download token so old LINE links stop resolving), and prunes expired admin sessions, login attempts older than 30 days, and activity logs older than two years. The request code, dates and line items survive so historical reporting still works. The job is idempotent.
+
+**`npm run uploads:sweep`** — deletes `.tmp` files left by a crash and BOQ files no request points at any more. Files under `media/` and anything outside the two managed trees are reported but never deleted automatically, because `media:import` exists precisely for files placed on disk before the `MediaAsset` table knows about them.
+
+Before enabling either cron:
+
+1. Back up MySQL and `UPLOAD_DIR`.
+2. Run both scripts once without `--delete` (`npm run retention:run -- --dry-run`, `npm run uploads:sweep`) and read what they report.
+3. Tell the sales team that a request which turned into a real order needs the **"ลูกค้ารายนี้สั่งซื้อจริง เก็บข้อมูลไว้ 10 ปี"** switch on `/admin/quotations/<id>` before it reaches three years. Nothing in the database marks a request as sold, so that switch is the only thing standing between an order record and automatic deletion.
+
+Disk headroom, the size of both upload trees, and how many requests have already been anonymized are shown on `/admin/settings` under **พื้นที่จัดเก็บไฟล์**.
+
 ## LINE quotation notifications
 
 Every quotation request is pushed to one of three sales LINE groups. Which group receives it is decided by the delivery address and the categories in the cart, not by anything the customer selects — see **[LINE-NOTIFICATION.md](LINE-NOTIFICATION.md) → กลุ่มไหนได้รับใบไหน** for the rules. The five `LINE_*` variables are optional: when they are missing the site still accepts quotations and only logs a warning.

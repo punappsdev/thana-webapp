@@ -17,7 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { ResendLineNotificationButton } from "@/components/admin/resend-line-notification-button";
+import { RetentionHoldToggle } from "@/components/admin/retention-hold-toggle";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
+import { quotationDeleteAt, QUOTATION_RETENTION_YEARS } from "@/lib/admin/retention";
 import { branchLabelTh, saleGroupLabelTh } from "@/lib/branches";
 import { resolveSaleGroup } from "@/lib/line/routing";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
@@ -63,7 +65,11 @@ export default async function QuotationDetailPage({
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <Badge variant="secondary">{request.needTaxInvoice ? "นามบริษัท" : "บุคคลธรรมดา"}</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">{request.needTaxInvoice ? "นามบริษัท" : "บุคคลธรรมดา"}</Badge>
+            {request.anonymizedAt ? <Badge variant="outline">ลบข้อมูลส่วนบุคคลแล้ว</Badge> : null}
+            {request.retainUntil ? <Badge variant="outline">เก็บข้อมูล 10 ปี</Badge> : null}
+          </div>
           <h1 className="mt-3 font-headline-lg font-semibold">{request.code}</h1>
           <p className="font-body-sm text-muted-foreground">
             ส่งเมื่อ {request.createdAt.toLocaleString("th-TH")}
@@ -289,7 +295,7 @@ export default async function QuotationDetailPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline-sm">บันทึกความยินยอม</CardTitle>
+              <CardTitle className="font-headline-sm">บันทึกความยินยอมและกำหนดเก็บข้อมูล</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="flex items-start gap-2.5 font-body-sm">
@@ -297,6 +303,27 @@ export default async function QuotationDetailPage({
                 ยินยอมตามนโยบายความเป็นส่วนตัวเมื่อ {request.consentAt.toLocaleString("th-TH")}
               </p>
               <DetailRow label="IP Address" value={request.ipAddress} />
+
+              <div className="space-y-3 border-t pt-3">
+                {request.anonymizedAt ? (
+                  <p className="font-body-sm text-muted-foreground">
+                    ลบข้อมูลส่วนบุคคลไปแล้วเมื่อ {request.anonymizedAt.toLocaleDateString("th-TH")}
+                    ตามนโยบาย เหลือไว้เฉพาะรหัสอ้างอิงและรายการสินค้า
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-body-sm text-muted-foreground">
+                      {request.retainUntil
+                        ? `จะลบข้อมูลลูกค้าอัตโนมัติหลัง ${request.retainUntil.toLocaleDateString("th-TH")}`
+                        : `จะลบข้อมูลลูกค้าอัตโนมัติหลัง ${quotationDeleteAt(request.createdAt).toLocaleDateString("th-TH")} (${QUOTATION_RETENTION_YEARS} ปีนับจากวันที่ส่งคำขอ)`}
+                    </p>
+                    <RetentionHoldToggle
+                      id={request.id}
+                      held={request.retainUntil !== null}
+                    />
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

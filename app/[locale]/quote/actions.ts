@@ -296,9 +296,13 @@ export async function submitQuoteRequest(
   let boqAttachment: StoredBoqAttachment | null = null;
   const rawBoqFile = formData.get("boqFile");
   // Browsers submit an empty File object for an untouched optional file input.
+  // Only the size identifies it: the browser sends `filename=""`, busboy drops
+  // that falsy value, and React re-appends the part as a plain Blob — so by the
+  // time the action runs the name reads "blob", never "". A zero-byte upload is
+  // never a valid BOQ either way, so it always means "no attachment".
   const hasBoqFile =
     rawBoqFile !== null &&
-    !(isUploadFile(rawBoqFile) && rawBoqFile.name === "" && rawBoqFile.size === 0) &&
+    !(isUploadFile(rawBoqFile) && rawBoqFile.size === 0) &&
     !(typeof rawBoqFile === "string" && rawBoqFile.trim() === "");
   if (hasBoqFile) {
     if (!isUploadFile(rawBoqFile)) {

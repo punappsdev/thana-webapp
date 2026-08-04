@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { LineQuotaCard } from "@/components/admin/line-quota-card";
 import { MourningModeToggle } from "@/components/admin/mourning-mode-toggle";
+import { StorageCard } from "@/components/admin/storage-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,11 +48,32 @@ export default async function SiteSettingsPage() {
         </CardContent>
       </Card>
 
+      {/* อ่านพื้นที่ว่างของไดรฟ์และรวมขนาดไฟล์จากฐานข้อมูล เร็วแต่แยก stream ไว้เหมือนกัน */}
+      <Suspense fallback={<StorageCardSkeleton />}>
+        <StorageCard />
+      </Suspense>
+
       {/* LINE API ช้าหรือ timeout ได้ถึง 10 วินาที กันไม่ให้ไปหน่วงการ์ดอื่นทั้งหน้า */}
       <Suspense fallback={<LineQuotaCardSkeleton />}>
         <LineQuotaCard />
       </Suspense>
     </div>
+  );
+}
+
+function StorageCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>พื้นที่จัดเก็บไฟล์</CardTitle>
+        <CardDescription>กำลังตรวจสอบพื้นที่ของไดรฟ์...</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-2 w-full" />
+        <Skeleton className="h-5 w-64" />
+      </CardContent>
+    </Card>
   );
 }
 

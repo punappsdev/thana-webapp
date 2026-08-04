@@ -693,6 +693,14 @@ model QuotationRequest {
   boqSize          Int?
   boqDownloadToken String? @unique @db.VarChar(64)
 
+  /// เวลาที่งาน retention ลบข้อมูลส่วนบุคคลออกจากแถวนี้ (null = ยังเป็นข้อมูลจริง)
+  /// ใช้กันการทำซ้ำด้วย งานจึงรันกี่รอบก็ได้ผลเท่าเดิม
+  anonymizedAt DateTime?
+
+  /// วันที่ทีมงานขอให้เก็บข้อมูลนานกว่าค่าเริ่มต้น เช่น คำขอที่กลายเป็นออเดอร์จริง
+  /// ซึ่งนโยบายความเป็นส่วนตัวกำหนดให้เก็บ 10 ปี งาน retention จะข้ามแถวที่ยังไม่ถึงวันนี้
+  retainUntil DateTime?
+
   items QuotationItem[]
 
   createdAt DateTime @default(now())
@@ -701,6 +709,8 @@ model QuotationRequest {
   @@index([createdAt])
   @@index([phone])
   @@index([email])
+  /// คิวรีหลักของงาน retention: หาแถวที่ยังไม่ถูกลบและเก่าเกินกำหนด
+  @@index([anonymizedAt, createdAt])
 }
 
 /// สินค้าหนึ่งบรรทัดในคำขอ เก็บ snapshot ชื่อไว้ทั้งสองภาษาแบบเดียวกับ CartItem ใน lib/cart.ts
