@@ -13,6 +13,7 @@
     "admin:create": "tsx scripts/create-admin.ts",
     "media:import": "tsx scripts/import-media.ts",
     "search:reindex": "tsx scripts/reindex-search.ts",
+    "quotations:backfill-responsible-branch": "tsx scripts/backfill-quotation-responsible-branch.ts",
     "retention:run": "tsx scripts/retention.ts",
     "uploads:sweep": "tsx scripts/sweep-uploads.ts",
     "db:seed": "tsx prisma/seed.ts"

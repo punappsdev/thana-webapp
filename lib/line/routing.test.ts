@@ -48,7 +48,8 @@ function hardware(): RoutingItem {
 function delivery(overrides: Partial<RoutingInput> = {}): RoutingInput {
   return {
     needDelivery: true,
-    contactBranch: "headquarters",
+    // คำขอแบบจัดส่งไม่มีสาขาที่ลูกค้าเลือก กฎข้อ 2-4 ต้องตัดสินได้โดยไม่ใช้ค่านี้
+    contactBranch: null,
     deliveryProvince: "phang-nga",
     deliveryDistrict: "ตะกั่วทุ่ง",
     items: [glass()],
@@ -86,6 +87,12 @@ describe("resolveSaleGroup — ข้อ 1 รับสินค้าเอง�
   it("ใช้สำนักงานใหญ่เมื่อค่าสาขาในฐานข้อมูลอ่านไม่ออก", () => {
     expect(
       resolveSaleGroup(delivery({ needDelivery: false, contactBranch: "สาขาที่ปิดไปแล้ว" }), config).group,
+    ).toBe("headquarters");
+  });
+
+  it("ใช้สำนักงานใหญ่เมื่อไม่มีค่าสาขาเลย — ไม่ควรเกิดจากฟอร์ม แต่ต้องไม่พัง", () => {
+    expect(
+      resolveSaleGroup(delivery({ needDelivery: false, contactBranch: null }), config).group,
     ).toBe("headquarters");
   });
 });

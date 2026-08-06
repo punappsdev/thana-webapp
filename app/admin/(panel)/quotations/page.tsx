@@ -8,26 +8,47 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAdminQuotations } from "@/lib/admin/quotation-data";
+import {
+  ALL_FILTER_VALUE,
+  monthLabelTh,
+  quotationFulfillmentLabel,
+  responsibleBranchLabel,
+  responsibleBranchOptions,
+} from "@/lib/admin/quotation-filters";
 
 export default async function AdminQuotationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string; customerType?: string; page?: string }>;
+  searchParams: Promise<{
+    query?: string;
+    customerType?: string;
+    branch?: string;
+    month?: string;
+    page?: string;
+  }>;
 }) {
   const filters = await searchParams;
   const result = await getAdminQuotations({
     query: filters.query,
     customerType: filters.customerType,
+    branch: filters.branch,
+    month: filters.month,
     page: Number(filters.page) || 1,
   });
+  const isSet = (value: string | undefined) => Boolean(value) && value !== ALL_FILTER_VALUE;
   const hasFilter =
-    Boolean(filters.query) || (filters.customerType && filters.customerType !== "all");
+    Boolean(filters.query) ||
+    isSet(filters.customerType) ||
+    isSet(filters.branch) ||
+    isSet(filters.month);
 
   // Keep the active filters when paging, otherwise page 2 would reset the search.
   const pageHref = (page: number) => {
     const params = new URLSearchParams();
     if (filters.query) params.set("query", filters.query);
     if (filters.customerType) params.set("customerType", filters.customerType);
+    if (filters.branch) params.set("branch", filters.branch);
+    if (filters.month) params.set("month", filters.month);
     params.set("page", String(page));
     return `?${params}`;
   };
@@ -41,15 +62,17 @@ export default async function AdminQuotationsPage({
             ใบเสนอราคา
           </h1>
           <p className="font-body-sm text-muted-foreground">
-            คำขอจากลูกค้าทั้งหมด {result.total} รายการ
+            {hasFilter
+              ? `พบ ${result.total} รายการตามตัวกรอง`
+              : `คำขอจากลูกค้าทั้งหมด ${result.total} รายการ`}
           </p>
         </div>
       </div>
 
       <Card>
         <CardContent className="pt-6">
-          <form className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
-            <div className="relative">
+          <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(3,190px)_auto]">
+            <div className="relative md:col-span-2 xl:col-span-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 name="query"
@@ -59,11 +82,26 @@ export default async function AdminQuotationsPage({
               />
             </div>
             <AdminSelect
-              name="customerType"
-              defaultValue={filters.customerType || "all"}
+              name="branch"
+              defaultValue={filters.branch || ALL_FILTER_VALUE}
+              className="w-full"
+              options={responsibleBranchOptions()}
+            />
+            <AdminSelect
+              name="month"
+              defaultValue={filters.month || ALL_FILTER_VALUE}
               className="w-full"
               options={[
-                { value: "all", label: "ลูกค้าทุกประเภท" },
+                { value: ALL_FILTER_VALUE, label: "ทุกเดือน" },
+                ...result.months.map((month) => ({ value: month, label: monthLabelTh(month) })),
+              ]}
+            />
+            <AdminSelect
+              name="customerType"
+              defaultValue={filters.customerType || ALL_FILTER_VALUE}
+              className="w-full"
+              options={[
+                { value: ALL_FILTER_VALUE, label: "ลูกค้าทุกประเภท" },
                 { value: "company", label: "ออกใบเสร็จนามบริษัท" },
                 { value: "individual", label: "บุคคลธรรมดา" },
               ]}
@@ -76,13 +114,14 @@ export default async function AdminQuotationsPage({
       <Card>
         <CardContent className="overflow-x-auto p-0">
           {result.items.length ? (
-            <Table className="min-w-[900px]">
+            <Table className="min-w-[1020px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>รหัสอ้างอิง</TableHead>
                   <TableHead>ลูกค้า</TableHead>
                   <TableHead>ช่องทางติดต่อ</TableHead>
                   <TableHead>ประเภท</TableHead>
+                  <TableHead>สาขาที่รับผิดชอบ</TableHead>
                   <TableHead>รายการ</TableHead>
                   <TableHead>ส่งเมื่อ</TableHead>
                   <TableHead className="text-right">จัดการ</TableHead>
@@ -130,6 +169,14 @@ export default async function AdminQuotationsPage({
                       <Badge variant={request.needTaxInvoice ? "default" : "secondary"}>
                         {request.needTaxInvoice ? "นามบริษัท" : "บุคคลธรรมดา"}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <p className="font-body-sm">
+                        {responsibleBranchLabel(request.responsibleBranch)}
+                      </p>
+                      <p className="font-body-sm text-muted-foreground">
+                        {quotationFulfillmentLabel(request)}
+                      </p>
                     </TableCell>
                     <TableCell className="font-body-sm">{request._count.items}</TableCell>
                     <TableCell className="font-body-sm whitespace-nowrap">

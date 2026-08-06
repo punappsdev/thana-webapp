@@ -12,7 +12,7 @@ import type { RoutingInput } from "@/lib/line/routing";
  */
 export function toRoutingInput(request: {
   needDelivery: boolean;
-  contactBranch: string;
+  contactBranch: string | null;
   deliveryProvince: string | null;
   deliveryDistrict: string | null;
   items: {

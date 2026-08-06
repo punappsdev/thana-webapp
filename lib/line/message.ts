@@ -81,8 +81,8 @@ export type QuotationNotificationItem = {
 
 export type QuotationNotification = {
   code: string;
-  /** สาขาที่ลูกค้าเลือกไปรับสินค้าเอง มีความหมายเฉพาะเมื่อ needDelivery เป็น false */
-  contactBranch: string;
+  /** สาขาที่ลูกค้าเลือกไปรับสินค้าเอง null เมื่อเลือกจัดส่ง */
+  contactBranch: string | null;
   /** กลุ่มที่ระบบเลือกให้รับเรื่องใบนี้ พร้อมเหตุผล — มาจาก lib/line/routing.ts */
   saleGroup: SaleGroupCode;
   routingReason: string;
@@ -177,10 +177,7 @@ function formatAddress(parts: (string | null)[]): string | null {
   return filled.length > 0 ? filled.join(" ") : null;
 }
 
-/**
- * คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา (`contactBranch` ถูกตั้งเป็นค่า default
- * ตอนบันทึก) จึงต้องพูดถึงวิธีรับสินค้าแทน ไม่ใช่ "สาขาที่ติดต่อ" ซึ่งไม่จริง
- */
+/** คำขอแบบจัดส่งไม่มีสาขาให้พูดถึง (`contactBranch` เป็น null) จึงบอกวิธีรับสินค้าแทน */
 function fulfillmentLabel(input: QuotationNotification): string {
   return input.needDelivery
     ? "จัดส่งไปยังที่อยู่หน้างาน"

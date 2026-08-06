@@ -23,15 +23,11 @@ export type NotifyResult =
  * อ่านข้อมูลกลับจากฐานข้อมูลแทนการรับ payload จากผู้เรียก เพื่อให้เส้นทาง "ส่ง
  * อัตโนมัติตอนลูกค้ากดส่ง" กับ "กดส่งซ้ำจากหลังบ้าน" ใช้โค้ดชุดเดียวกันเป๊ะ และ
  * ข้อความที่ส่งสะท้อนสิ่งที่บันทึกไว้จริงเสมอ
+ *
+ * นี่คือที่เดียวที่เขียน `responsibleBranch` ลงฐานข้อมูล — การกดส่งซ้ำหลังแก้กฎในหน้า
+ * `/admin/settings/line-routing` จึงย้ายใบไปอยู่ใต้สาขาใหม่ตามกลุ่มที่ได้รับจริง
  */
 export async function notifyQuotationToLine(requestId: number): Promise<NotifyResult> {
-  const config = getLineConfig();
-  if (!config) {
-    // ไม่เขียน lineNotifyError เพราะนี่คือ "ยังไม่ได้ตั้งค่า" ไม่ใช่ "ส่งแล้วพลาด"
-    console.warn("[line] ยังไม่ได้ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN หรือ LINE_GROUP_ID_* ข้ามการแจ้งเตือน");
-    return { status: "skipped", reason: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ LINE" };
-  }
-
   const [request, routingConfig] = await Promise.all([
     getQuotationDetail(requestId),
     getLineRoutingConfig(),
@@ -39,6 +35,23 @@ export async function notifyQuotationToLine(requestId: number): Promise<NotifyRe
   if (!request) return { status: "failed", error: "ไม่พบคำขอใบเสนอราคานี้" };
 
   const decision = resolveSaleGroup(toRoutingInput(request), routingConfig);
+
+  // บันทึกสาขาที่รับผิดชอบก่อนพยายามส่ง และก่อนเช็กการตั้งค่า LINE ด้วย เพราะ
+  // ตัวกรองในหลังบ้านต้องใช้ค่านี้แม้ในระบบที่ยังไม่ได้ต่อ LINE และเพราะที่อยู่
+  // จัดส่งซึ่งใช้ตัดสินจะถูกงาน retention ลบทิ้งในภายหลัง (ดู lib/admin/retention.ts)
+  if (request.responsibleBranch !== decision.group) {
+    await getPrisma().quotationRequest.update({
+      where: { id: requestId },
+      data: { responsibleBranch: decision.group },
+    });
+  }
+
+  const config = getLineConfig();
+  if (!config) {
+    // ไม่เขียน lineNotifyError เพราะนี่คือ "ยังไม่ได้ตั้งค่า" ไม่ใช่ "ส่งแล้วพลาด"
+    console.warn("[line] ยังไม่ได้ตั้งค่า LINE_CHANNEL_ACCESS_TOKEN หรือ LINE_GROUP_ID_* ข้ามการแจ้งเตือน");
+    return { status: "skipped", reason: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ LINE" };
+  }
 
   const groupId = config.groupIds[decision.group];
   if (!groupId) {

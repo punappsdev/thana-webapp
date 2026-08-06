@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { isDistrictForProvince, isKnownDistrictName } from "@/lib/districts";
 import { getPrisma } from "@/lib/prisma";
-import { BRANCH_CODES, DEFAULT_BRANCH_CODE } from "@/lib/branches";
+import { BRANCH_CODES } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { isProvinceCode } from "@/lib/provinces";
@@ -247,7 +247,9 @@ export async function submitQuoteRequest(
   }
   const d = parsed.data;
   const needDelivery = d.fulfillmentMethod === "delivery";
-  const contactBranch = needDelivery ? DEFAULT_BRANCH_CODE : d.contactBranch!;
+  // null ไม่ใช่ค่า default: ฟอร์มไม่ได้ถามสาขาตอนเลือกจัดส่ง การเดาค่าลงไปทำให้
+  // หลังบ้านอ่านผิดว่าลูกค้าเลือกสาขานั้นเอง (`zod` การันตีแล้วว่า pickup มีค่าจริง)
+  const contactBranch = needDelivery ? null : d.contactBranch!;
 
   const itemsResult = z
     .string()

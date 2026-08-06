@@ -6,8 +6,12 @@
  * ใหม่แล้ว TypeScript ชี้จุดที่ต้องแก้ให้ครบเอง แทนที่จะต้องไล่ grep
  *
  * ตัวโค้ดถูกเก็บลง `QuotationRequest.contactBranch` เป็น VARCHAR ไม่ใช่ enum ของ
- * ฐานข้อมูล คำขอเก่าจึงอาจมีค่าที่ไม่อยู่ในลิสต์นี้ได้ ทุกฟังก์ชันด้านล่างจึงรับ
- * `string` และเผื่อทางออกไว้เสมอ
+ * ฐานข้อมูล คำขอเก่าจึงอาจมีค่าที่ไม่อยู่ในลิสต์นี้ได้ และคำขอแบบจัดส่งเก็บเป็น
+ * null เพราะลูกค้าไม่ได้เลือกสาขา ทุกฟังก์ชันด้านล่างจึงรับ `string | null` และ
+ * เผื่อทางออกไว้เสมอ
+ *
+ * ทางออกนั้นมีไว้กันพัง ไม่ใช่คำตอบที่ถูก — **อย่าเรียก `branchLabelTh()` กับคำขอ
+ * แบบจัดส่ง** เพราะจะได้ชื่อสาขาที่ลูกค้าไม่เคยเลือก ให้เช็ก `needDelivery` ก่อน
  */
 export const BRANCH_CODES = ["headquarters", "thalang"] as const;
 
@@ -39,8 +43,8 @@ export function isBranchCode(value: string): value is BranchCode {
   return (BRANCH_CODES as readonly string[]).includes(value);
 }
 
-export function toBranchCode(value: string): BranchCode {
-  return isBranchCode(value) ? value : DEFAULT_BRANCH_CODE;
+export function toBranchCode(value: string | null): BranchCode {
+  return value !== null && isBranchCode(value) ? value : DEFAULT_BRANCH_CODE;
 }
 
 const saleGroupLabelsTh: Record<SaleGroupCode, string> = {
@@ -53,7 +57,7 @@ const saleGroupLabelsTh: Record<SaleGroupCode, string> = {
  * ป้ายภาษาไทยสำหรับหลังบ้านและข้อความที่ส่งเข้ากลุ่ม LINE ซึ่งเป็นภาษาไทยล้วน
  * ฝั่งเว็บสาธารณะยังใช้ next-intl (`QuoteForm.contactBranch*`) ตามเดิม
  */
-export function branchLabelTh(code: string): string {
+export function branchLabelTh(code: string | null): string {
   return saleGroupLabelsTh[toBranchCode(code)];
 }
 

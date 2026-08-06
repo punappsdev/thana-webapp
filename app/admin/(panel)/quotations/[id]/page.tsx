@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRightLeft,
   Download,
   FileText,
   Mail,
@@ -21,6 +22,7 @@ import { RetentionHoldToggle } from "@/components/admin/retention-hold-toggle";
 import { requireAdminPage } from "@/lib/admin/auth";
 import { getLineRoutingConfig } from "@/lib/admin/line-routing-data";
 import { getQuotationDetail } from "@/lib/admin/quotation-data";
+import { responsibleBranchLabel } from "@/lib/admin/quotation-filters";
 import { quotationDeleteAt, QUOTATION_RETENTION_YEARS } from "@/lib/admin/retention";
 import { branchLabelTh, saleGroupLabelTh } from "@/lib/branches";
 import { resolveSaleGroup } from "@/lib/line/routing";
@@ -48,12 +50,17 @@ export default async function QuotationDetailPage({
   if (!request) notFound();
 
   const outsidePhuket = request.needDelivery && isOutsidePhuket(request.deliveryProvince);
-  // คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา จึงต้องพูดถึงวิธีรับสินค้าแทนชื่อสาขา
+  // คำขอแบบจัดส่งไม่มีสาขาให้พูดถึง (contactBranch เป็น null) จึงบอกวิธีรับสินค้าแทน
   const fulfillmentLabel = request.needDelivery
     ? "จัดส่งไปยังที่อยู่หน้างาน"
     : `รับสินค้าเองที่${branchLabelTh(request.contactBranch)}`;
   // คำนวณสดด้วยกฎเดียวกับตอนส่งจริง เพื่อให้ปุ่มส่งซ้ำบอกได้ว่าจะเข้ากลุ่มไหน
   const lineRouting = resolveSaleGroup(toRoutingInput(request), routingConfig);
+  // `responsibleBranch` คือสาขาที่ได้ใบไปจริงตอนแจ้งเข้ากลุ่มครั้งล่าสุด ต่างจากค่าที่
+  // คำนวณสดข้างบนได้เมื่อกฎถูกแก้ทีหลัง หรือเมื่อที่อยู่จัดส่งถูกงาน retention ลบไปแล้ว
+  // ตัวกรองในหน้ารวมใช้ค่าที่บันทึกไว้ หน้านี้จึงต้องบอกให้ชัดว่าสองค่าไม่ตรงกัน
+  const routingChanged =
+    request.responsibleBranch !== null && request.responsibleBranch !== lineRouting.group;
   const boqAttachment =
     request.boqOriginalName && request.boqSize !== null && request.boqDownloadToken
       ? {
@@ -192,7 +199,7 @@ export default async function QuotationDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailRow label="ชื่อ-นามสกุล" value={`${request.firstName} ${request.lastName}`} />
-              {/* คำขอแบบจัดส่งไม่ได้ให้ลูกค้าเลือกสาขา แถวนี้จึงมีความหมายเฉพาะตอนรับเอง */}
+              {/* คำขอแบบจัดส่งเก็บ contactBranch เป็น null เพราะลูกค้าไม่ได้เลือกสาขา */}
               {request.needDelivery ? null : (
                 <DetailRow label="สาขาที่รับสินค้า" value={branchLabelTh(request.contactBranch)} />
               )}
@@ -260,11 +267,37 @@ export default async function QuotationDetailPage({
               <CardTitle className="font-headline-sm">แจ้งเตือนกลุ่มไลน์ทีมขาย</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-0.5">
-                <p className="font-label-sm text-muted-foreground">กลุ่มปลายทาง</p>
-                <p className="font-body-sm break-words">{saleGroupLabelTh(lineRouting.group)}</p>
-                <p className="font-body-sm text-muted-foreground">{lineRouting.reason}</p>
-              </div>
+              {routingChanged ? (
+                <>
+                  <div className="space-y-0.5">
+                    <p className="font-label-sm text-muted-foreground">สาขาที่รับผิดชอบตอนนี้</p>
+                    <p className="font-body-sm break-words">
+                      {responsibleBranchLabel(request.responsibleBranch)}
+                    </p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="font-label-sm text-muted-foreground">
+                      กลุ่มปลายทางถ้ากดส่งซ้ำตอนนี้
+                    </p>
+                    <p className="font-body-sm break-words">
+                      {saleGroupLabelTh(lineRouting.group)}
+                    </p>
+                    <p className="font-body-sm text-muted-foreground">{lineRouting.reason}</p>
+                  </div>
+                  {/* ต่อประโยคด้วย template string ไม่ใช่หลาย ๆ บรรทัดใน JSX
+                      เพราะ JSX จะแทรกช่องว่างระหว่างบรรทัด ซึ่งผิดหลักภาษาไทย */}
+                  <p className="flex items-start gap-2.5 rounded-md border border-primary/20 bg-primary/5 p-3 font-body-sm text-foreground">
+                    <ArrowRightLeft className="mt-0.5 size-4 shrink-0 text-primary" />
+                    {`กฎการเลือกกลุ่มถูกแก้หลังจากใบนี้ถูกจัดสาขาไปแล้ว ในตารางและตัวกรองใบนี้จึงยังนับเป็นของ${responsibleBranchLabel(request.responsibleBranch)} กดส่งซ้ำเพื่อย้ายไปเป็นของ${saleGroupLabelTh(lineRouting.group)}`}
+                  </p>
+                </>
+              ) : (
+                <div className="space-y-0.5">
+                  <p className="font-label-sm text-muted-foreground">กลุ่มปลายทาง</p>
+                  <p className="font-body-sm break-words">{saleGroupLabelTh(lineRouting.group)}</p>
+                  <p className="font-body-sm text-muted-foreground">{lineRouting.reason}</p>
+                </div>
+              )}
               {request.lineNotifiedAt ? (
                 <>
                   <Badge>ส่งเข้ากลุ่มแล้ว</Badge>

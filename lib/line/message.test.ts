@@ -63,6 +63,8 @@ function fullRequest(overrides: Partial<QuotationNotification> = {}): QuotationN
     province: "phuket",
     postalCode: "83130",
     needDelivery: true,
+    // เลือกจัดส่งแล้วฟอร์มไม่ถามสาขา คอลัมน์นี้จึงเป็น null ในฐานข้อมูล
+    contactBranch: null,
     deliveryAddressLine: "12 ถนนเพชรเกษม",
     deliverySubDistrict: "โคกกลอย",
     deliveryDistrict: "ตะกั่วทุ่ง",
@@ -253,6 +255,12 @@ describe("buildQuotationMessages", () => {
   it("ยังส่งได้แม้ contactBranch ในฐานข้อมูลเป็นค่าที่ไม่รู้จัก", () => {
     const text = allText(buildQuotationMessages(minimalRequest({ contactBranch: "ปิดไปแล้ว" })));
     expect(text).toContain("สาขาสำนักงานใหญ่");
+  });
+
+  it("ไม่พูดถึงสาขาเลยเมื่อคำขอเป็นแบบจัดส่ง ซึ่ง contactBranch เป็น null", () => {
+    const text = allText(buildQuotationMessages(fullRequest()));
+    expect(text).toContain("จัดส่งไปยังที่อยู่หน้างาน");
+    expect(text).not.toContain("รับสินค้าเองที่");
   });
 });
 

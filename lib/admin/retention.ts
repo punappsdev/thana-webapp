@@ -62,8 +62,10 @@ export function quotationDeleteAt(createdAt: Date): Date {
  * แทนที่จะใส่ค่าที่ดูเหมือนชื่อจริง ส่วน boqDownloadToken ต้องถูกล้างด้วยเพราะลิงก์
  * ดาวน์โหลดที่เคยส่งเข้ากลุ่ม LINE จะค้างอยู่ในแชทตลอดไปและไม่มีวันหมดอายุเอง
  *
- * สิ่งที่เก็บไว้: code, createdAt, consentAt, contactBranch, locale, รหัสจังหวัด และ
- * QuotationItem ทั้งหมด — ไม่ระบุตัวบุคคลแต่ยังใช้ดูสถิติสินค้าที่ถูกขอราคาได้
+ * สิ่งที่เก็บไว้: code, createdAt, consentAt, contactBranch, responsibleBranch, locale, รหัส
+ * จังหวัด และ QuotationItem ทั้งหมด — ไม่ระบุตัวบุคคลแต่ยังใช้ดูสถิติสินค้าที่ถูกขอ
+ * ราคาได้ และยังกรองตามสาขาที่รับผิดชอบได้ (ที่อยู่จัดส่งที่ใช้ตัดสินสาขาถูกลบไป
+ * แล้ว จึงคำนวณซ้ำไม่ได้ ต้องอาศัยค่าที่บันทึกไว้ตอนแจ้งเข้ากลุ่ม LINE)
  */
 export function anonymizedQuotationFields(now: Date) {
   return {

@@ -38,7 +38,8 @@ export type RoutingItem = {
 export type RoutingInput = {
   /** false = ลูกค้าเลือกไปรับสินค้าเองที่สาขา จึงไม่มีที่อยู่จัดส่งให้ตัดสิน */
   needDelivery: boolean;
-  contactBranch: string;
+  /** null เมื่อเลือกจัดส่ง ซึ่งเป็นกรณีที่กฎข้อ 1 ไม่ทำงานอยู่แล้ว */
+  contactBranch: string | null;
   deliveryProvince: string | null;
   deliveryDistrict: string | null;
   items: RoutingItem[];
