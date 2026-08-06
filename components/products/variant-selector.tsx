@@ -179,73 +179,89 @@ export function VariantSelector({
             {labels.selectOptions}
           </h2>
 
-          {groups.map((group) => (
-            <div key={group.id} className="space-y-2">
-              <span className="font-label-md font-medium text-[#434653]">
-                {group.name}
-                {group.unit ? ` (${group.unit})` : ""}
-              </span>
+          {groups.map((group) => {
+            const selectedVal = group.values.find((v) => v.id === selected[group.id]);
 
-              <div className="flex flex-wrap gap-2">
-                {group.values.map((value) => {
-                  const isActive = selected[group.id] === value.id;
-                  const offered = offeredIds.has(value.id);
-                  // Dimmed means "does not go with your current pick", not "cannot click"
-                  const dimmed = offered && !isActive && !isCompatible(group.id, value.id);
+            return (
+              <div key={group.id} className="space-y-2">
+                <span className="font-label-md font-medium text-[#434653]">
+                  {group.name}
+                  {group.unit ? ` (${group.unit})` : ""}
+                  {selectedVal && (
+                    <span className="ml-1.5 font-semibold text-primary">
+                      : {selectedVal.label}
+                    </span>
+                  )}
+                </span>
 
-                  if (group.inputType === "COLOR" && value.colorHex) {
+                <div className="flex flex-wrap gap-2">
+                  {group.values.map((value) => {
+                    const isActive = selected[group.id] === value.id;
+                    const offered = offeredIds.has(value.id);
+                    // Dimmed means "does not go with your current pick", not "cannot click"
+                    const dimmed = offered && !isActive && !isCompatible(group.id, value.id);
+
+                    if (group.inputType === "COLOR" && value.colorHex) {
+                      return (
+                        <button
+                          key={value.id}
+                          type="button"
+                          onClick={() => pick(group.id, value.id)}
+                          title={value.label}
+                          aria-label={value.label}
+                          aria-pressed={isActive}
+                          disabled={!offered}
+                          className={`inline-flex items-center gap-2 px-3 py-2 font-label-sm rounded-md font-semibold transition-all border ${
+                            isActive
+                              ? "bg-primary text-white border-primary shadow-blue-sm"
+                              : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
+                          } ${
+                            !offered
+                              ? "opacity-30 cursor-not-allowed line-through hover:bg-white"
+                              : "cursor-pointer"
+                          } ${dimmed ? "opacity-50 border-dashed" : ""}`}
+                        >
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/10 shrink-0 shadow-xs relative flex items-center justify-center"
+                            style={{ backgroundColor: value.colorHex }}
+                          >
+                            {isActive && (
+                              <Check
+                                className="h-2.5 w-2.5 drop-shadow-xs"
+                                style={{ color: isLight(value.colorHex) ? "#1a1b22" : "#ffffff" }}
+                              />
+                            )}
+                          </span>
+                          <span>{value.label}</span>
+                        </button>
+                      );
+                    }
+
                     return (
                       <button
                         key={value.id}
                         type="button"
                         onClick={() => pick(group.id, value.id)}
-                        title={value.label}
-                        aria-label={value.label}
                         aria-pressed={isActive}
                         disabled={!offered}
-                        className={`relative h-10 w-10 rounded-md border-2 transition-all ${
+                        className={`px-4 py-2 font-label-sm rounded-md font-semibold transition-all border ${
                           isActive
-                            ? "border-primary shadow-blue-sm scale-105"
-                            : "border-[#c4c6d5] hover:border-primary/50"
-                        } ${!offered ? "opacity-30 cursor-not-allowed" : "cursor-pointer"} ${
-                          dimmed ? "opacity-50" : ""
-                        }`}
-                        style={{ backgroundColor: value.colorHex }}
+                            ? "bg-primary text-white border-primary shadow-blue-sm"
+                            : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
+                        } ${
+                          !offered
+                            ? "opacity-40 cursor-not-allowed line-through hover:bg-white"
+                            : "cursor-pointer"
+                        } ${dimmed ? "opacity-50 border-dashed" : ""}`}
                       >
-                        {isActive && (
-                          <Check
-                            className="absolute inset-0 m-auto h-4 w-4 drop-shadow"
-                            style={{ color: isLight(value.colorHex) ? "#1a1b22" : "#ffffff" }}
-                          />
-                        )}
+                        {value.label}
                       </button>
                     );
-                  }
-
-                  return (
-                    <button
-                      key={value.id}
-                      type="button"
-                      onClick={() => pick(group.id, value.id)}
-                      aria-pressed={isActive}
-                      disabled={!offered}
-                      className={`px-4 py-2 font-label-sm rounded-md font-semibold transition-all border ${
-                        isActive
-                          ? "bg-primary text-white border-primary shadow-blue-sm"
-                          : "bg-white text-[#434653] border-[#c4e2f5] hover:bg-[#f3f3fc]"
-                      } ${
-                        !offered
-                          ? "opacity-40 cursor-not-allowed line-through hover:bg-white"
-                          : "cursor-pointer"
-                      } ${dimmed ? "opacity-50 border-dashed" : ""}`}
-                    >
-                      {value.label}
-                    </button>
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
