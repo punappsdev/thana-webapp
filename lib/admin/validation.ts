@@ -74,15 +74,21 @@ export const MAX_COMBINATIONS = 200;
  */
 export function validateProductVariants(variants: ProductVariantInput[], published = true): string[] {
   const errors = new Set<string>();
-  const skus = new Set<string>();
+  const seenSkus = new Map<string, string>();
+  const duplicateSkus = new Set<string>();
   const combinations = new Set<string>();
   let defaultCount = 0;
 
   for (const variant of variants) {
-    const sku = variant.sku?.trim().toLowerCase();
-    if (sku) {
-      if (skus.has(sku)) errors.add("SKU ของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
-      skus.add(sku);
+    const rawSku = variant.sku?.trim();
+    if (rawSku) {
+      const skuLower = rawSku.toLowerCase();
+      if (seenSkus.has(skuLower)) {
+        duplicateSkus.add(seenSkus.get(skuLower)!);
+        duplicateSkus.add(rawSku);
+      } else {
+        seenSkus.set(skuLower, rawSku);
+      }
     }
 
     // A caller that addresses values by token rather than id passes no value ids
@@ -98,6 +104,10 @@ export function validateProductVariants(variants: ProductVariantInput[], publish
 
     if (variant.price < 0) errors.add("ราคาต้องไม่ติดลบ");
     if (variant.isDefault) defaultCount += 1;
+  }
+
+  if (duplicateSkus.size > 0) {
+    errors.add(`พบ SKU ซ้ำกันในตัวเลือก: ${[...duplicateSkus].join(", ")}`);
   }
 
   if (published) {

@@ -215,7 +215,56 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     const duplicateCombination = new Set(variants.map((variant) => [...variant.valueTokens].sort().join("|"))).size !== variants.length;
     if (duplicateCombination) variantErrors.push("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
   }
+
+  // Check if main SKU collides with any variant SKU in the form
+  const mainSkuTrimmed = d.sku?.trim();
+  if (mainSkuTrimmed && !isDraftSku(mainSkuTrimmed)) {
+    const matchingVariant = pricedVariants.find((v) => v.sku?.trim().toLowerCase() === mainSkuTrimmed.toLowerCase());
+    if (matchingVariant) {
+      variantErrors.push(`รหัสสินค้าหลัก (SKU "${mainSkuTrimmed}") ซ้ำกับในรายการตัวเลือก`);
+    }
+  }
+
   if (variantErrors.length) return { success: false, message: variantErrors.join(" · ") };
+
+  // Check for duplicate SKUs in DB before proceeding
+  const candidateSkus = [...new Set([
+    ...(mainSkuTrimmed && !isDraftSku(mainSkuTrimmed) ? [mainSkuTrimmed] : []),
+    ...pricedVariants.map((v) => v.sku?.trim()).filter((sku): sku is string => Boolean(sku && !isDraftSku(sku))),
+  ])];
+
+  if (candidateSkus.length > 0) {
+    const [dbProductMatches, dbVariantMatches] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          sku: { in: candidateSkus },
+          ...(id ? { NOT: { id } } : {}),
+        },
+        select: { sku: true },
+      }),
+      prisma.productVariant.findMany({
+        where: {
+          sku: { in: candidateSkus },
+          ...(id ? { NOT: { productId: id } } : {}),
+        },
+        select: { sku: true },
+      }),
+    ]);
+
+    const existingSkusInDb = [...new Set([
+      ...dbProductMatches.map((p) => p.sku),
+      ...dbVariantMatches.map((v) => v.sku).filter((sku): sku is string => Boolean(sku)),
+    ])];
+
+    if (existingSkusInDb.length > 0) {
+      const message = `รหัสสินค้า (SKU) "${existingSkusInDb.join(", ")}" ถูกใช้แล้วในระบบ กรุณาเปลี่ยนใหม่`;
+      return {
+        success: false,
+        message,
+        fieldErrors: mainSkuTrimmed && existingSkusInDb.includes(mainSkuTrimmed) ? { sku: [`รหัสสินค้า (SKU) "${mainSkuTrimmed}" ถูกใช้แล้ว`] } : undefined,
+      };
+    }
+  }
 
   const slug = await ensureUniqueProductSlug(prisma, slugifyAdminTitle(d.slug || d.nameEn) || fallbackToken("product"), id);
   const core = {

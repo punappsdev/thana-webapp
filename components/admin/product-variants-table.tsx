@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MAX_COMBINATIONS } from "@/lib/admin/validation";
+import { cn } from "@/lib/utils";
 import type { DictionaryAttribute, ProductAttributeDraft } from "@/components/admin/product-attributes-editor";
 
 /**
@@ -146,6 +148,19 @@ export function ProductVariantsTable({
 
   const overLimit = isOverCombinationLimit(axes);
 
+  const duplicateSkus = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of variants) {
+      const sku = v.sku?.trim().toLowerCase();
+      if (sku) counts.set(sku, (counts.get(sku) || 0) + 1);
+    }
+    const dupes = new Set<string>();
+    for (const [sku, count] of counts.entries()) {
+      if (count > 1) dupes.add(sku);
+    }
+    return dupes;
+  }, [variants]);
+
   if (!axes.length) return null;
 
   return (
@@ -166,6 +181,12 @@ export function ProductVariantsTable({
         </p>
       ) : null}
 
+      {duplicateSkus.size > 0 ? (
+        <p className="rounded-md border border-destructive bg-error-container p-2.5 font-body-sm text-on-error-container font-medium">
+          พบ SKU ซ้ำกันในตารางตัวเลือกสินค้า กรุณาแก้ไขรหัสที่ซ้ำกัน
+        </p>
+      ) : null}
+
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -179,27 +200,36 @@ export function ProductVariantsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {variants.map((row) => (
-              <TableRow key={row._key}>
-                {axes.map((axis) => {
-                  const token = row.valueTokens.find((item) => axis.options.some((option) => option.token === item));
-                  return (
-                    <TableCell key={axis.attributeKey} className="font-label-md whitespace-nowrap">
-                      {token ? labelOf(token) : <span className="text-destructive">ไม่ระบุ</span>}
-                    </TableCell>
-                  );
-                })}
-                <TableCell>
-                  <Input value={row.sku} onChange={(event) => update(row._key, { sku: event.target.value })} placeholder="ไม่บังคับ" className="w-32 font-body-sm" />
-                </TableCell>
-                <TableCell className="text-center">
-                  <input type="checkbox" aria-label="ขายอยู่" checked={row.isAvailable} onChange={(event) => update(row._key, { isAvailable: event.target.checked })} />
-                </TableCell>
-                <TableCell className="text-center">
-                  <input type="radio" name="variant-default" aria-label="ค่าเริ่มต้น" checked={row.isDefault} onChange={() => setDefault(row._key)} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {variants.map((row) => {
+              const isDuplicateSku = Boolean(row.sku?.trim()) && duplicateSkus.has(row.sku.trim().toLowerCase());
+              return (
+                <TableRow key={row._key}>
+                  {axes.map((axis) => {
+                    const token = row.valueTokens.find((item) => axis.options.some((option) => option.token === item));
+                    return (
+                      <TableCell key={axis.attributeKey} className="font-label-md whitespace-nowrap">
+                        {token ? labelOf(token) : <span className="text-destructive">ไม่ระบุ</span>}
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell>
+                    <Input
+                      value={row.sku}
+                      onChange={(event) => update(row._key, { sku: event.target.value })}
+                      placeholder="ไม่บังคับ"
+                      aria-invalid={isDuplicateSku || undefined}
+                      className={cn("w-32 font-body-sm", isDuplicateSku && "border-destructive focus-visible:ring-destructive")}
+                    />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <input type="checkbox" aria-label="ขายอยู่" checked={row.isAvailable} onChange={(event) => update(row._key, { isAvailable: event.target.checked })} />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <input type="radio" name="variant-default" aria-label="ค่าเริ่มต้น" checked={row.isDefault} onChange={() => setDefault(row._key)} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

@@ -32,7 +32,7 @@ describe("admin validation", () => {
     ]);
 
     expect(result).toEqual(expect.arrayContaining([
-      "SKU ของแต่ละตัวเลือกต้องไม่ซ้ำกัน",
+      "พบ SKU ซ้ำกันในตัวเลือก: SKU-1, sku-1",
       "ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน",
       "ราคาต้องไม่ติดลบ",
       "กำหนดตัวเลือกเริ่มต้นได้เพียงหนึ่งรายการ",
@@ -56,7 +56,7 @@ describe("admin validation", () => {
     ], false);
 
     // No default and a duplicate combination are fine until the product is published.
-    expect(result).toEqual(expect.arrayContaining(["SKU ของแต่ละตัวเลือกต้องไม่ซ้ำกัน", "ราคาต้องไม่ติดลบ"]));
+    expect(result).toEqual(expect.arrayContaining(["พบ SKU ซ้ำกันในตัวเลือก: SKU-1, sku-1", "ราคาต้องไม่ติดลบ"]));
     expect(result).not.toContain("กรุณากำหนดตัวเลือกเริ่มต้นหนึ่งรายการ");
     expect(result).not.toContain("ชุดคุณลักษณะของแต่ละตัวเลือกต้องไม่ซ้ำกัน");
   });
