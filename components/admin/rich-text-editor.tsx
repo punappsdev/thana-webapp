@@ -31,6 +31,7 @@ import {
   Unlink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useMediaUpload } from "@/components/admin/use-media-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,7 +53,7 @@ function normalizeHref(raw: string): string | null {
 
 export function RichTextEditor({ name, initialValue, onDirty }: { name: string; initialValue: string; onDirty?: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const { pending: uploading, uploadFiles, duplicateDialog } = useMediaUpload();
   /**
    * The submitted value has to live in React state. Reading editor.getHTML()
    * straight into the hidden input only sampled it at render time, and typing
@@ -119,20 +120,10 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
 
   const insertImage = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) { toast.error("ไฟล์รูปภาพต้องมีขนาดไม่เกิน 10 MB"); return; }
-    setUploading(true);
-    try {
-      const body = new FormData();
-      body.set("file", file);
-      const response = await fetch("/api/admin/media", { method: "POST", body });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) { toast.error(data.message || "อัปโหลดไม่สำเร็จ"); return; }
-      editor?.chain().focus().setImage({ src: data.asset.url, alt: file.name }).run();
-      onDirty?.();
-    } catch {
-      toast.error("อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
-    } finally {
-      setUploading(false);
-    }
+    const { urls } = await uploadFiles([file]);
+    if (!urls[0]) return;
+    editor?.chain().focus().setImage({ src: urls[0], alt: file.name }).run();
+    onDirty?.();
   };
 
   const groups: { label: string; icon: typeof Bold; isActive?: boolean; disabled?: boolean; run: () => void }[][] = [
@@ -209,6 +200,7 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
             if (fileRef.current) fileRef.current.value = "";
           }}
         />
+        {duplicateDialog}
         <Button type="button" variant="ghost" size="icon-sm" aria-label="แทรกรูปภาพ" title="แทรกรูปภาพ" disabled={uploading} onClick={() => fileRef.current?.click()}>
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
         </Button>

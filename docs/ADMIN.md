@@ -42,7 +42,13 @@ LINE_GROUP_ID_FACTORY=Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    npm run media:import
    ```
 
-6. Start the production application and open `/admin/login`.
+6. Fingerprint the media library so the duplicate-upload warning can see existing files:
+
+   ```bash
+   npm run media:checksum
+   ```
+
+7. Start the production application and open `/admin/login`.
 
 ## VPS requirements
 
@@ -75,6 +81,14 @@ Before enabling either cron:
 3. Tell the sales team that a request which turned into a real order needs the **"ลูกค้ารายนี้สั่งซื้อจริง เก็บข้อมูลไว้ 10 ปี"** switch on `/admin/quotations/<id>` before it reaches three years. Nothing in the database marks a request as sold, so that switch is the only thing standing between an order record and automatic deletion.
 
 Disk headroom, the size of both upload trees, and how many requests have already been anonymized are shown on `/admin/settings` under **พื้นที่จัดเก็บไฟล์**.
+
+## Duplicate uploads
+
+Every upload surface in the admin panel checks the media library before storing a file and asks the admin whether to reuse what is already there. Two checks run: an exact filename match before the bytes are sent, and a sha256 of the optimized bytes on the server, which returns `409` and stores nothing when an identical file already exists. Choosing **อัปโหลดเป็นไฟล์ใหม่** re-sends with `force=1` and creates a second copy on purpose.
+
+**`npm run media:checksum`** fills `MediaAsset.checksum` for files uploaded before the column existed — without it the content check only sees files uploaded after this feature shipped. It is idempotent (it only reads rows where the checksum is still null), skips rows whose file is missing from disk, and prints the groups of byte-identical files already in the library at the end. Run it once after deploying, and again after `media:import`.
+
+The checksum is taken from the bytes on disk, so it identifies a file exactly; two exports of the same photo differ byte-for-byte and are only caught by the filename check.
 
 ## LINE quotation notifications
 

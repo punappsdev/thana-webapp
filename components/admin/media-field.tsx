@@ -5,6 +5,7 @@ import { useId, useRef, useState } from "react";
 import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/media-library-picker";
+import { useMediaUpload } from "@/components/admin/use-media-upload";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -48,8 +49,8 @@ export function MediaField({
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const [internal, setInternal] = useState(defaultValue || "");
-  const [pending, setPending] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const { pending, uploadFiles, duplicateDialog } = useMediaUpload();
 
   const isControlled = value !== undefined;
   const url = isControlled ? value : internal;
@@ -64,21 +65,12 @@ export function MediaField({
     if (file.size > rules.maxBytes) {
       return toast.error(`ไฟล์ใหญ่เกินไป — รองรับ ${rules.hint}`);
     }
-    setPending(true);
-    try {
-      const body = new FormData();
-      body.set("file", file);
-      const response = await fetch("/api/admin/media", { method: "POST", body });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) return toast.error(data.message || "อัปโหลดไม่สำเร็จ");
-      setUrl(data.asset.url);
-      toast.success(`อัปโหลด ${file.name} แล้ว`);
-    } catch {
-      toast.error("อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
-    } finally {
-      setPending(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
+    const outcome = await uploadFiles([file]);
+    if (inputRef.current) inputRef.current.value = "";
+    const [next] = outcome.urls;
+    if (!next) return;
+    setUrl(next);
+    toast.success(outcome.reused ? "ใช้ไฟล์เดิมจากคลังไฟล์" : `อัปโหลด ${file.name} แล้ว`);
   };
 
   const isPdf = url.toLowerCase().endsWith(".pdf");
@@ -103,6 +95,7 @@ export function MediaField({
       <div className={cn("flex items-center gap-2", className)}>
         {hiddenInput}
         {filePicker}
+        {duplicateDialog}
         {url ? <Preview url={url} isPdf={isPdf} size={36} /> : null}
         <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => inputRef.current?.click()}>
           {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
@@ -126,7 +119,8 @@ export function MediaField({
       ) : null}
       {hiddenInput}
       {filePicker}
-      
+      {duplicateDialog}
+
       {!url ? (
         <div
           onDragOver={(event) => {

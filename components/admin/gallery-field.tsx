@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/media-library-picker";
+import { useMediaUpload } from "@/components/admin/use-media-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,8 @@ export function GalleryField({
   description?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [pending, setPending] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const { pending, uploadFiles, duplicateDialog } = useMediaUpload();
 
   const remaining = max - value.length;
   const isFull = remaining <= 0;
@@ -44,7 +45,7 @@ export function GalleryField({
     onChange([...value, ...urls.map((url) => ({ _key: crypto.randomUUID(), url, altTh: "", altEn: "" }))]);
   };
 
-  const uploadFiles = async (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     if (!files.length) return;
     if (isFull) return toast.error(`ใส่รูปได้สูงสุด ${max} รูป`);
 
@@ -54,33 +55,17 @@ export function GalleryField({
       toast.warning(`เลือกมา ${files.length} ไฟล์ แต่เหลือที่ว่างอีก ${remaining} รูป — อัปโหลดเฉพาะ ${accepted.length} ไฟล์แรก`);
     }
 
-    setPending(true);
-    const uploaded: string[] = [];
-    for (const file of accepted) {
-      if (file.size > MAX_IMAGE_BYTES) {
-        toast.error(`${file.name} ใหญ่เกินไป — รองรับ JPG, PNG หรือ WebP ไม่เกิน 10 MB`);
-        continue;
-      }
-      try {
-        const body = new FormData();
-        body.set("file", file);
-        const response = await fetch("/api/admin/media", { method: "POST", body });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          toast.error(`${file.name}: ${data.message || "อัปโหลดไม่สำเร็จ"}`);
-          continue;
-        }
-        uploaded.push(data.asset.url);
-      } catch {
-        toast.error(`${file.name}: อัปโหลดไม่สำเร็จ`);
-      }
-    }
-    setPending(false);
+    const withinLimit = accepted.filter((file) => {
+      if (file.size <= MAX_IMAGE_BYTES) return true;
+      toast.error(`${file.name} ใหญ่เกินไป — รองรับ JPG, PNG หรือ WebP ไม่เกิน 10 MB`);
+      return false;
+    });
+
+    const outcome = await uploadFiles(withinLimit);
     if (inputRef.current) inputRef.current.value = "";
-    if (uploaded.length) {
-      addUrls(uploaded);
-      toast.success(`อัปโหลด ${uploaded.length} รูปสำเร็จ`);
-    }
+    if (outcome.urls.length) addUrls(outcome.urls);
+    if (outcome.uploaded) toast.success(`อัปโหลด ${outcome.uploaded} รูปสำเร็จ`);
+    if (outcome.reused) toast.success(`ใช้รูปเดิมจากคลังไฟล์ ${outcome.reused} รูป`);
   };
 
   const move = (index: number, delta: number) => {
@@ -118,8 +103,9 @@ export function GalleryField({
         multiple
         accept={ACCEPT}
         className="sr-only"
-        onChange={(event) => void uploadFiles(Array.from(event.target.files ?? []))}
+        onChange={(event) => void handleFiles(Array.from(event.target.files ?? []))}
       />
+      {duplicateDialog}
 
       <div
         onDragOver={(event) => {
@@ -130,7 +116,7 @@ export function GalleryField({
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          void uploadFiles(Array.from(event.dataTransfer.files ?? []));
+          void handleFiles(Array.from(event.dataTransfer.files ?? []));
         }}
         onClick={() => !isFull && inputRef.current?.click()}
         className={cn(

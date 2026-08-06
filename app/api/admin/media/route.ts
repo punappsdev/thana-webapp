@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { MediaKind } from "@/generated/prisma/client";
 import { requireAdminApi } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
+import { computeChecksum } from "@/lib/admin/checksum";
 import { optimizeImage } from "@/lib/admin/image-optimize";
 import { countMediaReferences, unlinkMediaAsset } from "@/lib/admin/media";
 import { resolveUploadPath, validateUploadMetadata } from "@/lib/admin/security";
@@ -38,6 +39,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Duplicate guard: the checksum is taken after optimization, so it matches what
+  // ends up on disk (and what the backfill script computes for older assets).
+  // Bail out before writing anything, so a duplicate costs no disk space at all.
+  const checksum = computeChecksum(buffer);
+  if (formData.get("force") !== "1") {
+    const existing = await getPrisma().mediaAsset.findFirst({
+      where: { checksum },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, url: true, originalName: true, kind: true, size: true, createdAt: true },
+    });
+    if (existing) return NextResponse.json({ reason: "content", asset: existing }, { status: 409 });
+  }
+
   const now = new Date();
   const relativeDir = path.join("media", String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, "0"));
   const fileName = `${crypto.randomUUID()}.${extensionByMime[storedMime]}`;
@@ -47,7 +61,7 @@ export async function POST(request: NextRequest) {
   await fs.writeFile(absolutePath, buffer, { flag: "wx" });
   const url = `/api/uploads/${relativePath.split(path.sep).map(encodeURIComponent).join("/")}`;
   try {
-    const asset = await getPrisma().mediaAsset.create({ data: { path: relativePath, url, originalName: file.name.slice(0, 255), mimeType: storedMime, kind: validation.kind, size: buffer.length, uploadedById: admin.id } });
+    const asset = await getPrisma().mediaAsset.create({ data: { path: relativePath, url, originalName: file.name.slice(0, 255), mimeType: storedMime, kind: validation.kind, size: buffer.length, checksum, uploadedById: admin.id } });
     await recordActivity({ adminId: admin.id, action: "UPLOAD", entityType: "MediaAsset", entityId: asset.id, label: file.name, metadata: { mimeType: storedMime, size: buffer.length } });
     return NextResponse.json({ asset }, { status: 201 });
   } catch (error) {
@@ -61,15 +75,22 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const kindParam = searchParams.get("kind");
   const query = searchParams.get("query")?.trim() || "";
-  const page = Math.max(1, Number(searchParams.get("page")) || 1);
-  const take = 24;
+  // `name` is the upload pre-flight: an exact filename match, so the admin gets
+  // warned about a same-named asset before a single byte leaves their machine.
+  const exactName = searchParams.get("name")?.trim() || "";
+  const page = exactName ? 1 : Math.max(1, Number(searchParams.get("page")) || 1);
+  const take = exactName ? 5 : 24;
   const kinds: MediaKind[] = kindParam === "image" ? ["IMAGE"] : kindParam === "pdf" ? ["PDF"] : ["IMAGE", "PDF"];
   const where = {
     kind: { in: kinds },
-    ...(query ? { OR: [{ originalName: { contains: query } }, { url: { contains: query } }] } : {}),
+    ...(exactName
+      ? { originalName: exactName }
+      : query
+        ? { OR: [{ originalName: { contains: query } }, { url: { contains: query } }] }
+        : {}),
   };
   const [items, total] = await Promise.all([
-    getPrisma().mediaAsset.findMany({ where, skip: (page - 1) * take, take, orderBy: { createdAt: "desc" }, select: { id: true, url: true, originalName: true, kind: true, size: true } }),
+    getPrisma().mediaAsset.findMany({ where, skip: (page - 1) * take, take, orderBy: { createdAt: "desc" }, select: { id: true, url: true, originalName: true, kind: true, size: true, createdAt: true } }),
     getPrisma().mediaAsset.count({ where }),
   ]);
   return NextResponse.json({ items, total, page, totalPages: Math.max(1, Math.ceil(total / take)) });

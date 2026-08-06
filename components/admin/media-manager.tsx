@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useMediaUpload } from "@/components/admin/use-media-upload";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,37 +20,23 @@ const MAX_PDF_BYTES = 25 * 1024 * 1024;
 export function MediaUpload() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [pending, setPending] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const { pending, uploadFiles, duplicateDialog } = useMediaUpload();
 
-  const uploadFiles = async (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     if (!files.length) return;
-    setPending(true);
-    let uploaded = 0;
-    for (const file of files) {
-      const limit = file.type.startsWith("image/") ? MAX_IMAGE_BYTES : MAX_PDF_BYTES;
-      if (file.size > limit) {
-        toast.error(`${file.name} ใหญ่เกินไป`);
-        continue;
-      }
-      try {
-        const body = new FormData();
-        body.set("file", file);
-        const response = await fetch("/api/admin/media", { method: "POST", body });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          toast.error(`${file.name}: ${data.message || "อัปโหลดไม่สำเร็จ"}`);
-          continue;
-        }
-        uploaded += 1;
-      } catch {
-        toast.error(`${file.name}: อัปโหลดไม่สำเร็จ`);
-      }
-    }
-    setPending(false);
+    const withinLimit = files.filter((file) => {
+      if (file.size <= (file.type.startsWith("image/") ? MAX_IMAGE_BYTES : MAX_PDF_BYTES)) return true;
+      toast.error(`${file.name} ใหญ่เกินไป`);
+      return false;
+    });
+
+    const outcome = await uploadFiles(withinLimit);
     if (inputRef.current) inputRef.current.value = "";
-    if (uploaded) {
-      toast.success(`อัปโหลด ${uploaded} ไฟล์สำเร็จ`);
+    // Reusing on this page means "it is already here" — there is nothing to add.
+    if (outcome.reused) toast.info(`มีอยู่ในคลังแล้ว ${outcome.reused} ไฟล์ — ข้ามการอัปโหลด`);
+    if (outcome.uploaded) {
+      toast.success(`อัปโหลด ${outcome.uploaded} ไฟล์สำเร็จ`);
       router.refresh();
     }
   };
@@ -62,8 +49,9 @@ export function MediaUpload() {
         multiple
         accept="image/jpeg,image/png,image/webp,application/pdf"
         className="sr-only"
-        onChange={(event) => void uploadFiles(Array.from(event.target.files ?? []))}
+        onChange={(event) => void handleFiles(Array.from(event.target.files ?? []))}
       />
+      {duplicateDialog}
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -73,7 +61,7 @@ export function MediaUpload() {
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          void uploadFiles(Array.from(event.dataTransfer.files ?? []));
+          void handleFiles(Array.from(event.dataTransfer.files ?? []));
         }}
         onClick={() => inputRef.current?.click()}
         className={cn(

@@ -101,6 +101,8 @@ model MediaAsset {
   size         Int
   width        Int?
   height       Int?
+  /// sha256 (hex) ของไฟล์ที่เก็บบนดิสก์จริง — ใช้เตือนเมื่ออัปโหลดไฟล์ซ้ำ (null = ยังไม่ได้ backfill)
+  checksum     String?    @db.Char(64)
   uploadedById String?
   uploadedBy   AdminUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime   @default(now())
@@ -108,6 +110,8 @@ model MediaAsset {
   @@index([kind])
   @@index([uploadedById])
   @@index([createdAt])
+  @@index([checksum])
+  @@index([originalName])
 }
 
 model ArticleCategory {

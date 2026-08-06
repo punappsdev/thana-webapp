@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "admin:create": "tsx scripts/create-admin.ts",
     "media:import": "tsx scripts/import-media.ts",
+    "media:checksum": "tsx scripts/backfill-media-checksum.ts",
     "search:reindex": "tsx scripts/reindex-search.ts",
     "quotations:backfill-responsible-branch": "tsx scripts/backfill-quotation-responsible-branch.ts",
     "retention:run": "tsx scripts/retention.ts",
