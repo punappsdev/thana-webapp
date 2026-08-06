@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { Eye, Mail, MessageCircle, ReceiptText, Search, TriangleAlert } from "lucide-react";
 import { AdminSelect } from "@/components/admin/admin-select";
@@ -71,7 +72,10 @@ export default async function AdminQuotationsPage({
 
       <Card>
         <CardContent className="pt-6">
-          <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(3,190px)_auto]">
+          {/* next/form ไม่ใช่ <form> เปล่า ๆ — action="" ทำ client-side navigation ไป
+              ที่ path เดิมพร้อม search params ใหม่ ถ้าใช้ <form> ธรรมดาเบราว์เซอร์จะ
+              โหลดหน้าใหม่ทั้งหน้า แล้วเห็นตัวกรองกระพริบทุกครั้งที่กดค้นหา */}
+          <Form action="" className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(3,190px)_auto]">
             <div className="relative md:col-span-2 xl:col-span-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -107,7 +111,7 @@ export default async function AdminQuotationsPage({
               ]}
             />
             <Button type="submit" variant="outline">ค้นหา</Button>
-          </form>
+          </Form>
         </CardContent>
       </Card>
 

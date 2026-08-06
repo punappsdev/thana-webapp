@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { Calendar, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import Form from "next/form";
 import Image from "next/image";
 import {
   Pagination,
@@ -174,7 +175,9 @@ export default async function ArticlesPage({
             />
 
             {/* Search Box */}
-            <form method="GET" action="" className="relative w-full md:w-80">
+            {/* ห้ามใส่ method="GET" กลับมา — next/form ไม่รองรับ แล้วจะตกกลับไปเป็น
+                การ submit ของเบราว์เซอร์ซึ่งโหลดหน้าใหม่ทั้งหน้า */}
+            <Form action="" className="relative w-full md:w-80">
               <input
                 type="text"
                 name="query"
@@ -184,7 +187,7 @@ export default async function ArticlesPage({
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#747684]" />
               {category && <input type="hidden" name="category" value={category} />}
-            </form>
+            </Form>
           </div>
         </section>
 

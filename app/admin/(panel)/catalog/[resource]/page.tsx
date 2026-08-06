@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Info, Search } from "lucide-react";
@@ -43,13 +44,13 @@ export default async function CatalogResourcePage({ params, searchParams }: { pa
 
       <Card>
         <CardContent className="pt-6">
-          <form className="flex gap-3">
+          <Form action="" className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input name="query" defaultValue={filters.query} placeholder={`ค้นหา${catalogLabels[resource]}`} className="pl-9" />
             </div>
             <Button type="submit" variant="outline">ค้นหา</Button>
-          </form>
+          </Form>
         </CardContent>
       </Card>
 
