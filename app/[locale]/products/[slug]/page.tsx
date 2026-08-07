@@ -10,9 +10,11 @@ import { ArrowLeft, FileText, Lightbulb } from "lucide-react";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { ProductPromotions } from "@/components/products/product-promotions";
 import { getPromotionsForProduct } from "@/lib/promotions";
+import { MAX_TEXT_FIELD_LENGTH } from "@/lib/quotation-custom-fields";
 import {
   VariantSelector,
   type AttributeGroup,
+  type CustomFieldOption,
   type VariantOption,
 } from "@/components/products/variant-selector";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -81,6 +83,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       attributeLinks: {
         include: { attributeValue: { include: { attribute: true } } },
       },
+      customFields: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -137,6 +140,48 @@ export default async function ProductDetailPage({ params }: PageProps) {
     }
   }
   const groups = Array.from(groupMap.values());
+
+  /**
+   * Bounds are converted to plain numbers here: a Prisma Decimal cannot cross
+   * into the client component (same reason as `toNumber` in lib/products.ts).
+   */
+  const customFields: CustomFieldOption[] = product.customFields.map((field) => {
+    const isText = field.inputType === "TEXT";
+    const min = field.minValue === null ? null : Number(field.minValue);
+    const max = field.maxValue === null ? null : Number(field.maxValue);
+    const step = field.step === null ? null : Number(field.step);
+    const unit = pick(field, "unit", locale) || null;
+
+    // A text field's only limit is its length, so that doubles as both the
+    // standing hint and the message shown when the customer overruns it.
+    const rangeLabel = isText
+      ? t("customFieldMaxLength", { max: field.maxLength ?? MAX_TEXT_FIELD_LENGTH })
+      : t("customFieldRange", {
+          min: trimZeros(min ?? 0),
+          max: trimZeros(max ?? 0),
+          unit: unit ?? "",
+        });
+
+    return {
+      id: field.id,
+      inputType: field.inputType,
+      triggerValueId: field.triggerValueId,
+      label: pick(field, "label", locale),
+      unit,
+      labelTh: field.labelTh,
+      labelEn: field.labelEn,
+      unitTh: field.unitTh,
+      unitEn: field.unitEn,
+      min,
+      max,
+      step,
+      maxLength: field.maxLength,
+      required: field.required,
+      hintLabel: rangeLabel,
+      rangeLabel,
+      stepLabel: t("customFieldStep", { step: trimZeros(step ?? 1), unit: unit ?? "" }),
+    };
+  });
 
   /**
    * Spec table: every attribute value on the product, variant-driven or not.
@@ -283,11 +328,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 groups={groups}
                 variants={variants}
                 baseSku={product.sku}
+                customFields={customFields}
                 labels={{
                   selectOptions: t("selectOptions"),
                   selectAllPrompt: t("selectAllPrompt"),
                   unavailable: t("unavailableCombination"),
                   sku: t("sku"),
+                  customFieldsPrompt: t("customFieldsPrompt"),
+                  customFieldsIncomplete: t("customFieldsIncomplete"),
+                  customFieldOptional: t("customFieldOptional"),
                 }}
                 cartProduct={{
                   productId: product.id,
@@ -366,4 +415,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
       <ContactFab />
     </div>
   );
+}
+
+/**
+ * Bounds come out of Decimal(12,3) columns, so 1200 arrives as 1200.000. Trimmed
+ * here rather than with Intl so the number reads identically in both locales —
+ * the sales team and the factory compare it against the same figure.
+ */
+function trimZeros(value: number): string {
+  return String(Number(value.toFixed(3)));
 }

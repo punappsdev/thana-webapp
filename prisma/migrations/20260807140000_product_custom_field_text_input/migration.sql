@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `ProductCustomField` ADD COLUMN `inputType` ENUM('NUMBER', 'TEXT') NOT NULL DEFAULT 'NUMBER',
+    ADD COLUMN `maxLength` INTEGER NULL,
+    ADD COLUMN `required` BOOLEAN NOT NULL DEFAULT true,
+    MODIFY `unitTh` VARCHAR(20) NULL,
+    MODIFY `unitEn` VARCHAR(20) NULL,
+    MODIFY `minValue` DECIMAL(12, 3) NULL,
+    MODIFY `maxValue` DECIMAL(12, 3) NULL,
+    MODIFY `step` DECIMAL(12, 3) NULL DEFAULT 1;

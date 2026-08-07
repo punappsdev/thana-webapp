@@ -75,6 +75,9 @@ export type FlexMessage = { type: "flex"; altText: string; contents: FlexContain
 export type QuotationNotificationItem = {
   productNameTh: string;
   optionsTh: string | null;
+  /// ขนาดที่ลูกค้ากรอกเอง เช่น "กว้าง: 1200 มม. · สูง: 2400 มม." (ดู ProductCustomField)
+  /// แยกบรรทัดจาก optionsTh และเน้นสีเพราะเป็นสิ่งที่ทีมขายต้องอ่านก่อนตีราคางานตัด
+  customFieldsTh: string | null;
   sku: string | null;
   qty: number;
 };
@@ -189,6 +192,16 @@ function itemComponent(item: QuotationNotificationItem, index: number): FlexBox 
     { type: "text", text: item.productNameTh, size: "sm", weight: "bold", color: COLOR_TEXT, wrap: true },
     item.optionsTh
       ? ({ type: "text", text: item.optionsTh, size: "xs", color: COLOR_MUTED, wrap: true } satisfies FlexText)
+      : null,
+    item.customFieldsTh
+      ? ({
+          type: "text",
+          text: item.customFieldsTh,
+          size: "xs",
+          weight: "bold",
+          color: COLOR_PRIMARY,
+          wrap: true,
+        } satisfies FlexText)
       : null,
     item.sku
       ? ({ type: "text", text: `รหัส ${item.sku}`, size: "xs", color: COLOR_MUTED, wrap: true } satisfies FlexText)

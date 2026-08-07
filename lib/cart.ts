@@ -33,16 +33,50 @@ export type CartItem = {
     valueEn: string;
     colorHex?: string | null;
   }[];
+  /**
+   * What the customer typed into a ProductCustomField — a number for a
+   * measurement, a string for a free text note. Unlike everything else in a cart
+   * line these cannot be re-read from the database; the server re-validates them
+   * against the field's own rules instead (see `resolveItems` in
+   * app/[locale]/quote/actions.ts).
+   *
+   * Fields the customer left blank are simply absent, so an optional note costs
+   * nothing. The readable version is appended to `attributes` at add time so the
+   * cart and the quotation form render it with no extra lookup.
+   */
+  customValues?: { fieldId: number; value: number | string }[];
 };
 
-/** Bumped to v2 when lines gained per-locale names; v1 carts are simply dropped. */
-export const CART_STORAGE_KEY = "thana-quote-cart-v2";
+/**
+ * Bumped to v2 when lines gained per-locale names, and to v3 when `lineKey`
+ * started including customValues; older carts are simply dropped.
+ */
+export const CART_STORAGE_KEY = "thana-quote-cart-v3";
 
 export const MAX_QTY = 9999;
 
-/** Identifies a line: the same product in two variants is two separate lines. */
-export function lineKey(item: Pick<CartItem, "productId" | "variantId">): string {
-  return `${item.productId}:${item.variantId ?? "base"}`;
+/**
+ * Identifies a line: the same product in two variants is two separate lines.
+ *
+ * The typed-in values are part of the identity too. Two cut-to-size sheets at
+ * 100×200 and 300×400 match the same "cut to size" variant, so without them
+ * `addItem` would merge the lines, sum the quantities and overwrite the first
+ * size with the second — a wrong quotation with nothing on screen to show it.
+ *
+ * Sorted by fieldId so the key does not depend on the order the inputs were
+ * filled in. Lines with no custom values keep exactly the key they had before.
+ */
+export function lineKey(item: Pick<CartItem, "productId" | "variantId" | "customValues">): string {
+  const base = `${item.productId}:${item.variantId ?? "base"}`;
+  if (!item.customValues || item.customValues.length === 0) return base;
+
+  // JSON.stringify quotes and escapes the value so a typed note containing a
+  // comma or a quote cannot forge the separator and collide with another line.
+  const custom = [...item.customValues]
+    .sort((a, b) => a.fieldId - b.fieldId)
+    .map((entry) => `${entry.fieldId}=${JSON.stringify(entry.value)}`)
+    .join(",");
+  return `${base}:${custom}`;
 }
 
 export function clampQty(qty: number): number {
@@ -87,6 +121,31 @@ function parseItem(raw: unknown): CartItem | null {
     }
   }
 
+  // A malformed entry here would change the line's identity, so the whole line
+  // is dropped rather than kept with a partial set of typed-in values.
+  let customValues: CartItem["customValues"] = undefined;
+  if (Array.isArray(it.customValues)) {
+    customValues = [];
+    for (const entry of it.customValues) {
+      if (
+        typeof entry !== "object" ||
+        entry === null ||
+        typeof entry.fieldId !== "number" ||
+        !Number.isInteger(entry.fieldId) ||
+        entry.fieldId <= 0
+      ) {
+        return null;
+      }
+      // A number is a measurement, a string is a typed note. Anything else —
+      // including a NaN that JSON.parse would hand back as null — is not a value.
+      const isNumber = typeof entry.value === "number" && Number.isFinite(entry.value);
+      const isText = typeof entry.value === "string";
+      if (!isNumber && !isText) return null;
+
+      customValues.push({ fieldId: entry.fieldId, value: entry.value as number | string });
+    }
+  }
+
   return {
     productId: it.productId,
     variantId: it.variantId as number | null,
@@ -97,6 +156,7 @@ function parseItem(raw: unknown): CartItem | null {
     sku: typeof it.sku === "string" ? it.sku : null,
     qty: clampQty(it.qty),
     attributes,
+    customValues,
   };
 }
 

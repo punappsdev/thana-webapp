@@ -5,6 +5,13 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { isDistrictForProvince, isKnownDistrictName } from "@/lib/districts";
+import {
+  MAX_CUSTOM_FIELDS,
+  MAX_TEXT_FIELD_LENGTH,
+  formatCustomFields,
+  resolveCustomValues,
+  type CustomFieldValue,
+} from "@/lib/quotation-custom-fields";
 import { getPrisma } from "@/lib/prisma";
 import { BRANCH_CODES } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
@@ -46,6 +53,14 @@ const boqErrorTranslationKey = {
  * Only the identity of a line is trusted. Names, SKUs and images are re-read from
  * the database in `resolveItems` — the cart lives in localStorage, so everything
  * in this payload is user-writable (same reasoning as `parseItem` in lib/cart.ts).
+ *
+ * `customValues` is the single exception: a measurement or note the customer
+ * typed for a ProductCustomField has no catalog row to be re-read from. It is
+ * therefore the only field taken from the payload, and `resolveItems` re-checks
+ * every one of them against its field's own rules before anything is stored.
+ *
+ * The length cap here is a cheap first gate; `resolveCustomValues` applies the
+ * field's real limit and normalizes the text.
  */
 const itemsSchema = z
   .array(
@@ -53,6 +68,15 @@ const itemsSchema = z
       productId: z.number().int().positive(),
       variantId: z.number().int().positive().nullable(),
       qty: z.number().int().min(1).max(MAX_QTY),
+      customValues: z
+        .array(
+          z.object({
+            fieldId: z.number().int().positive(),
+            value: z.union([z.number().finite(), z.string().max(MAX_TEXT_FIELD_LENGTH)]),
+          }),
+        )
+        .max(MAX_CUSTOM_FIELDS)
+        .optional(),
     }),
   )
   .min(1)
@@ -416,6 +440,8 @@ type ResolvedItem = {
   sku: string | null;
   optionsTh: string | null;
   optionsEn: string | null;
+  customFieldsTh: string | null;
+  customFieldsEn: string | null;
   qty: number;
   sortOrder: number;
 };
@@ -427,7 +453,12 @@ type ResolvedItem = {
  * the customer's problem to hear about, not a reason to lose the other lines.
  */
 async function resolveItems(
-  input: { productId: number; variantId: number | null; qty: number }[],
+  input: {
+    productId: number;
+    variantId: number | null;
+    qty: number;
+    customValues?: { fieldId: number; value: CustomFieldValue }[];
+  }[],
 ): Promise<ResolvedItem[]> {
   const prisma = getPrisma();
   const products = await prisma.product.findMany({
@@ -444,6 +475,7 @@ async function resolveItems(
           sku: true,
           attributeValues: {
             select: {
+              attributeValueId: true,
               attributeValue: {
                 select: {
                   valueTh: true,
@@ -454,6 +486,24 @@ async function resolveItems(
             },
           },
         },
+      },
+      customFields: {
+        select: {
+          id: true,
+          inputType: true,
+          labelTh: true,
+          labelEn: true,
+          unitTh: true,
+          unitEn: true,
+          minValue: true,
+          maxValue: true,
+          step: true,
+          maxLength: true,
+          required: true,
+          triggerValueId: true,
+          sortOrder: true,
+        },
+        orderBy: { sortOrder: "asc" },
       },
     },
   });
@@ -472,6 +522,17 @@ async function resolveItems(
     // A variant id that no longer belongs to this product is a stale cart line.
     if (line.variantId !== null && !variant) continue;
 
+    const custom = resolveCustomValues(
+      product.customFields,
+      (variant?.attributeValues ?? []).map((link) => link.attributeValueId),
+      line.customValues ?? [],
+    );
+    // The only way to fail this check is a payload that was edited by hand or a
+    // cart from before the product's limits changed — the picker on the product
+    // page will not let a real customer submit one. Dropped like any other stale
+    // line rather than failing the whole request.
+    if (custom === null) continue;
+
     const options = variant?.attributeValues ?? [];
     resolved.push({
       productId: product.id,
@@ -482,6 +543,8 @@ async function resolveItems(
       sku: variant?.sku ?? product.sku,
       optionsTh: formatOptions(options, "th"),
       optionsEn: formatOptions(options, "en"),
+      customFieldsTh: formatCustomFields(custom, "th"),
+      customFieldsEn: formatCustomFields(custom, "en"),
       qty: line.qty,
       sortOrder: index,
     });
@@ -489,6 +552,7 @@ async function resolveItems(
 
   return resolved;
 }
+
 
 type VariantOptionRow = {
   attributeValue: {

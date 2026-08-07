@@ -34,6 +34,7 @@ export async function getProductEditorRecord(id: number) {
       attributes: { orderBy: { sortOrder: "asc" }, include: { attribute: { include: { values: { orderBy: { sortOrder: "asc" } } } } } },
       attributeLinks: true,
       variants: { orderBy: { sortOrder: "asc" }, include: { attributeValues: true } },
+      customFields: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!product) return null;
@@ -71,6 +72,23 @@ export async function getProductEditorRecord(id: number) {
       isDefault: variant.isDefault,
       sortOrder: variant.sortOrder,
       attributeValueIds: variant.attributeValues.map((link) => link.attributeValueId),
+    })),
+    // Bounds are Decimal columns, and this record is handed to a client
+    // component — same conversion the variant price above needs.
+    customFields: product.customFields.map((field) => ({
+      triggerValueId: field.triggerValueId,
+      inputType: field.inputType,
+      labelTh: field.labelTh,
+      labelEn: field.labelEn,
+      unitTh: field.unitTh ?? "",
+      unitEn: field.unitEn ?? "",
+      // Blank rather than 0 for a field that has no numeric side, so the editor
+      // shows an empty box instead of a limit nobody chose.
+      minValue: field.minValue === null ? "" : String(Number(field.minValue)),
+      maxValue: field.maxValue === null ? "" : String(Number(field.maxValue)),
+      step: field.step === null ? "" : String(Number(field.step)),
+      maxLength: field.maxLength === null ? "" : String(field.maxLength),
+      required: field.required,
     })),
   };
 }

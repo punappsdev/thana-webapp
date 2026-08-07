@@ -408,7 +408,10 @@ export function QuoteRequestForm() {
       className="grid grid-cols-1 gap-8 lg:grid-cols-3"
     >
       <input type="hidden" name="locale" value={locale} />
-      {/* Identity only — the action re-reads every name and SKU from the database */}
+      {/* Identity only — the action re-reads every name and SKU from the database.
+          customValues is the one exception: nothing in the catalog can produce a
+          number the customer typed, so the action re-validates it against the
+          ProductCustomField it belongs to instead. */}
       <input
         type="hidden"
         name="itemsJson"
@@ -418,6 +421,7 @@ export function QuoteRequestForm() {
             productId: item.productId,
             variantId: item.variantId,
             qty: item.qty,
+            customValues: item.customValues ?? [],
           })),
         )}
       />

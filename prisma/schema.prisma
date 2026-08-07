@@ -371,9 +371,9 @@ model LineRoutingSetting {
 
   updatedAt DateTime @updatedAt
 
-  factoryCategories        LineRoutingFactoryCategory[]
-  factoryExcludedSubs      LineRoutingFactoryExcludedSubCategory[]
-  factoryProducts          LineRoutingFactoryProduct[]
+  factoryCategories   LineRoutingFactoryCategory[]
+  factoryExcludedSubs LineRoutingFactoryExcludedSubCategory[]
+  factoryProducts     LineRoutingFactoryProduct[]
 }
 
 /// หมวดหลักที่โรงงานรับทำ
@@ -456,7 +456,7 @@ model SubCategory {
 
   // Relations
   categoryId     Int
-  category       Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category       Category                                @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   products       Product[]
   promotionLinks PromotionSubCategory[]
   lineRouting    LineRoutingFactoryExcludedSubCategory[]
@@ -549,6 +549,7 @@ model Product {
   variants       ProductVariant[]
   attributes     ProductAttribute[]
   attributeLinks ProductAttributeValue[]
+  customFields   ProductCustomField[]
   quotationItems QuotationItem[]
   promotionLinks PromotionProduct[]
   lineRouting    LineRoutingFactoryProduct[]
@@ -613,13 +614,77 @@ model AttributeValue {
   sortOrder    Int      @default(0)
 
   // Relations
-  attributeId Int
-  attribute   Attribute               @relation(fields: [attributeId], references: [id], onDelete: Cascade)
-  products    ProductAttributeValue[]
-  variants    VariantAttributeValue[]
+  attributeId  Int
+  attribute    Attribute               @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  products     ProductAttributeValue[]
+  variants     VariantAttributeValue[]
+  /// ช่องกรอกเองที่ค่านี้เป็นตัวเปิด เช่น "สั่งตัดตามขนาด" เปิดช่องกว้าง/สูง
+  customFields ProductCustomField[]
 
   @@unique([attributeId, slug])
   @@index([attributeId])
+}
+
+enum CustomFieldInputType {
+  NUMBER
+  TEXT
+}
+
+/// ช่องที่ลูกค้ากรอกเอง เช่น กว้าง/สูง ของสินค้าที่สั่งตัดตามขนาด หรือข้อความสลัก
+///
+/// จะแสดงบนหน้าสินค้าเมื่อลูกค้าเลือก `triggerValue` (เช่นค่า "สั่งตัดตามขนาด" ในแกน
+/// "ขนาด") ค่าที่กรอกไม่ได้กลายเป็น AttributeValue จึงกรองในหน้า listing ไม่ได้ —
+/// ตัวที่กรองได้คือค่า trigger ซึ่งแปลว่า "สินค้าตัวนี้รับตัด" ไม่ใช่ "มีขนาดนี้"
+///
+/// ขอบเขตอยู่ระดับสินค้าไม่ใช่ระดับ Attribute เพราะกระจกแต่ละชนิดตัดได้ไม่เท่ากัน
+/// และ `AttributeInputType.NUMBER` ใช้แทนไม่ได้ เพราะนั่นเป็นสมบัติของ dictionary
+/// ที่ใช้ร่วมกันทุกสินค้า และยังหมายถึง "รายการค่าที่กำหนดไว้ล่วงหน้า" เหมือนเดิม
+model ProductCustomField {
+  id Int @id @default(autoincrement())
+
+  /// NUMBER ใช้ minValue/maxValue/step ส่วน TEXT ใช้ maxLength
+  ///
+  /// **TEXT เก็บข้อมูลส่วนบุคคลได้** ลูกค้าพิมพ์ชื่อ เบอร์โทร หรือที่อยู่หน้างานลงมาได้
+  /// และเจ้าของระบบเลือกไว้แล้วว่าให้ `lib/admin/retention.ts` **เก็บค่านี้ต่อ** ไม่ลบ
+  /// ตอน anonymize เหมือน optionsTh (ดูหัวข้อในเอกสาร docs/ADMIN.md) การเปลี่ยนใจ
+  /// ภายหลังทำได้โดยเพิ่ม customFieldsTh/En ลงใน anonymizedQuotationFields
+  inputType CustomFieldInputType @default(NUMBER)
+
+  /// ป้ายกำกับช่อง เช่น "กว้าง" / "Width" — เก็บสองภาษาเพราะหน้าเว็บมีทั้งไทยและอังกฤษ
+  labelTh String  @db.VarChar(60)
+  labelEn String  @db.VarChar(60)
+  /// หน่วยที่ต่อท้ายค่า เช่น "มม." / "mm" — null ได้เพราะช่องข้อความมักไม่มีหน่วย
+  unitTh  String? @db.VarChar(20)
+  unitEn  String? @db.VarChar(20)
+
+  /// ขอบเขตที่ server ใช้ตรวจซ้ำ ไม่ใช่แค่ hint ของ UI — ค่าที่ลูกค้ากรอกมาจาก
+  /// localStorage ซึ่งแก้ได้ ต่างจากตัวเลือกอื่นที่อ่านกลับจากฐานข้อมูลได้
+  /// null เมื่อ inputType เป็น TEXT
+  minValue Decimal? @db.Decimal(12, 3)
+  maxValue Decimal? @db.Decimal(12, 3)
+  /// ขั้นของค่าที่ยอมรับ นับจาก minValue เช่น 1 = จำนวนเต็ม, 0.5 = ครึ่งหน่วย
+  step     Decimal? @default(1) @db.Decimal(12, 3)
+
+  /// จำนวนตัวอักษรสูงสุดของช่องข้อความ null เมื่อ inputType เป็น NUMBER
+  /// เพดานนี้คือสิ่งที่กัน customFieldsTh ไม่ให้ล้น VarChar(255) และกันการ์ด LINE บวม
+  maxLength Int?
+
+  /// false = ลูกค้าเว้นว่างได้ ใช้กับช่องอย่าง "หมายเหตุเพิ่มเติม"
+  required Boolean @default(true)
+
+  sortOrder Int @default(0)
+
+  // Relations
+  productId      Int
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  triggerValueId Int
+  triggerValue   AttributeValue @relation(fields: [triggerValueId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([triggerValueId])
 }
 
 /// คุณลักษณะที่สินค้าตัวนี้ใช้ — แต่ละสินค้ากำหนดชุดของตัวเองได้อิสระ
@@ -817,15 +882,24 @@ model QuotationItem {
   variantId Int?
   variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
-  productNameTh String  @db.VarChar(255)
-  productNameEn String  @db.VarChar(255)
-  slug          String  @db.VarChar(191)
-  sku           String? @db.VarChar(64)
+  productNameTh  String  @db.VarChar(255)
+  productNameEn  String  @db.VarChar(255)
+  slug           String  @db.VarChar(191)
+  sku            String? @db.VarChar(64)
   /// คุณสมบัติที่ลูกค้าเลือก แสดงเป็นข้อความเดียว เช่น "ความหนา: 6 มม. · สี: ใส"
-  optionsTh     String? @db.VarChar(500)
-  optionsEn     String? @db.VarChar(500)
-  qty           Int
-  sortOrder     Int     @default(0)
+  optionsTh      String? @db.VarChar(500)
+  optionsEn      String? @db.VarChar(500)
+  /// ค่าที่ลูกค้ากรอกเอง เช่น "กว้าง: 1200 มม. · สูง: 2400 มม." (ดู ProductCustomField)
+  ///
+  /// คอลัมน์แยกไม่ใช่ต่อท้าย optionsTh เพราะ optionsTh ถูก slice ที่ 500 อยู่แล้ว
+  /// การต่อท้ายจะทำให้ตัวเลือกที่ลูกค้าเลือกจริงถูกตัดหายเงียบ ๆ
+  ///
+  /// เป็นตัวเลขล้วนตามนิยามของ ProductCustomField จึงไม่ระบุตัวบุคคล และงาน
+  /// retention ใน lib/admin/retention.ts จึงเก็บไว้เหมือน optionsTh
+  customFieldsTh String? @db.VarChar(255)
+  customFieldsEn String? @db.VarChar(255)
+  qty            Int
+  sortOrder      Int     @default(0)
 
   @@index([requestId])
   @@index([productId])

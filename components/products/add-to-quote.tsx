@@ -38,9 +38,16 @@ interface AddToQuoteProps {
     valueEn: string;
     colorHex?: string | null;
   }[];
+  /**
+   * What was typed into the product's custom fields — a number for a
+   * measurement, a string for a note. Unlike `attributes`, which is a display
+   * snapshot, these are what the quotation action re-validates, and what keeps
+   * two sizes of the same variant as two cart lines.
+   */
+  customValues?: { fieldId: number; value: number | string }[];
 }
 
-export function AddToQuote({ product, line, attributes }: AddToQuoteProps) {
+export function AddToQuote({ product, line, attributes, customValues }: AddToQuoteProps) {
   const t = useTranslations("Cart");
   const { add, openCart } = useCart();
   const [qty, setQty] = useState(1);
@@ -64,6 +71,7 @@ export function AddToQuote({ product, line, attributes }: AddToQuoteProps) {
       sku: line.sku,
       qty,
       attributes,
+      customValues: customValues && customValues.length > 0 ? customValues : undefined,
     });
 
     openCart();

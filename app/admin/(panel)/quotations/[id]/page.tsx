@@ -131,6 +131,13 @@ export default async function QuotationDetailPage({
                         {item.optionsTh ? (
                           <p className="mt-1 font-body-sm text-muted-foreground">{item.optionsTh}</p>
                         ) : null}
+                        {/* ขนาดที่ลูกค้ากรอกเอง เน้นให้ต่างจากตัวเลือกที่เลือกจากรายการ
+                            เพราะเป็นตัวเลขที่ต้องส่งต่อให้โรงงานตัดจริง */}
+                        {item.customFieldsTh ? (
+                          <p className="mt-1 font-body-sm font-semibold text-primary">
+                            {item.customFieldsTh}
+                          </p>
+                        ) : null}
                         {!item.productId ? (
                           <p className="mt-1 font-body-sm text-muted-foreground">
                             (สินค้านี้ถูกลบออกจากแคตตาล็อกแล้ว)

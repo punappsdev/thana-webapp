@@ -21,6 +21,7 @@ async function main() {
   await prisma.promotion.deleteMany({});
   await prisma.variantAttributeValue.deleteMany({});
   await prisma.productVariant.deleteMany({});
+  await prisma.productCustomField.deleteMany({});
   await prisma.productAttributeValue.deleteMany({});
   await prisma.productImage.deleteMany({});
   await prisma.product.deleteMany({});
@@ -961,6 +962,51 @@ async function main() {
       ],
     },
     {
+      // สินค้าตัวอย่างของฟีเจอร์ "ให้ลูกค้ากรอกขนาดเอง" — `size` เป็นแกนตัวเลือกจริง
+      // ที่มีทั้งแผ่นมาตรฐานและ "สั่งตัดตามขนาด" ช่องกรอกกว้าง/สูงผูกไว้กับค่าหลัง
+      // (ดู customFieldData ด้านล่าง) จึงโผล่เฉพาะตอนลูกค้าเลือกสั่งตัด
+      slug: "tempered-glass-cut-to-size",
+      sku: "GL-TMP-CUT",
+      nameTh: "กระจกเทมเปอร์สั่งตัดตามขนาด",
+      nameEn: "Cut-to-size Tempered Glass",
+      descriptionTh:
+        "กระจกเทมเปอร์นิรภัยที่สั่งตัดได้ตามขนาดหน้างาน เลือกแผ่นมาตรฐานหรือระบุความกว้างและความสูงที่ต้องการเข้ามา ทีมงานจะคำนวณราคาตามขนาดจริงแล้วติดต่อกลับ",
+      descriptionEn:
+        "Tempered safety glass cut to your own measurements. Choose a standard sheet or enter the exact width and height you need, and our team will quote the real size.",
+      usageGuideTh:
+        "กรุณาวัดขนาดช่องเปิดจริงก่อนสั่ง และเผื่อระยะติดตั้งตามที่ช่างกำหนด กระจกเทมเปอร์ตัดหรือเจาะเพิ่มหลังอบไม่ได้ ขนาดที่ระบุจึงเป็นขนาดสุดท้าย",
+      usageGuideEn:
+        "Measure the actual opening and allow the installation clearance your fitter specifies. Tempered glass cannot be cut or drilled after tempering, so the size you enter is final.",
+      coverImage: "/api/uploads/products/tempered-safety-glass.jpg",
+      basePrice: 1180,
+      categorySlug: "glass",
+      subCategorySlug: "glass/tempered",
+      brandSlug: "thana-glass",
+      unitCode: "sheet",
+      pricingCode: "per-sqm",
+      published: true,
+      images: [
+        { url: "/api/uploads/portfolio/safety-glass-shower-screen.jpg", altTh: "ฉากกั้นอาบน้ำกระจกเทมเปอร์สั่งตัด", altEn: "Cut-to-size tempered glass shower screen" },
+      ],
+      attributes: [
+        "thickness:6mm",
+        "thickness:8mm",
+        "thickness:10mm",
+        "color:clear",
+        "edge-type:polished",
+        "size:1220x2440",
+        "size:custom",
+      ],
+      variants: [
+        { sku: "GL-TMP-CUT-6-STD", price: 1180, values: ["thickness:6mm", "size:1220x2440"], isDefault: true },
+        { sku: "GL-TMP-CUT-6-CUT", price: 1180, values: ["thickness:6mm", "size:custom"] },
+        { sku: "GL-TMP-CUT-8-STD", price: 1460, values: ["thickness:8mm", "size:1220x2440"] },
+        { sku: "GL-TMP-CUT-8-CUT", price: 1460, values: ["thickness:8mm", "size:custom"] },
+        { sku: "GL-TMP-CUT-10-STD", price: 1790, values: ["thickness:10mm", "size:1220x2440"] },
+        { sku: "GL-TMP-CUT-10-CUT", price: 1790, values: ["thickness:10mm", "size:custom"] },
+      ],
+    },
+    {
       slug: "frosted-decorative-glass",
       sku: "GL-FRS-001",
       nameTh: "กระจกฝ้าตกแต่ง",
@@ -1218,6 +1264,39 @@ async function main() {
           }),
         },
       },
+    });
+  }
+
+  // ช่องตัวเลขที่ลูกค้ากรอกเอง เก็บแยกจาก productData เพราะผูกกับ "ค่าใดค่าหนึ่ง"
+  // ของสินค้า ไม่ใช่ตัวสินค้าเอง และมีแค่สินค้าสั่งตัดเท่านั้นที่ใช้
+  console.log("Seeding customer-entered measurement fields...");
+  const customFieldData = [
+    {
+      productSlug: "tempered-glass-cut-to-size",
+      triggerValueKey: "size:custom",
+      fields: [
+        // ขอบเขตนี้ถูกตรวจซ้ำที่ฝั่งเซิร์ฟเวอร์ตอนลูกค้าส่งคำขอ (resolveCustomValues
+        // ใน lib/quotation-custom-fields.ts) จึงต้องเป็นขนาดที่โรงงานตัดได้จริง
+        { inputType: "NUMBER" as const, labelTh: "กว้าง", labelEn: "Width", unitTh: "มม.", unitEn: "mm", minValue: 100, maxValue: 2400, step: 1, maxLength: null, required: true },
+        { inputType: "NUMBER" as const, labelTh: "สูง", labelEn: "Height", unitTh: "มม.", unitEn: "mm", minValue: 100, maxValue: 3600, step: 1, maxLength: null, required: true },
+        // ตัวอย่างช่องข้อความ ตั้งเป็นไม่บังคับเพราะลูกค้าส่วนใหญ่ไม่ได้สั่งสลัก
+        { inputType: "TEXT" as const, labelTh: "ข้อความที่ต้องการสลัก", labelEn: "Text to engrave", unitTh: null, unitEn: null, minValue: null, maxValue: null, step: null, maxLength: 60, required: false },
+      ],
+    },
+  ];
+
+  for (const entry of customFieldData) {
+    const product = await prisma.product.findUniqueOrThrow({
+      where: { slug: entry.productSlug },
+      select: { id: true },
+    });
+    await prisma.productCustomField.createMany({
+      data: entry.fields.map((field, i) => ({
+        ...field,
+        productId: product.id,
+        triggerValueId: attrValueBy[entry.triggerValueKey],
+        sortOrder: i + 1,
+      })),
     });
   }
 

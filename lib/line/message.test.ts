@@ -11,6 +11,7 @@ function item(overrides: Partial<QuotationNotificationItem> = {}): QuotationNoti
   return {
     productNameTh: "กระจกเทมเปอร์",
     optionsTh: "ความหนา: 6 มม. · สี: ใส",
+    customFieldsTh: null,
     sku: "TG-6-CL",
     qty: 2,
     ...overrides,
@@ -174,6 +175,60 @@ describe("buildQuotationMessages", () => {
     // ทุกรายการต้องถึงกลุ่ม ไม่มีคำว่า "และอีก N รายการ"
     for (const line of items) expect(text).toContain(line.sku!);
     expect(text).not.toContain("และอีก");
+
+    for (const message of messages) {
+      expect(jsonByteLength(message)).toBeLessThanOrEqual(
+        LINE_MESSAGE_LIMITS.MESSAGE_JSON_LIMIT,
+      );
+      if (message.contents.type === "carousel") {
+        expect(message.contents.contents.length).toBeLessThanOrEqual(
+          LINE_MESSAGE_LIMITS.MAX_BUBBLES_PER_CAROUSEL,
+        );
+      }
+    }
+  });
+
+  it("แสดงขนาดที่ลูกค้ากรอกเองแยกจากตัวเลือกที่เลือกจากรายการ", () => {
+    const text = allText(
+      buildQuotationMessages(
+        minimalRequest({
+          items: [
+            item({
+              optionsTh: "ความหนา: 6 มม. · สี: ใส",
+              customFieldsTh: "กว้าง: 1200 มม. · สูง: 2400 มม.",
+            }),
+          ],
+        }),
+      ),
+    );
+
+    expect(text).toContain("ความหนา: 6 มม. · สี: ใส");
+    expect(text).toContain("กว้าง: 1200 มม. · สูง: 2400 มม.");
+  });
+
+  it("ไม่ทิ้งบรรทัดว่างไว้เมื่อสินค้าไม่ใช่แบบสั่งตัด", () => {
+    const text = allText(buildQuotationMessages(minimalRequest({ items: [item()] })));
+    expect(text).not.toContain("null");
+  });
+
+  /**
+   * เพดานที่ต้องคุมคือ "หนึ่งรายการต้องอยู่ในหนึ่งการ์ดได้" (splitIntoBubbles บังคับ
+   * ให้แต่ละใบมีอย่างน้อยหนึ่งรายการ) ค่าที่ลูกค้ากรอกจึงถูกจำกัดที่ VarChar(255)
+   * เทสต์นี้ยืนยันว่าแม้ทุกรายการยาวเต็มเพดานทุกช่อง ข้อความก็ยังไม่ชนของจริง
+   */
+  it("ยังไม่ชนเพดานของ LINE เมื่อทุกรายการมีขนาดกรอกเองยาวเต็ม 255 ตัวอักษร", () => {
+    const messages = buildQuotationMessages(
+      minimalRequest({
+        items: Array.from({ length: 100 }, (_, index) =>
+          item({
+            productNameTh: `${index + 1} ${"กระจกนิรภัยเทมเปอร์ลามิเนตสองชั้น".repeat(6)}`,
+            optionsTh: "ความหนา: 12 มม. · สี: ชาเข้ม · การเจียร: ขอบมน · ลบมุม: 4 มุม",
+            customFieldsTh: "ก".repeat(255),
+            sku: `CUT-${index + 1}`,
+          }),
+        ),
+      }),
+    );
 
     for (const message of messages) {
       expect(jsonByteLength(message)).toBeLessThanOrEqual(

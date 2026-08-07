@@ -117,6 +117,157 @@ export function validateProductVariants(variants: ProductVariantInput[], publish
   return [...errors];
 }
 
+export interface ProductCustomFieldInput {
+  /** Client token of the option value that reveals this field */
+  triggerToken: string;
+  inputType: "NUMBER" | "TEXT";
+  labelTh: string;
+  labelEn: string;
+  unitTh: string;
+  unitEn: string;
+  /** As typed, so a blank stays distinguishable from a real zero */
+  minValue: string;
+  maxValue: string;
+  step: string;
+  maxLength: string;
+  /** false = the customer may leave it blank, and "ไม่ระบุ" is stored instead */
+  required: boolean;
+}
+
+/**
+ * The longest `QuotationItem.customFieldsTh` can be. Mirrors the column width,
+ * which in turn is what keeps one quotation line inside the LINE bubble budget
+ * (see `splitIntoBubbles` in lib/line/message.ts).
+ */
+const CUSTOM_FIELDS_COLUMN_LIMIT = 255;
+
+/** Hard ceiling on one text answer — matches MAX_TEXT_FIELD_LENGTH. */
+const TEXT_FIELD_LIMIT = 200;
+
+/**
+ * What a customer types into a custom field is the one piece of a cart line the
+ * server cannot re-read from the catalog — these limits are what it checks
+ * instead (`resolveCustomValues` in lib/quotation-custom-fields.ts).
+ *
+ * So an inverted range or a missing length cap is not a cosmetic flaw: it
+ * decides what reaches the sales team, and how long the LINE card gets. Checked
+ * for drafts too, unlike most product rules.
+ */
+export function validateProductCustomFields(fields: ProductCustomFieldInput[]): string[] {
+  const errors = new Set<string>();
+
+  for (const field of fields) {
+    const name = field.labelTh.trim() || "ช่องกรอกที่ยังไม่ได้ตั้งชื่อ";
+
+    if (field.inputType === "TEXT") {
+      const maxLength = Number(field.maxLength);
+      if (!field.maxLength.trim() || !Number.isFinite(maxLength)) {
+        errors.add(`"${name}": กรุณากรอกความยาวสูงสุดเป็นตัวเลข`);
+        continue;
+      }
+      if (!Number.isInteger(maxLength) || maxLength < 1) {
+        errors.add(`"${name}": ความยาวสูงสุดต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป`);
+      }
+      if (maxLength > TEXT_FIELD_LIMIT) {
+        errors.add(`"${name}": ความยาวสูงสุดต้องไม่เกิน ${TEXT_FIELD_LIMIT} ตัวอักษร`);
+      }
+      continue;
+    }
+
+    // หน่วยบังคับเฉพาะช่องตัวเลข — "1200" ลอย ๆ ไม่บอกว่าเป็นมิลลิเมตรหรือเซนติเมตร
+    if (!field.unitTh.trim() || !field.unitEn.trim()) {
+      errors.add(`"${name}": ช่องตัวเลขต้องระบุหน่วยทั้งภาษาไทยและภาษาอังกฤษ`);
+    }
+
+    const min = Number(field.minValue);
+    const max = Number(field.maxValue);
+    const step = Number(field.step);
+
+    if (
+      !field.minValue.trim() ||
+      !field.maxValue.trim() ||
+      !field.step.trim() ||
+      !Number.isFinite(min) ||
+      !Number.isFinite(max) ||
+      !Number.isFinite(step)
+    ) {
+      errors.add(`"${name}": ค่าต่ำสุด ค่าสูงสุด และช่วงการกรอกต้องเป็นตัวเลข`);
+      continue;
+    }
+    if (min < 0) errors.add(`"${name}": ค่าต่ำสุดต้องไม่ติดลบ`);
+    // Equal bounds leave exactly one legal value, which is a fixed option, not
+    // something worth asking the customer to type.
+    if (min >= max) errors.add(`"${name}": ค่าสูงสุดต้องมากกว่าค่าต่ำสุด`);
+    if (step <= 0) errors.add(`"${name}": ช่วงการกรอกต้องมากกว่า 0`);
+    // A step wider than the range would leave only the minimum as a legal entry,
+    // so every other number the customer types is silently rejected on submit.
+    if (step > 0 && max > min && step > max - min) {
+      errors.add(`"${name}": ช่วงการกรอกกว้างเกินกว่าระยะระหว่างค่าต่ำสุดกับค่าสูงสุด`);
+    }
+  }
+
+  // Two fields on the same trigger with the same label read as duplicates in the
+  // cart and on the LINE card, where only the label distinguishes them.
+  const seen = new Set<string>();
+  for (const field of fields) {
+    const key = `${field.triggerToken}|${field.labelTh.trim()}`;
+    if (seen.has(key)) errors.add("ชื่อช่องกรอกของค่าเดียวกันต้องไม่ซ้ำกัน");
+    seen.add(key);
+  }
+
+  // Fields sharing a trigger are formatted into one string. If their worst case
+  // overflows the column, `formatCustomFields` would slice it and the sales team
+  // would silently lose the tail — so it is rejected here, where it is fixable.
+  for (const [token, group] of groupByTrigger(fields)) {
+    if (!token) continue;
+    for (const locale of ["th", "en"] as const) {
+      if (worstCaseLength(group, locale) > CUSTOM_FIELDS_COLUMN_LIMIT) {
+        errors.add(
+          `ช่องกรอกของค่าเดียวกันยาวรวมกันเกิน ${CUSTOM_FIELDS_COLUMN_LIMIT} ตัวอักษร กรุณาลดความยาวสูงสุดหรือย่อชื่อช่องลง`,
+        );
+        break;
+      }
+    }
+  }
+
+  return [...errors];
+}
+
+function groupByTrigger(
+  fields: ProductCustomFieldInput[],
+): Map<string, ProductCustomFieldInput[]> {
+  const groups = new Map<string, ProductCustomFieldInput[]>();
+  for (const field of fields) {
+    const group = groups.get(field.triggerToken) ?? [];
+    group.push(field);
+    groups.set(field.triggerToken, group);
+  }
+  return groups;
+}
+
+/**
+ * Longest string `formatCustomFields` could produce for one trigger value.
+ * Mirrors the placeholder there: a skipped optional field still costs
+ * "label: ไม่ระบุ", which for a short text cap is the longer of the two cases.
+ */
+const NOT_SPECIFIED_LENGTH = { th: "ไม่ระบุ".length, en: "Not specified".length } as const;
+
+function worstCaseLength(fields: ProductCustomFieldInput[], locale: "th" | "en"): number {
+  const SEPARATOR = 3; // " · "
+  return fields.reduce((total, field, index) => {
+    const label = (locale === "en" ? field.labelEn : field.labelTh).trim();
+    const unit = (locale === "en" ? field.unitEn : field.unitTh).trim();
+    const value =
+      field.inputType === "TEXT"
+        ? Math.min(Number(field.maxLength) || TEXT_FIELD_LIMIT, TEXT_FIELD_LIMIT)
+        : String(field.maxValue).trim().length;
+    // label + ": " + value + (" " + unit); the placeholder carries no unit
+    const filled = value + (unit ? unit.length + 1 : 0);
+    const widest = field.required ? filled : Math.max(filled, NOT_SPECIFIED_LENGTH[locale]);
+    return total + label.length + 2 + widest + (index > 0 ? SEPARATOR : 0);
+  }, 0);
+}
+
 export interface VariantAxis {
   attributeId: number;
   nameTh: string;

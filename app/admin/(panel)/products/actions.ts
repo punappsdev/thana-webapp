@@ -9,6 +9,7 @@ import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import { reindexProducts } from "@/lib/search-index";
+import { MAX_CUSTOM_FIELDS } from "@/lib/quotation-custom-fields";
 import {
   MAX_COMBINATIONS,
   draftSku,
@@ -17,6 +18,7 @@ import {
   slugifyAdminTitle,
   validateBilingualPublish,
   validateProductClassification,
+  validateProductCustomFields,
   validateProductVariants,
   validateVariantAxisCoverage,
   type ActionResult,
@@ -56,6 +58,32 @@ const variantSchema = z.array(
   }),
 ).max(MAX_COMBINATIONS, `ตัวเลือกสินค้าได้สูงสุด ${MAX_COMBINATIONS} รายการ กรุณาลดจำนวนค่าของตัวเลือกลง`);
 
+/**
+ * A field the customer types a number into. Addressed by the same value token as
+ * variants so it can point at a value the admin typed a moment ago.
+ *
+ * The bounds arrive as strings so a blank stays blank: `z.coerce.number()` turns
+ * "" into 0, which would silently publish a field accepting a zero measurement.
+ */
+const customFieldSchema = z.array(
+  z.object({
+    triggerToken: z.string().regex(/^[vn]:.+$/, "กรุณาเลือกค่าที่จะเปิดช่องกรอกให้ครบทุกช่อง"),
+    inputType: z.enum(["NUMBER", "TEXT"]).default("NUMBER"),
+    labelTh: z.string().trim().min(1, "กรุณากรอกชื่อช่องกรอกภาษาไทย").max(60),
+    labelEn: z.string().trim().min(1, "กรุณากรอกชื่อช่องกรอกภาษาอังกฤษ").max(60),
+    // Free text usually has no unit, so emptiness is checked per input type in
+    // validateProductCustomFields rather than here.
+    unitTh: z.string().trim().max(20).default(""),
+    unitEn: z.string().trim().max(20).default(""),
+    minValue: z.string().trim().default(""),
+    maxValue: z.string().trim().default(""),
+    step: z.string().trim().default(""),
+    maxLength: z.string().trim().default(""),
+    required: z.boolean().default(true),
+    sortOrder: z.number().int().default(0),
+  }),
+).max(MAX_CUSTOM_FIELDS, `ช่องให้ลูกค้ากรอกเองได้สูงสุด ${MAX_CUSTOM_FIELDS} ช่องต่อสินค้าหนึ่งตัว`);
+
 const optionalId = z.preprocess((value) => (value === "none" || value === "" ? undefined : value), z.coerce.number().int().positive().optional());
 
 const formSchema = z.object({
@@ -84,6 +112,8 @@ const formSchema = z.object({
   imagesJson: z.string(),
   attributesJson: z.string(),
   variantsJson: z.string(),
+  // Optional so a product form saved before this feature existed still parses.
+  customFieldsJson: z.string().optional().default("[]"),
 });
 
 type AttributeInput = z.infer<typeof attributeSchema>[number];
@@ -135,16 +165,25 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
   let images: z.infer<typeof imageSchema>;
   let attributes: z.infer<typeof attributeSchema>;
   let variants: z.infer<typeof variantSchema>;
+  let customFields: z.infer<typeof customFieldSchema>;
   try {
     images = imageSchema.parse(JSON.parse(d.imagesJson));
     attributes = attributeSchema.parse(JSON.parse(d.attributesJson));
     variants = variantSchema.parse(JSON.parse(d.variantsJson));
+    customFields = customFieldSchema.parse(JSON.parse(d.customFieldsJson));
   } catch (error) {
     // A schema rejection here carries a message worth showing ("สูงสุด 4 รูป",
     // the variant cap); only a malformed JSON blob needs the generic fallback.
     const issue = error instanceof z.ZodError ? error.issues[0]?.message : null;
     return { success: false, message: issue || "ข้อมูลรูปภาพ คุณลักษณะ หรือตัวเลือกไม่ถูกต้อง" };
   }
+
+  // The bounds are what the quotation action enforces against a payload the
+  // customer can edit, so a nonsensical range here is not a cosmetic problem —
+  // it decides what the sales team is asked to quote. Checked for drafts too:
+  // publishing is one click away and a broken range is never worth storing.
+  const customFieldErrors = validateProductCustomFields(customFields);
+  if (customFieldErrors.length) return { success: false, message: customFieldErrors.join(" · ") };
 
   // Anything created here lands in the shared dictionary and is rendered on both
   // the Thai and English storefront, so neither language may be left blank —
@@ -341,6 +380,13 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
       const unresolved = variants.flatMap((variant) => variant.valueTokens).filter((token) => !tokenToValueId.has(token));
       if (unresolved.length) throw new Error("VARIANT_TOKEN_UNRESOLVED");
 
+      // A custom field pointing at a value that no longer exists would never be
+      // shown, so the admin would think it was saved and the customer would
+      // never see the size box.
+      if (customFields.some((field) => !tokenToValueId.has(field.triggerToken))) {
+        throw new Error("CUSTOM_FIELD_TOKEN_UNRESOLVED");
+      }
+
       // Only the public variant selector cares that every axis is covered, so a
       // draft may hold half-built combinations until it is ready to publish.
       if (published) {
@@ -357,6 +403,36 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
       await tx.productAttribute.deleteMany({ where: { productId: row.id } });
       await tx.productAttributeValue.deleteMany({ where: { productId: row.id } });
       await tx.productVariant.deleteMany({ where: { productId: row.id } });
+      await tx.productCustomField.deleteMany({ where: { productId: row.id } });
+
+      // Written as one statement for the same reason as the variants below:
+      // every statement inside this transaction costs ~45ms.
+      if (customFields.length) {
+        await tx.productCustomField.createMany({
+          // The columns for the other input type are nulled rather than left at
+          // some leftover number: `resolveCustomValues` treats a missing bound on
+          // a NUMBER field as a broken row, so a stale value must not survive a
+          // switch from ตัวเลข to ข้อความ and back.
+          data: customFields.map((field, index) => {
+            const isText = field.inputType === "TEXT";
+            return {
+              productId: row.id,
+              triggerValueId: tokenToValueId.get(field.triggerToken)!,
+              inputType: field.inputType,
+              labelTh: field.labelTh,
+              labelEn: field.labelEn,
+              unitTh: field.unitTh || null,
+              unitEn: field.unitEn || null,
+              minValue: isText ? null : Number(field.minValue),
+              maxValue: isText ? null : Number(field.maxValue),
+              step: isText ? null : Number(field.step),
+              maxLength: isText ? Number(field.maxLength) : null,
+              required: field.required,
+              sortOrder: field.sortOrder || index,
+            };
+          }),
+        });
+      }
 
       if (images.length) {
         await tx.productImage.createMany({
@@ -437,6 +513,9 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     if (error instanceof Error && error.message.startsWith("AXIS:")) return { success: false, message: error.message.slice(5) };
     if (error instanceof Error && error.message === "VARIANT_TOKEN_UNRESOLVED") {
       return { success: false, message: "ตัวเลือกอ้างถึงค่าคุณลักษณะที่ถูกลบไปแล้ว กรุณากดสร้างตัวเลือกใหม่" };
+    }
+    if (error instanceof Error && error.message === "CUSTOM_FIELD_TOKEN_UNRESOLVED") {
+      return { success: false, message: "ช่องให้ลูกค้ากรอกเองผูกอยู่กับค่าที่ถูกลบไปแล้ว กรุณาเลือกค่าใหม่ให้ช่องนั้น" };
     }
     // The fallback message says nothing about what went wrong, so anything
     // reaching it has to be legible in the server log or it is undiagnosable.

@@ -119,6 +119,42 @@ A promotion edited under **โปรโมชั่น** (`/admin/content/promot
 - Products can be bound while still drafts; the promotion appears once the product is published.
 - Deleting a product, category, or sub-category clears its bindings automatically.
 
+## Letting customers fill in their own values
+
+Some products are made to order, so what the customer wants cannot be listed in advance. The **ช่องให้ลูกค้ากรอกเอง (สินค้าสั่งตัด)** card on a product's **คุณลักษณะและตัวเลือก** tab adds inputs that appear on the storefront only while a specific option value is selected.
+
+Each field is either **ตัวเลข** (a measurement, with a min/max/step) or **ข้อความ** (free text, with a maximum length), and each can be marked **ต้องกรอก** or left optional. An optional field the customer leaves blank is still recorded on the quotation, as **ไม่ระบุ** / *Not specified* — so staff can tell "the customer declined it" from "this product never offered it".
+
+To set one up:
+
+1. Under **ตัวเลือกที่ลูกค้าเลือกได้**, make sure the option carries a value that means "made to order" (the shared dictionary already has **ขนาด → สั่งตัดตามขนาด**).
+2. Make sure at least one variant row uses that value. A value no variant carries never reaches the storefront picker, so the inputs would never appear.
+3. Add a field, choose that value under **แสดงช่องนี้เมื่อลูกค้าเลือก**, pick **ชนิดของช่อง**, then fill in the label in both languages and the limits for that type.
+
+Things worth knowing before using this:
+
+- **The limits are enforced, not suggested.** The cart lives in the customer's browser, so the quotation action re-checks every submitted value against these limits and drops any line that fails. Enter the range the factory can actually cut — it is the only thing stopping an impossible request from reaching the LINE group.
+- **Two entries are two lines.** The same variant ordered at two different sizes, or with two different engraving texts, stays as two separate cart lines and two separate rows on the quotation.
+- **Typed values are not filterable.** Only the trigger value (e.g. "สั่งตัดตามขนาด") appears in the product filters, and it means "this product can be made to order", not "this product comes that way".
+- **Numeric fields need a unit; text fields do not.** "1200" alone does not say millimetres or centimetres, so a unit is required in both languages for **ตัวเลข**.
+- **Length caps are hard.** One text answer can be at most 200 characters, and the fields sharing a trigger value must fit together into 255 characters. The editor refuses a configuration that would overflow, because the overflow would otherwise be silently cut off the LINE card and the quotation row.
+- `AttributeInputType` **ตัวเลข** / **ข้อความ** under `/admin/catalog` is a different thing: it still means a list of values the admin defines up front, not a box the customer types into. Per-product limits are why this feature does not reuse it.
+
+### Free text and personal data — read before enabling one
+
+A text field lets the customer type anything, including their own name, phone number, or site address.
+
+`QuotationItem` rows are deliberately **not** touched by the retention job: they are treated as non-identifying product statistics and kept after a request is anonymized (see `anonymizedQuotationFields` in `lib/admin/retention.ts`). That was decided when these fields were numeric only, and **it still applies to text**, so anything a customer types into one survives the 3-year anonymization indefinitely.
+
+That is a deliberate choice, not an oversight. It means:
+
+- Use text fields only for what the factory needs to make the product — engraving wording, a finish reference — and never as a second place to ask for contact details. The quotation form already collects those, in columns the retention job does clear.
+- If the privacy policy later has to cover this, add `customFieldsTh` and `customFieldsEn` to `anonymizedQuotationFields`. That single change makes the retention job clear them, at the cost of losing the numeric measurements too.
+
+Newlines, tabs, and control characters in a typed note are collapsed to single spaces on submit, so a pasted multi-line block cannot break the quotation row or the LINE card layout.
+
+The values reach staff as their own line on `/admin/quotations/<id>` and in the LINE card, highlighted separately from the options picked from a list.
+
 ## Operations
 
 - Change the administrator password under **ตั้งค่าบัญชี**. This revokes all other sessions.

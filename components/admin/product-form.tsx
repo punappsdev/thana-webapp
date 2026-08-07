@@ -15,6 +15,10 @@ import {
   type ProductAttributeDraft,
 } from "@/components/admin/product-attributes-editor";
 import {
+  ProductCustomFieldList,
+  type ProductCustomFieldDraft,
+} from "@/components/admin/product-custom-fields-editor";
+import {
   MAX_COMBINATIONS,
   ProductVariantsTable,
   buildAxes,
@@ -60,6 +64,21 @@ type SavedVariant = {
   attributeValueIds: number[];
 };
 
+/** Limits arrive as strings so a field that has no numeric side stays blank. */
+type SavedCustomField = {
+  triggerValueId: number;
+  inputType: "NUMBER" | "TEXT";
+  labelTh: string;
+  labelEn: string;
+  unitTh: string;
+  unitEn: string;
+  minValue: string;
+  maxValue: string;
+  step: string;
+  maxLength: string;
+  required: boolean;
+};
+
 type ProductRecord = {
   id: number;
   updatedAt: Date;
@@ -82,6 +101,7 @@ type ProductRecord = {
   images: ImageRow[];
   attributes: SavedAttribute[];
   variants: SavedVariant[];
+  customFields: SavedCustomField[];
 };
 
 type EditorOptions = {
@@ -137,6 +157,23 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
       isDefault: variant.isDefault,
       sortOrder: variant.sortOrder,
       valueTokens: variant.attributeValueIds.map(existingToken),
+    })),
+  );
+
+  const [customFields, setCustomFields] = useState<ProductCustomFieldDraft[]>(() =>
+    (record?.customFields || []).map((field) => ({
+      _key: crypto.randomUUID(),
+      triggerToken: existingToken(field.triggerValueId),
+      inputType: field.inputType,
+      labelTh: field.labelTh,
+      labelEn: field.labelEn,
+      unitTh: field.unitTh,
+      unitEn: field.unitEn,
+      minValue: field.minValue,
+      maxValue: field.maxValue,
+      step: field.step,
+      maxLength: field.maxLength,
+      required: field.required,
     })),
   );
 
@@ -217,6 +254,23 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     valueTokens: variant.valueTokens,
   }));
 
+  // Limits go over as typed. Turning "" into 0 here would quietly ship a field
+  // the customer can enter 0 into; the action rejects the blank instead.
+  const customFieldsPayload = customFields.map((field, index) => ({
+    triggerToken: field.triggerToken,
+    inputType: field.inputType,
+    labelTh: field.labelTh,
+    labelEn: field.labelEn,
+    unitTh: field.unitTh,
+    unitEn: field.unitEn,
+    minValue: field.minValue,
+    maxValue: field.maxValue,
+    step: field.step,
+    maxLength: field.maxLength,
+    required: field.required,
+    sortOrder: index,
+  }));
+
   return (
     <form onSubmit={handleSubmit} onChange={markDirty} className="space-y-6">
       <input type="hidden" name="id" value={record?.id || ""} />
@@ -224,6 +278,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
       <input type="hidden" name="imagesJson" value={JSON.stringify(images)} readOnly />
       <input type="hidden" name="attributesJson" value={JSON.stringify(attributesPayload)} readOnly />
       <input type="hidden" name="variantsJson" value={JSON.stringify(variantsPayload)} readOnly />
+      <input type="hidden" name="customFieldsJson" value={JSON.stringify(customFieldsPayload)} readOnly />
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
@@ -428,6 +483,26 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                 onChange={(next) => {
                   markDirty();
                   setVariants(next);
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline-sm">ช่องให้ลูกค้ากรอกเอง (สินค้าสั่งตัด)</CardTitle>
+              <p className="font-body-sm text-muted-foreground">
+                ช่องที่จะอยู่บนหน้าสินค้าเมื่อลูกค้าเลือกค่าที่กำหนดไว้ เช่นเลือก
+                &ldquo;สั่งตัดตามขนาด&rdquo; เพื่อให้ลูกค้ากรอกความกว้าง/สูง หรือข้อความที่ต้องการได้เอง
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ProductCustomFieldList
+                fields={customFields}
+                axes={axes}
+                onChange={(next) => {
+                  markDirty();
+                  setCustomFields(next);
                 }}
               />
             </CardContent>
