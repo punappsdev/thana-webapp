@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Wrench } from "lucide-react";
+import { Award, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 
@@ -38,7 +38,7 @@ export function AboutUs() {
 
             <div className="flex gap-4">
               <div className="bg-primary/5 p-3 rounded-lg h-fit text-primary">
-                <Wrench className="h-6 w-6" />
+                <Truck className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="font-headline-md text-primary font-bold">{t("expert.title")}</h3>

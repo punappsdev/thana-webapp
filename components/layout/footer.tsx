@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
-import { Mail, Phone, Clock, MapPin } from "lucide-react";
+import { Mail, Phone, Clock } from "lucide-react";
 import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
@@ -35,7 +35,7 @@ export async function Footer() {
             className="h-12 w-auto object-contain self-start"
             style={{ width: 'auto' }}
           />
-          <p className="text-muted-foreground font-body-sm">
+          <p className="text-muted-foreground font-body-sm whitespace-pre-line">
             {t("desc")}
           </p>
           <div className="flex gap-4">
@@ -52,7 +52,7 @@ export async function Footer() {
             <a href="mailto:info@thana-glass.com" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
               <Mail className="h-5 w-5" />
             </a>
-            <a href="tel:076-381444" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
+            <a href="tel:076-381-444" className="p-2 bg-accent rounded-full hover:bg-primary hover:text-white transition-all text-muted-foreground hover:scale-105 active:scale-95">
               <Phone className="h-5 w-5" />
             </a>
           </div>
@@ -88,16 +88,12 @@ export async function Footer() {
             <h2 className="font-headline-sm font-semibold text-primary mb-6">{t("headingContact")}</h2>
             <ul className="flex flex-col gap-4 text-muted-foreground font-body-sm">
               <li className="flex gap-2">
-                <MapPin className="h-5 w-5 shrink-0 text-primary" />
-                <span>{t("address")}</span>
-              </li>
-              <li className="flex gap-2">
                 <Mail className="h-5 w-5 shrink-0 text-primary" />
                 <span className="break-all">info@thana-glass.com</span>
               </li>
               <li className="flex gap-2">
                 <Phone className="h-5 w-5 shrink-0 text-primary" />
-                <span>076-381444, 076-381356-7, 088-7652642</span>
+                <span>076-381-444, 076-381-356, 076-311-222</span>
               </li>
               <li className="flex gap-2">
                 <Clock className="h-5 w-5 shrink-0 text-primary" />

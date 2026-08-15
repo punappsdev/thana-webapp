@@ -297,6 +297,10 @@ export default async function AboutPage({ params }: PageProps) {
                     : []),
                 ];
 
+                const salesMid = Math.ceil(contacts.sales.length / 2);
+                const salesCol1 = contacts.sales.slice(0, salesMid);
+                const salesCol2 = contacts.sales.slice(salesMid);
+
                 return (
                   <Card
                     key={company.name}
@@ -354,16 +358,31 @@ export default async function AboutPage({ params }: PageProps) {
                             <Phone className="h-4 w-4 text-secondary" aria-hidden="true" />
                             <p className="font-label-md text-primary">{t("contacts.sales")}</p>
                           </div>
-                          <div className="space-y-4">
-                            {contacts.sales.map((sale) => (
-                              <ContactRow
-                                key={sale.number}
-                                icon={Phone}
-                                label={sale.label}
-                                value={sale.number}
-                                href={phoneHref(sale.number)}
-                              />
-                            ))}
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="space-y-4">
+                              {salesCol1.map((sale) => (
+                                <ContactRow
+                                  key={sale.number}
+                                  icon={Phone}
+                                  label={sale.label}
+                                  value={sale.number}
+                                  href={phoneHref(sale.number)}
+                                />
+                              ))}
+                            </div>
+                            {salesCol2.length > 0 && (
+                              <div className="space-y-4">
+                                {salesCol2.map((sale) => (
+                                  <ContactRow
+                                    key={sale.number}
+                                    icon={Phone}
+                                    label={sale.label}
+                                    value={sale.number}
+                                    href={phoneHref(sale.number)}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </aside>
