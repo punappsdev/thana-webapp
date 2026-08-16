@@ -15,6 +15,8 @@ type District = {
   nameEn: string;
 };
 
+const LEGACY_VALUE = "__legacy_district__";
+
 export function DistrictCombobox({
   id,
   name,
@@ -47,41 +49,56 @@ export function DistrictCombobox({
       ? selectedDistrict.nameEn
       : selectedDistrict.nameTh
     : value;
-  const selectValue = provinceCode ? selectedLabel : "";
+  const selectValue = provinceCode ? selectedDistrict?.code ?? (value ? LEGACY_VALUE : "") : "";
+  const handleValueChange = (selectedValue: string) => {
+    if (selectedValue === LEGACY_VALUE) {
+      onValueChange(value);
+      return;
+    }
+
+    const district = districts.find((item) => item.code === selectedValue);
+    if (!district) return;
+
+    onValueChange(locale === "en" ? district.nameEn : district.nameTh);
+  };
 
   return (
-    <Select
-      name={name}
-      value={selectValue}
-      onValueChange={onValueChange}
-      disabled={!provinceCode}
-    >
-      <SelectTrigger
-        id={id}
-        className="w-full"
-        aria-label={label}
-        aria-describedby={describedBy}
-        aria-invalid={invalid || undefined}
-      >
-        <SelectValue placeholder={provinceCode ? placeholder : chooseProvinceText} />
-      </SelectTrigger>
-      <SelectContent className="max-h-72">
-        {selectedLabel && !selectedDistrict && provinceCode && (
-          <SelectItem value={selectedLabel} className="font-body-sm">
-            {selectedLabel}
-          </SelectItem>
-        )}
-        {districts.map((district) => {
-          const optionLabel = locale === "en" ? district.nameEn : district.nameTh;
-
-          return (
-            <SelectItem key={district.code} value={optionLabel} className="font-body-sm">
-              {optionLabel}
+    <>
+      <Select value={selectValue} onValueChange={handleValueChange} disabled={!provinceCode}>
+        <SelectTrigger
+          id={id}
+          className="w-full"
+          aria-label={label}
+          aria-describedby={describedBy}
+          aria-invalid={invalid || undefined}
+        >
+          <SelectValue placeholder={provinceCode ? placeholder : chooseProvinceText} />
+        </SelectTrigger>
+        <SelectContent className="max-h-72">
+          {selectedLabel && !selectedDistrict && provinceCode && (
+            <SelectItem value={LEGACY_VALUE} className="font-body-sm">
+              {selectedLabel}
             </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+          )}
+          {districts.map((district) => {
+            const optionLabel = locale === "en" ? district.nameEn : district.nameTh;
+
+            return (
+              <SelectItem key={district.code} value={district.code} className="font-body-sm">
+                {optionLabel}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+      <input
+        type="hidden"
+        name={name}
+        value={provinceCode ? selectedLabel : ""}
+        disabled={!provinceCode}
+        readOnly
+      />
+    </>
   );
 }
 
