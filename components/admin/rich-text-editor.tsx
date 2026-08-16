@@ -51,9 +51,34 @@ function normalizeHref(raw: string): string | null {
   return null;
 }
 
-export function RichTextEditor({ name, initialValue, onDirty }: { name: string; initialValue: string; onDirty?: () => void }) {
+type RichTextEditorProps = {
+  name: string;
+  initialValue: string;
+  onDirty?: () => void;
+  /** The id is used by the field label and the toolbar's aria-controls. */
+  editorId?: string;
+  ariaLabel?: string;
+  describedBy?: string;
+  toolbarLabel?: string;
+  placeholder?: string;
+  minHeight?: "compact" | "default";
+};
+
+export function RichTextEditor({
+  name,
+  initialValue,
+  onDirty,
+  editorId = `${name}-editor`,
+  ariaLabel = "เนื้อหาแบบจัดรูปแบบ",
+  describedBy,
+  toolbarLabel = "เครื่องมือจัดรูปแบบข้อความ",
+  placeholder = "เริ่มพิมพ์เนื้อหาที่นี่...",
+  minHeight = "default",
+}: RichTextEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { pending: uploading, uploadFiles, duplicateDialog } = useMediaUpload();
+  const editorMinHeight = minHeight === "compact" ? "min-h-40" : "min-h-64";
+  const editorContentMinHeight = minHeight === "compact" ? "[&_.tiptap]:min-h-40" : "[&_.tiptap]:min-h-64";
   /**
    * The submitted value has to live in React state. Reading editor.getHTML()
    * straight into the hidden input only sampled it at render time, and typing
@@ -77,10 +102,19 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
       }),
       Image,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Placeholder.configure({ placeholder: "เริ่มพิมพ์เนื้อหาที่นี่..." }),
+      Placeholder.configure({ placeholder }),
     ],
     content: initialValue,
-    editorProps: { attributes: { class: "min-h-64 px-4 py-3 font-body-sm outline-none" } },
+    editorProps: {
+      attributes: {
+        id: editorId,
+        role: "textbox",
+        "aria-label": ariaLabel,
+        "aria-multiline": "true",
+        ...(describedBy ? { "aria-describedby": describedBy } : {}),
+        class: cn(editorMinHeight, "px-4 py-3 font-body-sm outline-none"),
+      },
+    },
     onUpdate: ({ editor }) => {
       // An "empty" editor still serialises to <p></p>, which passes the
       // required-field check on publish. Submit a truly empty string instead.
@@ -126,62 +160,84 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
     onDirty?.();
   };
 
-  const groups: { label: string; icon: typeof Bold; isActive?: boolean; disabled?: boolean; run: () => void }[][] = [
-    [
-      { label: "ข้อความปกติ", icon: Pilcrow, isActive: active?.paragraph, run: () => editor?.chain().focus().setParagraph().run() },
-      { label: "หัวข้อใหญ่ (H2)", icon: Heading2, isActive: active?.heading2, run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
-      { label: "หัวข้อย่อย (H3)", icon: Heading3, isActive: active?.heading3, run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
-    ],
-    [
-      { label: "ตัวหนา", icon: Bold, isActive: active?.bold, run: () => editor?.chain().focus().toggleBold().run() },
-      { label: "ตัวเอียง", icon: Italic, isActive: active?.italic, run: () => editor?.chain().focus().toggleItalic().run() },
-      { label: "ขีดเส้นใต้", icon: UnderlineIcon, isActive: active?.underline, run: () => editor?.chain().focus().toggleUnderline().run() },
-      { label: "ขีดฆ่า", icon: Strikethrough, isActive: active?.strike, run: () => editor?.chain().focus().toggleStrike().run() },
-    ],
-    [
-      { label: "รายการ", icon: List, isActive: active?.bulletList, run: () => editor?.chain().focus().toggleBulletList().run() },
-      { label: "รายการตัวเลข", icon: ListOrdered, isActive: active?.orderedList, run: () => editor?.chain().focus().toggleOrderedList().run() },
-      { label: "คำอ้างอิง", icon: Quote, isActive: active?.blockquote, run: () => editor?.chain().focus().toggleBlockquote().run() },
-      { label: "เส้นคั่น", icon: Minus, run: () => editor?.chain().focus().setHorizontalRule().run() },
-    ],
-    [
-      { label: "ชิดซ้าย", icon: AlignLeft, isActive: active?.alignLeft, run: () => editor?.chain().focus().setTextAlign("left").run() },
-      { label: "กึ่งกลาง", icon: AlignCenter, isActive: active?.alignCenter, run: () => editor?.chain().focus().setTextAlign("center").run() },
-      { label: "ชิดขวา", icon: AlignRight, isActive: active?.alignRight, run: () => editor?.chain().focus().setTextAlign("right").run() },
-      { label: "เต็มบรรทัด", icon: AlignJustify, isActive: active?.alignJustify, run: () => editor?.chain().focus().setTextAlign("justify").run() },
-    ],
+  const groups: { label: string; items: { label: string; icon: typeof Bold; isActive?: boolean; run: () => void }[] }[] = [
+    {
+      label: "รูปแบบบล็อกข้อความ",
+      items: [
+        { label: "ข้อความปกติ", icon: Pilcrow, isActive: active?.paragraph, run: () => editor?.chain().focus().setParagraph().run() },
+        { label: "หัวข้อใหญ่ (H2)", icon: Heading2, isActive: active?.heading2, run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
+        { label: "หัวข้อย่อย (H3)", icon: Heading3, isActive: active?.heading3, run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
+      ],
+    },
+    {
+      label: "การเน้นข้อความ",
+      items: [
+        { label: "ตัวหนา", icon: Bold, isActive: active?.bold, run: () => editor?.chain().focus().toggleBold().run() },
+        { label: "ตัวเอียง", icon: Italic, isActive: active?.italic, run: () => editor?.chain().focus().toggleItalic().run() },
+        { label: "ขีดเส้นใต้", icon: UnderlineIcon, isActive: active?.underline, run: () => editor?.chain().focus().toggleUnderline().run() },
+        { label: "ขีดฆ่า", icon: Strikethrough, isActive: active?.strike, run: () => editor?.chain().focus().toggleStrike().run() },
+      ],
+    },
+    {
+      label: "รายการและส่วนประกอบ",
+      items: [
+        { label: "รายการ", icon: List, isActive: active?.bulletList, run: () => editor?.chain().focus().toggleBulletList().run() },
+        { label: "รายการตัวเลข", icon: ListOrdered, isActive: active?.orderedList, run: () => editor?.chain().focus().toggleOrderedList().run() },
+        { label: "คำอ้างอิง", icon: Quote, isActive: active?.blockquote, run: () => editor?.chain().focus().toggleBlockquote().run() },
+        { label: "เส้นคั่น", icon: Minus, run: () => editor?.chain().focus().setHorizontalRule().run() },
+      ],
+    },
+    {
+      label: "การจัดแนวข้อความ",
+      items: [
+        { label: "ชิดซ้าย", icon: AlignLeft, isActive: active?.alignLeft, run: () => editor?.chain().focus().setTextAlign("left").run() },
+        { label: "กึ่งกลาง", icon: AlignCenter, isActive: active?.alignCenter, run: () => editor?.chain().focus().setTextAlign("center").run() },
+        { label: "ชิดขวา", icon: AlignRight, isActive: active?.alignRight, run: () => editor?.chain().focus().setTextAlign("right").run() },
+        { label: "เต็มบรรทัด", icon: AlignJustify, isActive: active?.alignJustify, run: () => editor?.chain().focus().setTextAlign("justify").run() },
+      ],
+    },
   ];
 
   return (
-    <div className="overflow-hidden rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring/30">
+    <div className="overflow-hidden rounded-md border border-border bg-background shadow-blue-sm focus-within:ring-2 focus-within:ring-ring/30">
       <input type="hidden" name={name} value={html} readOnly />
-      <div className="flex flex-wrap items-center gap-0.5 border-b bg-muted/50 p-2">
+      <div
+        role="toolbar"
+        aria-label={toolbarLabel}
+        aria-controls={editorId}
+        aria-orientation="horizontal"
+        className="flex max-w-full flex-wrap items-center gap-1 border-b bg-muted/50 p-2 sm:p-2.5"
+      >
         {groups.map((group, index) => (
-          <div key={index} className="flex items-center gap-0.5">
-            {index > 0 ? <Separator orientation="vertical" className="mx-1 !h-5" /> : null}
-            {group.map((item) => (
-              <Button
-                key={item.label}
-                type="button"
-                variant={item.isActive ? "secondary" : "ghost"}
-                size="icon-sm"
-                onClick={item.run}
-                aria-label={item.label}
-                aria-pressed={item.isActive}
-                title={item.label}
-              >
-                <item.icon className="size-4" />
-              </Button>
-            ))}
+          <div key={group.label} className="flex items-center gap-1">
+            {index > 0 ? <Separator orientation="vertical" decorative className="mx-0.5 !h-5" /> : null}
+            <div role="group" aria-label={group.label} className="flex flex-wrap items-center gap-0.5">
+              {group.items.map((item) => (
+                <Button
+                  key={item.label}
+                  type="button"
+                  variant={item.isActive ? "secondary" : "ghost"}
+                  size="icon"
+                  className="min-h-9 min-w-9"
+                  onClick={item.run}
+                  aria-label={item.label}
+                  aria-pressed={Boolean(item.isActive)}
+                  title={item.label}
+                >
+                  <item.icon className="size-4" />
+                </Button>
+              ))}
+            </div>
           </div>
         ))}
 
-        <Separator orientation="vertical" className="mx-1 !h-5" />
-        <LinkButton editor={editor} isActive={active?.link} currentHref={active?.currentLink || ""} onDirty={onDirty} />
+        <Separator orientation="vertical" decorative className="mx-0.5 !h-5" />
+        <LinkButton editor={editor} isActive={active?.link} currentHref={active?.currentLink || ""} onDirty={onDirty} inputId={`${name}-link`} />
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="icon"
+          className="min-h-9 min-w-9"
           aria-label="ลบลิงก์"
           title="ลบลิงก์"
           disabled={!active?.link}
@@ -201,28 +257,30 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
           }}
         />
         {duplicateDialog}
-        <Button type="button" variant="ghost" size="icon-sm" aria-label="แทรกรูปภาพ" title="แทรกรูปภาพ" disabled={uploading} onClick={() => fileRef.current?.click()}>
+        <Button type="button" variant="ghost" size="icon" className="min-h-9 min-w-9" aria-label="แทรกรูปภาพ" title="แทรกรูปภาพ" disabled={uploading} onClick={() => fileRef.current?.click()}>
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
         </Button>
 
-        <Separator orientation="vertical" className="mx-1 !h-5" />
+        <Separator orientation="vertical" decorative className="mx-0.5 !h-5" />
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="icon"
+          className="min-h-9 min-w-9"
           aria-label="ล้างรูปแบบ"
           title="ล้างรูปแบบ"
           onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}
         >
           <RemoveFormatting className="size-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" disabled={!active?.canUndo} onClick={() => editor?.chain().focus().undo().run()} aria-label="ย้อนกลับ" title="ย้อนกลับ"><Undo2 className="size-4" /></Button>
-        <Button type="button" variant="ghost" size="icon-sm" disabled={!active?.canRedo} onClick={() => editor?.chain().focus().redo().run()} aria-label="ทำซ้ำ" title="ทำซ้ำ"><Redo2 className="size-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" className="min-h-9 min-w-9" disabled={!active?.canUndo} onClick={() => editor?.chain().focus().undo().run()} aria-label="ย้อนกลับ" title="ย้อนกลับ"><Undo2 className="size-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" className="min-h-9 min-w-9" disabled={!active?.canRedo} onClick={() => editor?.chain().focus().redo().run()} aria-label="ทำซ้ำ" title="ทำซ้ำ"><Redo2 className="size-4" /></Button>
       </div>
       <EditorContent
         editor={editor}
         className={cn(
-          "[&_.tiptap]:min-h-64",
+          editorContentMinHeight,
+          "[&_.tiptap]:max-w-none",
           "[&_.tiptap_h2]:font-headline-md [&_.tiptap_h2]:mt-4 [&_.tiptap_h2]:mb-2",
           "[&_.tiptap_h3]:font-headline-sm [&_.tiptap_h3]:mt-3 [&_.tiptap_h3]:mb-2",
           "[&_.tiptap_p]:my-2",
@@ -239,7 +297,7 @@ export function RichTextEditor({ name, initialValue, onDirty }: { name: string; 
   );
 }
 
-function LinkButton({ editor, isActive, currentHref, onDirty }: { editor: Editor | null; isActive?: boolean; currentHref: string; onDirty?: () => void }) {
+function LinkButton({ editor, isActive, currentHref, onDirty, inputId }: { editor: Editor | null; isActive?: boolean; currentHref: string; onDirty?: () => void; inputId: string }) {
   const [open, setOpen] = useState(false);
   const [href, setHref] = useState("");
 
@@ -262,13 +320,23 @@ function LinkButton({ editor, isActive, currentHref, onDirty }: { editor: Editor
       }}
     >
       <PopoverTrigger asChild>
-        <Button type="button" variant={isActive ? "secondary" : "ghost"} size="icon-sm" aria-label="เพิ่มลิงก์" title="เพิ่มลิงก์"><LinkIcon className="size-4" /></Button>
+        <Button
+          type="button"
+          variant={isActive ? "secondary" : "ghost"}
+          size="icon"
+          className="min-h-9 min-w-9"
+          aria-label="เพิ่มลิงก์"
+          aria-pressed={Boolean(isActive)}
+          title="เพิ่มลิงก์"
+        >
+          <LinkIcon className="size-4" />
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="rich-text-link" className="font-label-md">URL ของลิงก์</Label>
+          <Label htmlFor={inputId} className="font-label-md">URL ของลิงก์</Label>
           <Input
-            id="rich-text-link"
+            id={inputId}
             value={href}
             autoFocus
             placeholder="https://example.com"

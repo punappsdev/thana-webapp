@@ -26,6 +26,7 @@ import {
   metaDescription,
 } from "@/lib/seo";
 import type { Metadata } from "next";
+import { sanitizeRichHtml } from "@/lib/admin/security";
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // generated line instead of inheriting the site-wide default.
   const description = metaDescription(
     locale,
-    pick(product, "description", locale),
+    richTextToPlainText(pick(product, "description", locale)),
     t("detailMetaDescription", { name })
   );
   return {
@@ -94,6 +95,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const name = pick(product, "name", locale);
   const description = pick(product, "description", locale);
   const usageGuide = pick(product, "usageGuide", locale);
+  // Sanitize again at the rendering boundary for legacy rows written before
+  // rich text persistence was added, and to keep every innerHTML path safe.
+  const descriptionHtml = sanitizeRichHtml(description || "");
+  const usageGuideHtml = sanitizeRichHtml(usageGuide || "");
+  const descriptionText = richTextToPlainText(description);
   const brandName = product.brand ? pick(product.brand, "name", locale) : null;
   const catalogDownloadUrl = product.catalogPdf
     ? `${product.catalogPdf}${product.catalogPdf.includes("?") ? "&" : "?"}download=1`
@@ -215,7 +221,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Product",
     name,
-    description: description || undefined,
+    description: descriptionText || undefined,
     sku: product.sku,
     url: absoluteUrl(locale, `/products/${slug}`),
     image: gallery.map((img) => `${SITE_URL}${img.url}`),
@@ -368,26 +374,42 @@ export default async function ProductDetailPage({ params }: PageProps) {
           {/* Details below the fold */}
           <div className="mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              {description && (
-                <section className="rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm">
-                  <h2 className="font-headline-sm font-semibold text-primary mb-3">
+              {descriptionHtml.trim() && (
+                <section aria-labelledby="product-description-heading" className="rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm">
+                  <h2 id="product-description-heading" className="font-headline-sm font-semibold text-primary mb-3">
                     {t("descriptionHeading")}
                   </h2>
-                  <p className="font-body-md text-[#434653] leading-relaxed whitespace-pre-line">
-                    {description}
-                  </p>
+                  <div
+                    className="font-body-md text-[#434653] leading-relaxed whitespace-pre-line
+                      [&_p]:mb-4 [&_h2]:font-headline-md [&_h2]:font-semibold [&_h2]:text-primary [&_h2]:mt-6 [&_h2]:mb-3
+                      [&_h3]:font-headline-sm [&_h3]:font-semibold [&_h3]:text-primary [&_h3]:mt-5 [&_h3]:mb-2
+                      [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2
+                      [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-4
+                      [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-border [&_a]:text-secondary [&_a]:underline [&_a]:underline-offset-2
+                      [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline [&_s]:line-through
+                      [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-lg"
+                    dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                  />
                 </section>
               )}
 
-              {usageGuide && (
-                <section className="rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm">
-                  <h2 className="inline-flex items-center gap-2 font-headline-sm font-semibold text-primary mb-3">
+              {usageGuideHtml.trim() && (
+                <section aria-labelledby="product-usage-heading" className="rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm">
+                  <h2 id="product-usage-heading" className="inline-flex items-center gap-2 font-headline-sm font-semibold text-primary mb-3">
                     <Lightbulb className="h-5 w-5" />
                     {t("usageGuide")}
                   </h2>
-                  <p className="font-body-md text-[#434653] leading-relaxed whitespace-pre-line">
-                    {usageGuide}
-                  </p>
+                  <div
+                    className="font-body-md text-[#434653] leading-relaxed whitespace-pre-line
+                      [&_p]:mb-4 [&_h2]:font-headline-md [&_h2]:font-semibold [&_h2]:text-primary [&_h2]:mt-6 [&_h2]:mb-3
+                      [&_h3]:font-headline-sm [&_h3]:font-semibold [&_h3]:text-primary [&_h3]:mt-5 [&_h3]:mb-2
+                      [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2
+                      [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-4
+                      [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-border [&_a]:text-secondary [&_a]:underline [&_a]:underline-offset-2
+                      [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline [&_s]:line-through
+                      [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-lg"
+                    dangerouslySetInnerHTML={{ __html: usageGuideHtml }}
+                  />
                 </section>
               )}
             </div>
@@ -424,4 +446,29 @@ export default async function ProductDetailPage({ params }: PageProps) {
  */
 function trimZeros(value: number): string {
   return String(Number(value.toFixed(3)));
+}
+
+/** Convert sanitized editor HTML to plain text for metadata and JSON-LD. */
+function richTextToPlainText(value: string | null): string {
+  return decodeHtmlEntities(
+    (value ? sanitizeRichHtml(value) : "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(?:p|h2|h3|li|blockquote)>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
+}
+
+function decodeHtmlEntities(value: string): string {
+  const entities: Record<string, string> = {
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+    "&apos;": "'",
+    "&nbsp;": " ",
+  };
+  return value.replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/gi, (entity) => entities[entity.toLowerCase()] ?? entity);
 }

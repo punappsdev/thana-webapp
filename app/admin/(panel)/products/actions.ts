@@ -10,6 +10,7 @@ import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import { reindexProducts } from "@/lib/search-index";
 import { MAX_CUSTOM_FIELDS } from "@/lib/quotation-custom-fields";
+import { sanitizeRichHtml } from "@/lib/admin/security";
 import {
   MAX_COMBINATIONS,
   draftSku,
@@ -131,6 +132,13 @@ function uniqueSlug(base: string, taken: Set<string>, fallback: string): string 
   while (taken.has(candidate)) candidate = `${seed}-${suffix++}`;
   taken.add(candidate);
   return candidate;
+}
+
+/** Store rich product copy as safe HTML while retaining null for empty fields. */
+function sanitizeProductRichText(value: string): string | null {
+  if (!value.trim()) return null;
+  const sanitized = sanitizeRichHtml(value);
+  return sanitized.trim() ? sanitized : null;
 }
 
 /**
@@ -313,10 +321,10 @@ export async function saveProductAction(_state: ActionResult, formData: FormData
     sku: d.sku || (isDraftSku(oldMedia?.sku) ? oldMedia!.sku : draftSku()),
     nameTh: d.nameTh,
     nameEn: d.nameEn,
-    descriptionTh: d.descriptionTh || null,
-    descriptionEn: d.descriptionEn || null,
-    usageGuideTh: d.usageGuideTh || null,
-    usageGuideEn: d.usageGuideEn || null,
+    descriptionTh: sanitizeProductRichText(d.descriptionTh),
+    descriptionEn: sanitizeProductRichText(d.descriptionEn),
+    usageGuideTh: sanitizeProductRichText(d.usageGuideTh),
+    usageGuideEn: sanitizeProductRichText(d.usageGuideEn),
     coverImage: d.coverImage || null,
     catalogPdf: d.catalogPdf || null,
     // `basePrice`, `currency` and `pricingUnitId` are deliberately absent: the site

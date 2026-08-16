@@ -43,6 +43,12 @@ describe("admin security helpers", () => {
     expect(clean).not.toContain("javascript:");
   });
 
+  it("keeps legacy plain text readable while removing empty unsafe documents", () => {
+    expect(sanitizeRichHtml("Legacy line one\nLegacy line two")).toBe("Legacy line one\nLegacy line two");
+    expect(sanitizeRichHtml("")).toBe("");
+    expect(sanitizeRichHtml("<script>alert(1)</script>")).toBe("");
+  });
+
   it("keeps the formatting the rich text editor can produce", () => {
     const clean = sanitizeRichHtml(
       '<p style="text-align: center"><u>ขีดเส้นใต้</u> <s>ขีดฆ่า</s> <em>เอียง</em></p><hr /><h3 style="text-align:right">หัวข้อย่อย</h3>',

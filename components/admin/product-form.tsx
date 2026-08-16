@@ -30,13 +30,13 @@ import {
 } from "@/components/admin/product-variants-table";
 import { FormTabPanel } from "@/components/admin/form-tab-panel";
 import { MediaField } from "@/components/admin/media-field";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { isDraftSku, slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 
@@ -358,12 +358,21 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                     <Field label="ชื่อสินค้า">
                       <Input name="nameTh" defaultValue={record?.nameTh} className="font-body-sm" />
                     </Field>
-                    <Field label="คำอธิบาย">
-                      <Textarea name="descriptionTh" defaultValue={record?.descriptionTh || ""} rows={6} className="font-body-sm" />
-                    </Field>
-                    <Field label="คำแนะนำการใช้งาน">
-                      <Textarea name="usageGuideTh" defaultValue={record?.usageGuideTh || ""} rows={4} className="font-body-sm" />
-                    </Field>
+                    <RichTextField
+                      name="descriptionTh"
+                      label="คำอธิบาย"
+                      initialValue={record?.descriptionTh || ""}
+                      helpText=""
+                      onDirty={markDirty}
+                    />
+                    <RichTextField
+                      name="usageGuideTh"
+                      label="คำแนะนำการใช้งาน"
+                      initialValue={record?.usageGuideTh || ""}
+                      helpText=""
+                      minHeight="compact"
+                      onDirty={markDirty}
+                    />
                   </FormTabPanel>
                   <FormTabPanel value="en" className="mt-5 space-y-4">
                     <Field label="Product name">
@@ -377,12 +386,23 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                         className="font-body-sm"
                       />
                     </Field>
-                    <Field label="Description">
-                      <Textarea name="descriptionEn" defaultValue={record?.descriptionEn || ""} rows={6} className="font-body-sm" />
-                    </Field>
-                    <Field label="Usage guide">
-                      <Textarea name="usageGuideEn" defaultValue={record?.usageGuideEn || ""} rows={4} className="font-body-sm" />
-                    </Field>
+                    <RichTextField
+                      name="descriptionEn"
+                      label="Description"
+                      initialValue={record?.descriptionEn || ""}
+                      helpText="Use headings, lists, emphasis, or links to make product information easier to scan."
+                      placeholder="Start writing the product description..."
+                      onDirty={markDirty}
+                    />
+                    <RichTextField
+                      name="usageGuideEn"
+                      label="Usage guide"
+                      initialValue={record?.usageGuideEn || ""}
+                      helpText="Add steps or important care notes. Numbered lists work well for instructions."
+                      placeholder="Start writing the usage guide..."
+                      minHeight="compact"
+                      onDirty={markDirty}
+                    />
                   </FormTabPanel>
                 </Tabs>
               </CardContent>
@@ -608,6 +628,45 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
         </FormTabPanel>
       </Tabs>
     </form>
+  );
+}
+
+function RichTextField({
+  name,
+  label,
+  initialValue,
+  helpText,
+  placeholder,
+  minHeight = "default",
+  onDirty,
+}: {
+  name: string;
+  label: string;
+  initialValue: string;
+  helpText: string;
+  placeholder?: string;
+  minHeight?: "compact" | "default";
+  onDirty: () => void;
+}) {
+  const editorId = `${name}-editor`;
+  const hintId = `${name}-hint`;
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={editorId} className="font-label-md">{label}</Label>
+      <RichTextEditor
+        name={name}
+        initialValue={initialValue}
+        editorId={editorId}
+        ariaLabel={label}
+        describedBy={hintId}
+        toolbarLabel={`เครื่องมือจัดรูปแบบ ${label}`}
+        placeholder={placeholder}
+        minHeight={minHeight}
+        onDirty={onDirty}
+      />
+      <p id={hintId} className="font-body-sm text-muted-foreground">{helpText}</p>
+    </div>
   );
 }
 
