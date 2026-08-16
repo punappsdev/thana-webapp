@@ -459,9 +459,13 @@ export function QuoteRequestForm() {
               id="phone"
               name="phone"
               type="tel"
-              inputMode="tel"
+              inputMode="numeric"
+              maxLength={10}
               value={contact.phone}
-              onChange={(event) => updateContact("phone", event.target.value)}
+              onChange={(event) => {
+                const digits = event.target.value.replace(/\D/g, "").slice(0, 10);
+                updateContact("phone", digits);
+              }}
               autoComplete="tel"
             />
           </Field>
@@ -772,9 +776,12 @@ export function QuoteRequestForm() {
                   id="taxId"
                   name="taxId"
                   value={companyInvoice.taxId}
-                  onChange={(event) => updateCompanyInvoice("taxId", event.target.value)}
+                  onChange={(event) => {
+                    const digits = event.target.value.replace(/\D/g, "").slice(0, 13);
+                    updateCompanyInvoice("taxId", digits);
+                  }}
                   inputMode="numeric"
-                  maxLength={20}
+                  maxLength={13}
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">

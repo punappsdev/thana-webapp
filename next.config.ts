@@ -14,7 +14,8 @@ const nextConfig: NextConfig = {
     '*.ngrok-free.dev',
     '*.ngrok.io',
     '192.168.1.*',
-    'localhost:*'
+    'localhost:*',
+    'thana.ngrok.app'
   ],
 };
 
