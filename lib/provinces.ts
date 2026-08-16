@@ -105,6 +105,36 @@ export function isProvinceCode(value: string): boolean {
   return byCode.has(value);
 }
 
+/**
+ * The provinces the business actually serves: Southern Thailand, minus the three
+ * southern-border provinces (ยะลา นราธิวาส ปัตตานี). The quote form shows only
+ * these; `PROVINCES` above stays the full 77 for admin surfaces like LINE routing
+ * that still need nationwide data.
+ */
+const SOUTHERN_PROVINCE_CODES: readonly string[] = [
+  "krabi",
+  "chumphon",
+  "trang",
+  "nakhon-si-thammarat",
+  "phang-nga",
+  "phatthalung",
+  PHUKET_CODE,
+  "ranong",
+  "songkhla",
+  "satun",
+  "surat-thani",
+];
+
+export const SOUTHERN_PROVINCES: Province[] = PROVINCES.filter((province) =>
+  SOUTHERN_PROVINCE_CODES.includes(province.code),
+);
+
+const southernByCode = new Set(SOUTHERN_PROVINCE_CODES);
+
+export function isSouthernProvinceCode(value: string): boolean {
+  return southernByCode.has(value);
+}
+
 /** Display name for a stored code, or null when the code is missing or unknown. */
 export function provinceName(code: string | null | undefined, locale: string): string | null {
   if (!code) return null;

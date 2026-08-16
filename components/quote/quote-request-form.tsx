@@ -29,6 +29,7 @@ import {
 import { CartEmptyState } from "@/components/cart/cart-empty-state";
 import { useCart } from "@/components/cart/use-cart";
 import { DistrictCombobox } from "./district-combobox";
+import { SubdistrictCombobox } from "./subdistrict-combobox";
 import { QUOTE_BRANCH_MAP_URLS, type BranchCode } from "@/lib/branches";
 import {
   CONTACT_STORAGE_KEY,
@@ -51,9 +52,10 @@ import {
   type RememberedDetails,
 } from "@/lib/quote-remembered-details";
 import { lineKey } from "@/lib/cart";
-import { getDistrictsForProvince } from "@/lib/districts";
+import { findDistrict, getDistrictsForProvince } from "@/lib/districts";
 import { pick } from "@/lib/products";
-import { PHUKET_CODE, PROVINCES } from "@/lib/provinces";
+import { PHUKET_CODE, SOUTHERN_PROVINCES } from "@/lib/provinces";
+import { getSubdistrictsForDistrict } from "@/lib/subdistricts";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { submitQuoteRequest, type QuoteFormResult } from "@/app/[locale]/quote/actions";
 import { LegalDialog } from "@/components/legal/legal-dialog";
@@ -138,6 +140,21 @@ function localizedDistrictValue(value: string, provinceCode: string, locale: "th
   return locale === "en" ? district.nameEn : district.nameTh;
 }
 
+function localizedSubdistrictValue(
+  value: string,
+  districtCode: string,
+  locale: "th" | "en",
+): string {
+  if (!value || !districtCode) return value;
+
+  const subdistrict = getSubdistrictsForDistrict(districtCode).find(
+    (item) => item.code === value || item.nameTh === value || item.nameEn === value,
+  );
+
+  if (!subdistrict) return value;
+  return locale === "en" ? subdistrict.nameEn : subdistrict.nameTh;
+}
+
 export function QuoteRequestForm() {
   const t = useTranslations("QuoteForm");
   const tCart = useTranslations("Cart");
@@ -201,28 +218,39 @@ export function QuoteRequestForm() {
         email: savedDetails.email,
         lineId: savedDetails.lineId,
       });
+      const uiLocale = locale === "en" ? "en" : "th";
+      const companyDistrict = localizedDistrictValue(
+        savedDetails.district,
+        savedDetails.province,
+        uiLocale,
+      );
       setCompanyInvoice({
         needTaxInvoice: savedDetails.needTaxInvoice,
         companyName: savedDetails.companyName,
         taxId: savedDetails.taxId,
         addressLine: savedDetails.addressLine,
-        subDistrict: savedDetails.subDistrict,
-        district: localizedDistrictValue(
-          savedDetails.district,
-          savedDetails.province,
-          locale === "en" ? "en" : "th",
+        subDistrict: localizedSubdistrictValue(
+          savedDetails.subDistrict,
+          findDistrict(savedDetails.province, companyDistrict)?.code ?? "",
+          uiLocale,
         ),
+        district: companyDistrict,
         province: savedDetails.province,
         postalCode: savedDetails.postalCode,
       });
+      const deliveryDistrict = localizedDistrictValue(
+        savedDetails.deliveryDistrict,
+        savedDetails.deliveryProvince,
+        uiLocale,
+      );
       setDelivery({
         deliveryAddressLine: savedDetails.deliveryAddressLine,
-        deliverySubDistrict: savedDetails.deliverySubDistrict,
-        deliveryDistrict: localizedDistrictValue(
-          savedDetails.deliveryDistrict,
-          savedDetails.deliveryProvince,
-          locale === "en" ? "en" : "th",
+        deliverySubDistrict: localizedSubdistrictValue(
+          savedDetails.deliverySubDistrict,
+          findDistrict(savedDetails.deliveryProvince, deliveryDistrict)?.code ?? "",
+          uiLocale,
         ),
+        deliveryDistrict,
         deliveryProvince: savedDetails.deliveryProvince,
         deliveryPostalCode: savedDetails.deliveryPostalCode,
       });
@@ -264,6 +292,15 @@ export function QuoteRequestForm() {
       ...current,
       deliveryProvince: value,
       deliveryDistrict: "",
+      deliverySubDistrict: "",
+    }));
+  };
+
+  const handleDeliveryDistrictChange = (value: string) => {
+    setDelivery((current) => ({
+      ...current,
+      deliveryDistrict: value,
+      deliverySubDistrict: "",
     }));
   };
 
@@ -272,6 +309,15 @@ export function QuoteRequestForm() {
       ...current,
       province: value,
       district: "",
+      subDistrict: "",
+    }));
+  };
+
+  const handleCompanyDistrictChange = (value: string) => {
+    setCompanyInvoice((current) => ({
+      ...current,
+      district: value,
+      subDistrict: "",
     }));
   };
 
@@ -595,7 +641,7 @@ export function QuoteRequestForm() {
                       <SelectValue placeholder={t("deliveryProvincePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
-                      {PROVINCES.map((item) => (
+                      {SOUTHERN_PROVINCES.map((item) => (
                         <SelectItem key={item.code} value={item.code} className="font-body-sm">
                           {locale === "en" ? item.nameEn : item.nameTh}
                         </SelectItem>
@@ -620,7 +666,7 @@ export function QuoteRequestForm() {
                     chooseProvinceText={t("districtChooseProvince")}
                     describedBy={fieldError("deliveryDistrict") ? "deliveryDistrict-error" : undefined}
                     invalid={Boolean(fieldError("deliveryDistrict"))}
-                    onValueChange={(value) => updateDelivery("deliveryDistrict", value)}
+                    onValueChange={handleDeliveryDistrictChange}
                   />
                 </Field>
               </div>
@@ -632,11 +678,19 @@ export function QuoteRequestForm() {
                   error={fieldError("deliverySubDistrict")}
                   required
                 >
-                  <Input
+                  <SubdistrictCombobox
                     id="deliverySubDistrict"
                     name="deliverySubDistrict"
+                    label={t("deliverySubDistrict")}
+                    provinceCode={delivery.deliveryProvince}
+                    districtValue={delivery.deliveryDistrict}
                     value={delivery.deliverySubDistrict}
-                    onChange={(event) => updateDelivery("deliverySubDistrict", event.target.value)}
+                    locale={locale === "en" ? "en" : "th"}
+                    placeholder={t("subDistrictPlaceholder")}
+                    chooseDistrictText={t("subDistrictChooseDistrict")}
+                    describedBy={fieldError("deliverySubDistrict") ? "deliverySubDistrict-error" : undefined}
+                    invalid={Boolean(fieldError("deliverySubDistrict"))}
+                    onValueChange={(value) => updateDelivery("deliverySubDistrict", value)}
                   />
                 </Field>
                 <Field
@@ -800,7 +854,7 @@ export function QuoteRequestForm() {
                       <SelectValue placeholder={t("provincePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
-                      {PROVINCES.map((item) => (
+                      {SOUTHERN_PROVINCES.map((item) => (
                         <SelectItem key={item.code} value={item.code} className="font-body-sm">
                           {locale === "en" ? item.nameEn : item.nameTh}
                         </SelectItem>
@@ -820,7 +874,7 @@ export function QuoteRequestForm() {
                     chooseProvinceText={t("districtChooseProvince")}
                     describedBy={fieldError("district") ? "district-error" : undefined}
                     invalid={Boolean(fieldError("district"))}
-                    onValueChange={(value) => updateCompanyInvoice("district", value)}
+                    onValueChange={handleCompanyDistrictChange}
                   />
                 </Field>
               </div>
@@ -832,11 +886,19 @@ export function QuoteRequestForm() {
                   error={fieldError("subDistrict")}
                   required
                 >
-                  <Input
+                  <SubdistrictCombobox
                     id="subDistrict"
                     name="subDistrict"
+                    label={t("subDistrict")}
+                    provinceCode={companyInvoice.province}
+                    districtValue={companyInvoice.district}
                     value={companyInvoice.subDistrict}
-                    onChange={(event) => updateCompanyInvoice("subDistrict", event.target.value)}
+                    locale={locale === "en" ? "en" : "th"}
+                    placeholder={t("subDistrictPlaceholder")}
+                    chooseDistrictText={t("subDistrictChooseDistrict")}
+                    describedBy={fieldError("subDistrict") ? "subDistrict-error" : undefined}
+                    invalid={Boolean(fieldError("subDistrict"))}
+                    onValueChange={(value) => updateCompanyInvoice("subDistrict", value)}
                   />
                 </Field>
                 <Field

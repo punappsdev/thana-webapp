@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
-import { isDistrictForProvince, isKnownDistrictName } from "@/lib/districts";
+import { findDistrict, isDistrictForProvince, isKnownDistrictName } from "@/lib/districts";
 import {
   MAX_CUSTOM_FIELDS,
   MAX_TEXT_FIELD_LENGTH,
@@ -16,7 +16,8 @@ import { getPrisma } from "@/lib/prisma";
 import { BRANCH_CODES } from "@/lib/branches";
 import { MAX_QTY } from "@/lib/cart";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
-import { isProvinceCode } from "@/lib/provinces";
+import { isSouthernProvinceCode } from "@/lib/provinces";
+import { isKnownSubdistrictName, isSubdistrictForDistrict } from "@/lib/subdistricts";
 import {
   BoqFileError,
   isUploadFile,
@@ -181,7 +182,7 @@ export async function submitQuoteRequest(
             message: t("errorPostalCode"),
           });
         }
-        if (data.deliveryProvince === null || !isProvinceCode(data.deliveryProvince)) {
+        if (data.deliveryProvince === null || !isSouthernProvinceCode(data.deliveryProvince)) {
           ctx.addIssue({
             code: "custom",
             path: ["deliveryProvince"],
@@ -191,7 +192,7 @@ export async function submitQuoteRequest(
         if (
           data.deliveryProvince !== null &&
           data.deliveryDistrict !== null &&
-          isProvinceCode(data.deliveryProvince) &&
+          isSouthernProvinceCode(data.deliveryProvince) &&
           isKnownDistrictName(data.deliveryDistrict) &&
           !isDistrictForProvince(data.deliveryProvince, data.deliveryDistrict)
         ) {
@@ -199,6 +200,22 @@ export async function submitQuoteRequest(
             code: "custom",
             path: ["deliveryDistrict"],
             message: t("errorDistrict"),
+          });
+        }
+        const deliveryDistrictCode = findDistrict(
+          data.deliveryProvince,
+          data.deliveryDistrict,
+        )?.code;
+        if (
+          deliveryDistrictCode &&
+          data.deliverySubDistrict !== null &&
+          isKnownSubdistrictName(data.deliverySubDistrict) &&
+          !isSubdistrictForDistrict(deliveryDistrictCode, data.deliverySubDistrict)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["deliverySubDistrict"],
+            message: t("errorSubDistrict"),
           });
         }
       }
@@ -224,17 +241,30 @@ export async function submitQuoteRequest(
       if (data.postalCode !== null && digitsOnly(data.postalCode).length !== 5) {
         ctx.addIssue({ code: "custom", path: ["postalCode"], message: t("errorPostalCode") });
       }
-      if (data.province === null || !isProvinceCode(data.province)) {
+      if (data.province === null || !isSouthernProvinceCode(data.province)) {
         ctx.addIssue({ code: "custom", path: ["province"], message: t("errorProvince") });
       }
       if (
         data.province !== null &&
         data.district !== null &&
-        isProvinceCode(data.province) &&
+        isSouthernProvinceCode(data.province) &&
         isKnownDistrictName(data.district) &&
         !isDistrictForProvince(data.province, data.district)
       ) {
         ctx.addIssue({ code: "custom", path: ["district"], message: t("errorDistrict") });
+      }
+      const districtCode = findDistrict(data.province, data.district)?.code;
+      if (
+        districtCode &&
+        data.subDistrict !== null &&
+        isKnownSubdistrictName(data.subDistrict) &&
+        !isSubdistrictForDistrict(districtCode, data.subDistrict)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["subDistrict"],
+          message: t("errorSubDistrict"),
+        });
       }
     });
 

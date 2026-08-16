@@ -2,8 +2,8 @@
 
 ## Thailand geography data
 
-The static province and district data in `lib/data/thai-provinces.json` and
-`lib/data/thai-districts.json` is from
+The static province, district, and subdistrict data in `lib/data/thai-provinces.json`,
+`lib/data/thai-districts.json`, and `lib/data/thai-subdistricts.json` is from
 [thailand-geography-data/thailand-geography-json](https://github.com/thailand-geography-data/thailand-geography-json),
 pinned to commit
 [`b8b3fb91c7df1129ff5b43cb46f7fcffadd2156b`](https://github.com/thailand-geography-data/thailand-geography-json/commit/b8b3fb91c7df1129ff5b43cb46f7fcffadd2156b).
