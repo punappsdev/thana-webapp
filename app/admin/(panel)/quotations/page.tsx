@@ -1,6 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
-import { Eye, Mail, MessageCircle, ReceiptText, Search, TriangleAlert } from "lucide-react";
+import { Eye, Mail, ReceiptText, Search, TriangleAlert } from "lucide-react";
+import { LineIcon } from "@/components/icons/line-icon";
 import { AdminSelect } from "@/components/admin/admin-select";
 import { DeleteQuotationButton } from "@/components/admin/delete-quotation-button";
 import { Badge } from "@/components/ui/badge";
@@ -163,7 +164,7 @@ export default async function AdminQuotationsPage({
                         ) : null}
                         {request.lineId ? (
                           <p className="flex items-center gap-1.5">
-                            <MessageCircle className="size-3.5 text-muted-foreground" />
+                            <LineIcon className="size-3.5" />
                             {request.lineId}
                           </p>
                         ) : null}

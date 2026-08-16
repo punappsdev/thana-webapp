@@ -14,6 +14,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { LineIcon } from "@/components/icons/line-icon";
 
 import { Partners } from "@/components/homepage/partners";
 import { Footer } from "@/components/layout/footer";
@@ -49,7 +50,7 @@ interface PageProps {
 }
 
 interface ContactRowProps {
-  icon: LucideIcon;
+  icon: LucideIcon | React.ComponentType<React.SVGProps<SVGSVGElement>>;
   label: string;
   value: string;
   href?: string;
@@ -261,7 +262,7 @@ export default async function AboutPage({ params }: PageProps) {
                     value: contacts.address,
                   },
                   {
-                    icon: MessageCircle,
+                    icon: LineIcon,
                     label: t("contacts.line"),
                     value: contacts.line,
                     href: lineHref(contacts.line),

@@ -1,7 +1,8 @@
 "use client";
 
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LineIcon } from "@/components/icons/line-icon";
 
 export function CtaSection() {
   const t = useTranslations("CtaSection");
@@ -41,7 +42,7 @@ export function CtaSection() {
               rel="noopener noreferrer"
               className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 font-label-sm"
             >
-              <MessageCircle className="h-4 w-4" /> {t("line")}
+              <LineIcon bubbleFill="white" textFill="#0062a0" className="h-4.5 w-4.5" /> {t("line")}
             </a>
           </div>
         </div>

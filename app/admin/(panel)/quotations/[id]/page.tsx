@@ -6,12 +6,12 @@ import {
   Download,
   FileText,
   Mail,
-  MessageCircle,
   Phone,
   ShieldCheck,
   TriangleAlert,
   Truck,
 } from "lucide-react";
+import { LineIcon } from "@/components/icons/line-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,7 +228,7 @@ export default async function QuotationDetailPage({
                 ) : null}
                 {request.lineId ? (
                   <p className="flex items-center gap-2 font-body-sm">
-                    <MessageCircle className="size-4 text-muted-foreground" />
+                    <LineIcon className="size-4" />
                     {request.lineId}
                   </p>
                 ) : null}
