@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { ActionResult } from "@/lib/admin/validation";
 
 /** An attribute from the shared dictionary, with every value ever defined for it. */
 export type DictionaryAttribute = {
@@ -18,6 +19,15 @@ export type DictionaryAttribute = {
   inputType: string;
   values: { id: number; valueTh: string; valueEn: string; colorHex: string | null }[];
 };
+
+export type DictionaryRenameInput = {
+  kind: "attribute" | "value";
+  id: number;
+  nameTh: string;
+  nameEn: string;
+};
+
+export type RenameDictionaryEntry = (input: DictionaryRenameInput) => Promise<ActionResult>;
 
 /**
  * One attribute on a product. Either it points at a dictionary attribute
@@ -57,6 +67,7 @@ export function ProductAttributeList({
   dictionary,
   variantAxis,
   onChange,
+  onRename,
   addLabel,
   emptyState,
 }: {
@@ -64,6 +75,7 @@ export function ProductAttributeList({
   dictionary: DictionaryAttribute[];
   variantAxis: boolean;
   onChange: (next: ProductAttributeDraft[]) => void;
+  onRename: RenameDictionaryEntry;
   addLabel: string;
   emptyState: React.ReactNode;
 }) {
@@ -99,6 +111,7 @@ export function ProductAttributeList({
           onMove={(delta) => move(index, delta)}
           onUpdate={(patch) => update(attribute._key, patch)}
           onRemove={() => onChange(attributes.filter((item) => item._key !== attribute._key))}
+          onRename={onRename}
         />
       ))}
 
@@ -128,6 +141,7 @@ function AttributeCard({
   onMove,
   onUpdate,
   onRemove,
+  onRename,
 }: {
   draft: ProductAttributeDraft;
   dictionary: DictionaryAttribute[];
@@ -137,6 +151,7 @@ function AttributeCard({
   onMove: (delta: number) => void;
   onUpdate: (patch: Partial<ProductAttributeDraft>) => void;
   onRemove: () => void;
+  onRename: RenameDictionaryEntry;
 }) {
   const source = draft.attributeId === null ? null : dictionary.find((item) => item.id === draft.attributeId) ?? null;
   const label = source ? source.nameTh : draft.newNameTh;
@@ -152,6 +167,15 @@ function AttributeCard({
             {label || "ยังไม่ได้ตั้งชื่อ"}
             {source?.unit ? <span className="ml-1 font-label-sm text-muted-foreground">({source.unit})</span> : null}
           </p>
+          {source ? (
+            <DictionaryRenamePopover
+              kind="attribute"
+              id={source.id}
+              nameTh={source.nameTh}
+              nameEn={source.nameEn}
+              onRename={onRename}
+            />
+          ) : null}
           {!source ? <Badge variant="outline" className="font-label-sm">ใหม่</Badge> : null}
         </div>
 
@@ -180,7 +204,14 @@ function AttributeCard({
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {selected.map((value) => (
-          <ValueChip key={value.id} label={value.valueTh} colorHex={value.colorHex} onRemove={() => onUpdate({ valueIds: draft.valueIds.filter((id) => id !== value.id) })} />
+          <ValueChip
+            key={value.id}
+            label={value.valueTh}
+            colorHex={value.colorHex}
+            rename={{ id: value.id, nameTh: value.valueTh, nameEn: value.valueEn }}
+            onRename={onRename}
+            onRemove={() => onUpdate({ valueIds: draft.valueIds.filter((id) => id !== value.id) })}
+          />
         ))}
         {draft.newValues.map((value) => (
           <ValueChip key={value._key} label={value.valueTh} isNew onRemove={() => onUpdate({ newValues: draft.newValues.filter((item) => item._key !== value._key) })} />
@@ -199,16 +230,160 @@ function AttributeCard({
   );
 }
 
-function ValueChip({ label, colorHex, isNew, onRemove }: { label: string; colorHex?: string | null; isNew?: boolean; onRemove: () => void }) {
+function ValueChip({ label, colorHex, isNew, rename, onRename, onRemove }: {
+  label: string;
+  colorHex?: string | null;
+  isNew?: boolean;
+  rename?: Omit<DictionaryRenameInput, "kind">;
+  onRename?: RenameDictionaryEntry;
+  onRemove: () => void;
+}) {
   return (
     <Badge variant={isNew ? "outline" : "secondary"} className="gap-1.5 py-1 pr-1 font-label-sm">
       {colorHex ? <span className="size-3 rounded-full border" style={{ backgroundColor: colorHex }} /> : null}
       {label}
       {isNew ? <span className="text-muted-foreground">ใหม่</span> : null}
-      <button type="button" aria-label={`ลบค่า ${label}`} onClick={onRemove} className="rounded-sm hover:bg-foreground/10">
-        <X className="size-3" />
+      {rename && onRename ? <DictionaryRenamePopover kind="value" {...rename} onRename={onRename} /> : null}
+      <button
+        type="button"
+        aria-label={`ลบค่า ${label}`}
+        onClick={onRemove}
+        className="inline-flex size-4 items-center justify-center rounded-full text-current/70 transition-colors hover:bg-current/15 hover:text-current focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        <X className="size-2.5" />
       </button>
     </Badge>
+  );
+}
+
+function DictionaryRenamePopover({ kind, id, nameTh, nameEn, onRename }: DictionaryRenameInput & { onRename: RenameDictionaryEntry }) {
+  const [open, setOpen] = useState(false);
+  const [editingNameTh, setEditingNameTh] = useState(nameTh);
+  const [editingNameEn, setEditingNameEn] = useState(nameEn);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const isAttribute = kind === "attribute";
+  const ready = editingNameTh.trim().length > 0 && editingNameEn.trim().length > 0;
+
+  const resetForOpen = () => {
+    setEditingNameTh(nameTh);
+    setEditingNameEn(nameEn);
+    setError(null);
+  };
+
+  const submit = async () => {
+    if (!ready || pending) return;
+
+    setError(null);
+    setPending(true);
+    try {
+      const result = await onRename({ kind, id, nameTh: editingNameTh.trim(), nameEn: editingNameEn.trim() });
+      if (result.success) {
+        setOpen(false);
+      } else {
+        setError(result.message || "บันทึกชื่อไม่สำเร็จ");
+      }
+    } catch {
+      setError("บันทึกชื่อไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (next) resetForOpen();
+        setOpen(next);
+      }}
+    >
+      <PopoverTrigger asChild>
+        {isAttribute ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`แก้ไขชื่อคุณลักษณะ ${nameTh}`}
+            title="แก้ไขชื่อคุณลักษณะส่วนกลาง"
+            disabled={pending}
+            className="size-6 text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Pencil className="size-3.5" />
+          </Button>
+        ) : (
+          <button
+            type="button"
+            aria-label={`แก้ไขค่าคุณลักษณะ ${nameTh}`}
+            title="แก้ไขค่าคุณลักษณะส่วนกลาง"
+            disabled={pending}
+            className="inline-flex size-4 items-center justify-center rounded-full text-current/70 transition-colors hover:bg-current/15 hover:text-current focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Pencil className="size-2.5" />
+          </button>
+        )}
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-80 max-w-[calc(100vw-2rem)] p-0"
+        onEscapeKeyDown={(event) => {
+          if (pending) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (pending) event.preventDefault();
+        }}
+      >
+        <div
+          role="form"
+          aria-label={isAttribute ? "แก้ไขชื่อคุณลักษณะ" : "แก้ไขค่าคุณลักษณะ"}
+          className="space-y-3 p-3"
+          onChange={(event) => event.stopPropagation()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void submit();
+            }
+          }}
+        >
+          <div>
+            <p className="font-label-md font-semibold">{isAttribute ? "แก้ไขชื่อคุณลักษณะ" : "แก้ไขค่าคุณลักษณะ"}</p>
+            <p className="mt-1 font-label-sm text-muted-foreground">บันทึกทันที และมีผลกับสินค้าทุกชิ้นที่ใช้{isAttribute ? "คุณลักษณะนี้" : "ค่านี้"}</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="font-label-sm">ชื่อภาษาไทย</Label>
+            <Input
+              autoFocus
+              value={editingNameTh}
+              onChange={(event) => setEditingNameTh(event.target.value)}
+              className="font-body-sm"
+              disabled={pending}
+              aria-invalid={Boolean(error) || undefined}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="font-label-sm">ชื่อภาษาอังกฤษ</Label>
+            <Input
+              value={editingNameEn}
+              onChange={(event) => setEditingNameEn(event.target.value)}
+              className="font-body-sm"
+              disabled={pending}
+              aria-invalid={Boolean(error) || undefined}
+            />
+          </div>
+          <p className="font-label-sm text-muted-foreground">ต้องกรอกทั้งสองภาษา</p>
+          {error ? <p role="alert" className="font-label-sm text-destructive">{error}</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
+              ยกเลิก
+            </Button>
+            <Button type="button" size="sm" disabled={!ready || pending} onClick={() => void submit()} aria-busy={pending}>
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              {pending ? "กำลังบันทึก..." : "บันทึก"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

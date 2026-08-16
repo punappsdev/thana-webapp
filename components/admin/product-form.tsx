@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, ExternalLink, Eye, ImagePlus, Info, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { saveProductAction } from "@/app/admin/(panel)/products/actions";
+import { renameDictionaryEntryAction, saveProductAction } from "@/app/admin/(panel)/products/actions";
 import { AdminSelect } from "@/components/admin/admin-select";
 import { Badge } from "@/components/ui/badge";
 import {
   ProductAttributeList,
   newAttributeKey,
   type DictionaryAttribute,
+  type DictionaryRenameInput,
   type ProductAttributeDraft,
 } from "@/components/admin/product-attributes-editor";
 import {
@@ -130,6 +131,8 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
   const [titleEn, setTitleEn] = useState(record?.nameEn || "");
   const [slug, setSlug] = useState(record?.slug || "");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [dictionary, setDictionary] = useState<DictionaryAttribute[]>(() => options.attributes);
+  const [, startRenameTransition] = useTransition();
 
   const [images, setImages] = useState<ImageRow[]>(() =>
     (record?.images || []).map((image, index) => ({ ...image, _key: `image-${index}-${image.url}` })),
@@ -177,7 +180,42 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
     })),
   );
 
-  const axes = useMemo(() => buildAxes(attributes, options.attributes), [attributes, options.attributes]);
+  const renameDictionaryEntry = async (input: DictionaryRenameInput): Promise<ActionResult> =>
+    new Promise((resolve) => {
+      startRenameTransition(async () => {
+        try {
+          const result = await renameDictionaryEntryAction(input);
+          if (result.success) {
+            setDictionary((current) =>
+              current.map((attribute) => {
+                if (input.kind === "attribute" && attribute.id === input.id) {
+                  return { ...attribute, nameTh: input.nameTh, nameEn: input.nameEn };
+                }
+                if (input.kind === "value") {
+                  return {
+                    ...attribute,
+                    values: attribute.values.map((value) =>
+                      value.id === input.id ? { ...value, valueTh: input.nameTh, valueEn: input.nameEn } : value,
+                    ),
+                  };
+                }
+                return attribute;
+              }),
+            );
+            toast.success(result.message);
+          } else {
+            toast.error(result.message);
+          }
+          resolve(result);
+        } catch {
+          const result: ActionResult = { success: false, message: "เปลี่ยนชื่อไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
+          toast.error(result.message);
+          resolve(result);
+        }
+      });
+    });
+
+  const axes = useMemo(() => buildAxes(attributes, dictionary), [attributes, dictionary]);
 
   // Past the cap the variant table stops regenerating, so the rows on screen no
   // longer match the options. Saving that would quietly store combinations the
@@ -482,7 +520,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             <CardContent className="space-y-5">
               <ProductAttributeList
                 attributes={attributes}
-                dictionary={options.attributes}
+                dictionary={dictionary}
                 variantAxis
                 addLabel="เพิ่มตัวเลือก"
                 emptyState={
@@ -496,6 +534,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                   markDirty();
                   setAttributes(next);
                 }}
+                onRename={renameDictionaryEntry}
               />
               <ProductVariantsTable
                 variants={variants}
@@ -538,7 +577,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
             <CardContent>
               <ProductAttributeList
                 attributes={attributes}
-                dictionary={options.attributes}
+                dictionary={dictionary}
                 variantAxis={false}
                 addLabel="เพิ่มข้อมูลจำเพาะ"
                 emptyState={
@@ -550,6 +589,7 @@ export function ProductForm({ record, options }: { record: ProductRecord | null;
                   markDirty();
                   setAttributes(next);
                 }}
+                onRename={renameDictionaryEntry}
               />
             </CardContent>
           </Card>

@@ -8,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { deleteOrphanedMedia } from "@/lib/admin/media";
 import { fallbackToken } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
-import { reindexProducts } from "@/lib/search-index";
+import { reindexProducts, reindexProductsWhere } from "@/lib/search-index";
 import { MAX_CUSTOM_FIELDS } from "@/lib/quotation-custom-fields";
 import { sanitizeRichHtml } from "@/lib/admin/security";
 import {
@@ -117,6 +117,21 @@ const formSchema = z.object({
   customFieldsJson: z.string().optional().default("[]"),
 });
 
+const renameDictionaryEntrySchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("attribute"),
+    id: z.number().int().positive(),
+    nameTh: z.string().trim().min(1).max(191),
+    nameEn: z.string().trim().min(1).max(191),
+  }),
+  z.object({
+    kind: z.literal("value"),
+    id: z.number().int().positive(),
+    nameTh: z.string().trim().min(1).max(191),
+    nameEn: z.string().trim().min(1).max(191),
+  }),
+]);
+
 type AttributeInput = z.infer<typeof attributeSchema>[number];
 
 /**
@@ -152,6 +167,46 @@ async function ensureUniqueProductSlug(prisma: ReturnType<typeof getPrisma>, bas
     candidate = `${base}-${suffix}`;
   }
   return candidate;
+}
+
+export async function renameDictionaryEntryAction(input: { kind: "attribute" | "value"; id: number; nameTh: string; nameEn: string }): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = renameDictionaryEntrySchema.safeParse(input);
+  if (!parsed.success) return { success: false, message: "กรุณาตรวจสอบชื่อและข้อมูลที่กรอก" };
+
+  const d = parsed.data;
+  const prisma = getPrisma();
+  const resource = d.kind === "attribute" ? "attributes" : "attribute-values";
+  const productWhere: Prisma.ProductWhereInput = d.kind === "attribute"
+    ? { attributes: { some: { attributeId: d.id } } }
+    : { attributeLinks: { some: { attributeValueId: d.id } } };
+
+  try {
+    const existing = d.kind === "attribute"
+      ? await prisma.attribute.findUnique({ where: { id: d.id }, select: { id: true } })
+      : await prisma.attributeValue.findUnique({ where: { id: d.id }, select: { id: true } });
+    if (!existing) return { success: false, message: "ไม่พบข้อมูลที่ต้องการเปลี่ยนชื่อ" };
+
+    if (d.kind === "attribute") {
+      await prisma.attribute.update({ where: { id: d.id }, data: { nameTh: d.nameTh, nameEn: d.nameEn } });
+    } else {
+      await prisma.attributeValue.update({ where: { id: d.id }, data: { valueTh: d.nameTh, valueEn: d.nameEn } });
+    }
+
+    await reindexProductsWhere(productWhere);
+    await recordActivity({ adminId: admin.id, action: "UPDATE", entityType: resource, entityId: d.id, label: d.nameTh });
+
+    revalidatePath(`/admin/catalog/${resource}`);
+    revalidatePath("/products");
+    revalidatePath("/en/products");
+    revalidatePath("/products/[slug]", "page");
+    revalidatePath("/en/products/[slug]", "page");
+
+    return { success: true, message: "เปลี่ยนชื่อสำเร็จ" };
+  } catch (error) {
+    console.error("renameDictionaryEntryAction failed", { kind: d.kind, id: d.id }, error);
+    return { success: false, message: "เปลี่ยนชื่อไม่สำเร็จ" };
+  }
 }
 
 export async function saveProductAction(_state: ActionResult, formData: FormData): Promise<ActionResult> {
