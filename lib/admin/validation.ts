@@ -63,7 +63,7 @@ export interface ProductVariantInput {
  * Lives here rather than next to the editor so the save action can enforce it
  * too: the editor's cap is a courtesy, this is the one that actually holds.
  */
-export const MAX_COMBINATIONS = 200;
+export const MAX_COMBINATIONS = 500;
 
 /**
  * A draft is work in progress, so only the rules the database itself enforces

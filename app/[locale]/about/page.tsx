@@ -62,7 +62,12 @@ function phoneHref(phone: string) {
 }
 
 function lineHref(lineId: string) {
-  return `https://line.me/R/ti/p/~${encodeURIComponent(lineId.replace(/^@/, ""))}`;
+  const trimmed = lineId.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  const clean = trimmed.replace(/^@/, "");
+  return `https://line.me/R/ti/p/@${encodeURIComponent(clean)}`;
 }
 
 function ContactRow({
@@ -264,7 +269,7 @@ export default async function AboutPage({ params }: PageProps) {
                   {
                     icon: LineIcon,
                     label: t("contacts.line"),
-                    value: contacts.line,
+                    value: "Thanaglass",
                     href: lineHref(contacts.line),
                     external: true,
                   },
