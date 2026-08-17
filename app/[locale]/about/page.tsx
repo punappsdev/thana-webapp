@@ -82,13 +82,13 @@ function ContactRow({
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
       aria-label={`${label}: ${value}`}
-      className="inline-flex max-w-full items-center gap-1 font-body-sm break-words text-primary underline-offset-4 transition-colors hover:text-secondary hover:underline"
+      className="inline-flex max-w-full items-center gap-1 font-body-sm wrap-break-word text-primary underline-offset-4 transition-colors hover:text-secondary hover:underline"
     >
-      <span className="break-words">{value}</span>
+      <span className="wrap-break-word">{value}</span>
       {external ? <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : null}
     </a>
   ) : (
-    <span className="font-body-sm break-words text-foreground">{value}</span>
+    <span className="font-body-sm wrap-break-word text-foreground">{value}</span>
   );
 
   return (
@@ -147,7 +147,7 @@ export default async function AboutPage({ params }: PageProps) {
           />
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none" />
 
-          <div className="max-w-[1280px] mx-auto px-4 md:px-10 subpage-banner-padding relative z-10 animate-fade-in">
+          <div className="max-w-7xl mx-auto px-4 md:px-10 subpage-banner-padding relative z-10 animate-fade-in">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 font-label-sm font-medium tracking-wide backdrop-blur-md">
               <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
               {t("eyebrow")}
@@ -162,14 +162,14 @@ export default async function AboutPage({ params }: PageProps) {
         </section>
 
         <section className="relative overflow-hidden px-4 py-14 md:px-10 md:py-20">
-          <div className="pointer-events-none absolute left-0 top-24 h-72 w-72 rounded-full bg-[#3ca6fe]/10 blur-3xl" />
-          <div className="relative mx-auto max-w-[1280px]">
-            <Card className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white !p-0 shadow-blue-lg ring-0">
+          <div className="pointer-events-none absolute left-0 top-24 h-72 w-72 rounded-full bg-secondary-container/10 blur-3xl" />
+          <div className="relative mx-auto max-w-7xl">
+            <Card className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white p-0! shadow-blue-lg ring-0">
               <div className="grid lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.2fr)]">
                 <div className="relative flex min-h-64 items-center justify-center overflow-hidden bg-[#001d35] p-8 md:min-h-80 md:p-12">
                   <div className="absolute inset-6 border border-white/20" />
-                  <div className="absolute right-8 top-8 h-16 w-16 border-r border-t border-[#3ca6fe]/80" />
-                  <div className="absolute bottom-8 left-8 h-16 w-16 border-b border-l border-[#3ca6fe]/80" />
+                  <div className="absolute right-8 top-8 h-16 w-16 border-r border-t border-secondary-container/80" />
+                  <div className="absolute bottom-8 left-8 h-16 w-16 border-b border-l border-secondary-container/80" />
                   <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/10 to-transparent" />
                   <Image
                     src="/main-logo-tp.png"
@@ -202,7 +202,7 @@ export default async function AboutPage({ params }: PageProps) {
         </section>
 
         <section className="border-y border-[#c4e2f5] bg-white/60 px-4 py-14 md:px-10 md:py-20">
-          <div className="mx-auto max-w-[1280px]">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-8 max-w-2xl md:mb-12">
               <p className="font-label-md uppercase tracking-[0.18em] text-secondary">
                 {t("directionEyebrow")}
@@ -219,7 +219,7 @@ export default async function AboutPage({ params }: PageProps) {
               {direction.map(({ icon: Icon, key, number }) => (
                 <Card
                   key={key}
-                  className="group rounded-lg border-[#c4e2f5] bg-white/85 !p-6 shadow-blue-sm ring-0 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-blue-md md:!p-7"
+                  className="group rounded-lg border-[#c4e2f5] bg-white/85 p-6! shadow-blue-sm ring-0 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-blue-md md:p-7!"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
@@ -240,7 +240,7 @@ export default async function AboutPage({ params }: PageProps) {
         </section>
 
         <section className="px-4 py-14 md:px-10 md:py-24">
-          <div className="mx-auto max-w-[1280px]">
+          <div className="mx-auto max-w-7xl">
             <div className="mb-10 max-w-3xl md:mb-14">
               <p className="font-label-md uppercase tracking-[0.18em] text-secondary">
                 {t("companiesEyebrow")}
@@ -309,7 +309,7 @@ export default async function AboutPage({ params }: PageProps) {
                 return (
                   <Card
                     key={company.name}
-                    className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white !p-0 shadow-blue-md ring-0"
+                    className="overflow-hidden rounded-lg border-[#c4e2f5] bg-white p-0! shadow-blue-md ring-0"
                   >
                     <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(21rem,0.78fr)]">
                       <div className={`p-6 md:p-10 lg:p-12 ${isReversed ? "lg:order-2" : ""}`}>
@@ -324,7 +324,7 @@ export default async function AboutPage({ params }: PageProps) {
                         <h3 className="mt-6 max-w-2xl font-headline-md text-primary md:font-headline-lg">
                           {company.name}
                         </h3>
-                        <div className="mt-7 border-l-2 border-[#3ca6fe]/50 pl-5 md:mt-8 md:pl-6">
+                        <div className="mt-7 border-l-2 border-secondary-container/50 pl-5 md:mt-8 md:pl-6">
                           <p className="font-label-md uppercase tracking-[0.14em] text-secondary">
                             {t("profileLabel")}
                           </p>
