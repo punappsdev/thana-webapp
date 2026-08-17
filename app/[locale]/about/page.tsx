@@ -8,7 +8,6 @@ import {
   Eye,
   Layers,
   MapPin,
-  MessageCircle,
   Phone,
   ShoppingCart,
   UsersRound,
@@ -400,7 +399,7 @@ export default async function AboutPage({ params }: PageProps) {
           </div>
         </section>
 
-        <Partners />
+        <Partners locale={locale} />
       </main>
 
       <Footer />

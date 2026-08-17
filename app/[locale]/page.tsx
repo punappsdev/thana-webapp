@@ -77,7 +77,7 @@ export default async function Home({ params }: HomeProps) {
         <ProductList locale={locale} />
         <QuotationSteps />
         <AboutUs />
-        <Partners />
+        <Partners locale={locale} />
         <CtaSection />
       </main>
 
