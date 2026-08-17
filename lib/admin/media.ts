@@ -8,8 +8,8 @@ export async function countMediaReferences(url: string): Promise<number> {
   const prisma = getPrisma();
   const counts = await Promise.all([
     prisma.product.count({ where: { OR: [{ coverImage: url }, { catalogPdf: url }, { images: { some: { url } } }, { variants: { some: { image: url } } }] } }),
-    prisma.category.count({ where: { coverImage: url } }),
-    prisma.subCategory.count({ where: { coverImage: url } }),
+    prisma.category.count({ where: { OR: [{ coverImage: url }, { descriptionTh: { contains: url } }, { descriptionEn: { contains: url } }] } }),
+    prisma.subCategory.count({ where: { OR: [{ descriptionTh: { contains: url } }, { descriptionEn: { contains: url } }] } }),
     prisma.brand.count({ where: { logo: url } }),
     prisma.work.count({ where: { OR: [{ coverImage: url }, { images: { some: { url } } }] } }),
     prisma.article.count({ where: { OR: [{ coverImage: url }, { contentTh: { contains: url } }, { contentEn: { contains: url } }] } }),

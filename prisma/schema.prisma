@@ -446,13 +446,14 @@ model Category {
 }
 
 model SubCategory {
-  id         Int     @id @default(autoincrement())
-  slug       String
-  nameTh     String
-  nameEn     String
-  coverImage String?
-  sortOrder  Int     @default(0)
-  published  Boolean @default(true)
+  id            Int     @id @default(autoincrement())
+  slug          String
+  nameTh        String
+  nameEn        String
+  descriptionTh String? @db.Text
+  descriptionEn String? @db.Text
+  sortOrder     Int     @default(0)
+  published     Boolean @default(true)
 
   // Relations
   categoryId     Int

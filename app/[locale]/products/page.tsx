@@ -3,6 +3,8 @@ import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
+import { richTextToPlainText } from "@/lib/rich-text";
+import { sanitizeRichHtml } from "@/lib/admin/security";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import {
@@ -91,6 +93,14 @@ export async function generateMetadata({
       ? pick(categoryRecord, "name", locale)
       : null;
 
+  // The admin-written category/sub-category copy is the strongest signal for a
+  // filtered catalog page; fall back to the name-templated blurb when missing.
+  const scopeDescription = subRecord
+    ? pick(subRecord, "description", locale)
+    : categoryRecord
+      ? pick(categoryRecord, "description", locale)
+      : null;
+
   const title = scope ?? t("title");
   const canonicalPage = isRefinement ? 1 : pageNumber;
 
@@ -101,6 +111,7 @@ export async function generateMetadata({
     // boilerplate and gives Google nothing to distinguish them by.
     description: metaDescription(
       locale,
+      richTextToPlainText(scopeDescription),
       scope ? t("categoryMetaDescription", { category: scope }) : t("metaDescription")
     ),
     alternates: alternatesFor(
@@ -215,6 +226,16 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
       : activeCategory
         ? pick(activeCategory, "name", locale)
         : t("title");
+
+  // Category/sub-category description for SEO — the sub wins when it has copy,
+  // otherwise the page falls back to its parent so a filtered view never goes blank.
+  const scopeDescription =
+    activeSub
+      ? pick(activeSub, "description", locale) || pick(activeCategory!, "description", locale)
+      : activeCategory
+        ? pick(activeCategory, "description", locale)
+        : null;
+  const scopeDescriptionHtml = sanitizeRichHtml(scopeDescription || "");
 
   const breadcrumb = breadcrumbLd(
     locale,
@@ -447,6 +468,20 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                     </div>
                   )}
                 </>
+              )}
+
+              {activeCategory && scopeDescriptionHtml.trim() && (
+                <div
+                  className="mt-12 rounded-2xl border border-[#c4e2f5] bg-white p-6 shadow-blue-sm font-body-md text-[#434653] leading-relaxed
+                    [&_p]:mb-4 [&_h2]:font-headline-md [&_h2]:font-semibold [&_h2]:text-primary [&_h2]:mt-6 [&_h2]:mb-3
+                    [&_h3]:font-headline-sm [&_h3]:font-semibold [&_h3]:text-primary [&_h3]:mt-5 [&_h3]:mb-2
+                    [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2
+                    [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-4
+                    [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-border [&_a]:text-secondary [&_a]:underline [&_a]:underline-offset-2
+                    [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline [&_s]:line-through
+                    [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-lg"
+                  dangerouslySetInnerHTML={{ __html: scopeDescriptionHtml }}
+                />
               )}
             </section>
           </div>

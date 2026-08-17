@@ -5,7 +5,8 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { isCatalogResource } from "@/lib/admin/catalog-config";
-import { deleteOrphanedMedia } from "@/lib/admin/media";
+import { deleteOrphanedMedia, extractUploadUrls } from "@/lib/admin/media";
+import { sanitizeRichHtml } from "@/lib/admin/security";
 import { codeFromName, fallbackToken, isUniqueConstraintError } from "@/lib/admin/slug";
 import { getPrisma } from "@/lib/prisma";
 import { reindexProductsWhere } from "@/lib/search-index";
@@ -13,6 +14,12 @@ import { slugifyAdminTitle, type ActionResult } from "@/lib/admin/validation";
 import type { Prisma } from "@/generated/prisma/client";
 
 const schema = z.object({ resource: z.string(), id: z.coerce.number().int().positive().optional().or(z.literal("")), slug: z.string().trim().optional().default(""), code: z.string().trim().optional().default(""), nameTh: z.string().trim().optional().default(""), nameEn: z.string().trim().optional().default(""), descriptionTh: z.string().optional().default(""), descriptionEn: z.string().optional().default(""), coverImage: z.string().optional().default(""), logo: z.string().optional().default(""), websiteUrl: z.string().optional().default(""), unit: z.string().optional().default(""), inputType: z.enum(["SELECT", "COLOR", "NUMBER", "TEXT"]).optional().default("SELECT"), valueTh: z.string().optional().default(""), valueEn: z.string().optional().default(""), colorHex: z.string().optional().default(""), numericValue: z.string().optional().default(""), sortOrder: z.coerce.number().int().optional().default(0), categoryId: z.coerce.number().int().positive().optional().or(z.literal("")), attributeId: z.coerce.number().int().positive().optional().or(z.literal("")), published: z.string().optional() });
+
+/** Store rich category/subcategory copy as safe HTML, keeping null for empty. */
+function sanitizeDescription(value: string): string | null {
+  const sanitized = sanitizeRichHtml(value);
+  return sanitized.trim() ? sanitized : null;
+}
 
 export async function saveCatalogAction(_state: ActionResult, formData: FormData): Promise<ActionResult> {
   const admin = await requireAdmin();
@@ -39,21 +46,22 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
   if (usesCode) { if (!d.code) d.code = codeFromName(d.nameEn) || fallbackToken("U").toUpperCase().replace(/[^A-Z0-9]+/g, ""); }
   else if (!d.slug) { d.slug = slugifyAdminTitle(slugSource) || fallbackToken(d.resource); }
   const baseSlug = d.slug; const baseCode = d.code;
-  // Snapshot the current image before an edit so a replaced logo/cover can be
-  // cleaned up afterwards (only if nothing else still uses the file).
-  const oldMediaUrl = id ? await (async () => {
+  // Snapshot the current media before an edit so a replaced logo/cover and any
+  // rich-text images dropped from the description can be cleaned up afterwards
+  // (only if nothing else still uses the file).
+  const oldMedia: { single: string | null; descriptionTh?: string | null; descriptionEn?: string | null } | null = id ? await (async () => {
     switch (d.resource) {
-      case "brands": return (await prisma.brand.findUnique({ where: { id }, select: { logo: true } }))?.logo ?? null;
-      case "categories": return (await prisma.category.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
-      case "subcategories": return (await prisma.subCategory.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
+      case "brands": return { single: (await prisma.brand.findUnique({ where: { id }, select: { logo: true } }))?.logo ?? null };
+      case "categories": { const row = await prisma.category.findUnique({ where: { id }, select: { coverImage: true, descriptionTh: true, descriptionEn: true } }); return { single: row?.coverImage ?? null, descriptionTh: row?.descriptionTh ?? null, descriptionEn: row?.descriptionEn ?? null }; }
+      case "subcategories": { const row = await prisma.subCategory.findUnique({ where: { id }, select: { descriptionTh: true, descriptionEn: true } }); return { single: null, descriptionTh: row?.descriptionTh ?? null, descriptionEn: row?.descriptionEn ?? null }; }
       default: return null;
     }
   })() : null;
   try {
     const writeOnce = () => (async () => {
       switch (d.resource) {
-        case "categories": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: d.descriptionTh || null, descriptionEn: d.descriptionEn || null, coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on" }; return id ? prisma.category.update({ where: { id }, data }) : prisma.category.create({ data }); }
-        case "subcategories": { if (typeof d.categoryId !== "number") throw new Error("กรุณาเลือกหมวดหมู่"); const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on", categoryId: d.categoryId }; return id ? prisma.subCategory.update({ where: { id }, data }) : prisma.subCategory.create({ data }); }
+        case "categories": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: sanitizeDescription(d.descriptionTh), descriptionEn: sanitizeDescription(d.descriptionEn), coverImage: d.coverImage || null, sortOrder: d.sortOrder, published: d.published === "on" }; return id ? prisma.category.update({ where: { id }, data }) : prisma.category.create({ data }); }
+        case "subcategories": { if (typeof d.categoryId !== "number") throw new Error("กรุณาเลือกหมวดหมู่"); const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: sanitizeDescription(d.descriptionTh), descriptionEn: sanitizeDescription(d.descriptionEn), sortOrder: d.sortOrder, published: d.published === "on", categoryId: d.categoryId }; return id ? prisma.subCategory.update({ where: { id }, data }) : prisma.subCategory.create({ data }); }
         case "brands": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, logo: d.logo || null, websiteUrl: d.websiteUrl || null }; return id ? prisma.brand.update({ where: { id }, data }) : prisma.brand.create({ data }); }
         case "units": { const data = { code: d.code, nameTh: d.nameTh, nameEn: d.nameEn }; return id ? prisma.productUnit.update({ where: { id }, data }) : prisma.productUnit.create({ data }); }
         case "attributes": { const data = { slug: d.slug, nameTh: d.nameTh, nameEn: d.nameEn, unit: d.unit || null, inputType: d.inputType, sortOrder: d.sortOrder }; return id ? prisma.attribute.update({ where: { id }, data }) : prisma.attribute.create({ data }); }
@@ -78,8 +86,12 @@ export async function saveCatalogAction(_state: ActionResult, formData: FormData
     if (id) { const where = productsAffectedBy(d.resource, saved.id); if (where) await reindexProductsWhere(where); }
     await recordActivity({ adminId: admin.id, action: id ? "UPDATE" : "CREATE", entityType: d.resource, entityId: saved.id, label: d.nameTh || d.valueTh || d.code || d.slug });
     revalidatePath(`/admin/catalog/${d.resource}`); revalidatePath("/products"); revalidatePath("/en/products");
-    const newMediaUrl = d.resource === "brands" ? d.logo : d.coverImage;
-    if (oldMediaUrl && oldMediaUrl !== newMediaUrl) await deleteOrphanedMedia([oldMediaUrl]);
+    const newMediaUrl = d.resource === "brands" ? d.logo : d.resource === "categories" ? d.coverImage : null;
+    if (oldMedia) {
+      const kept = new Set<string>([newMediaUrl, ...extractUploadUrls(d.descriptionTh), ...extractUploadUrls(d.descriptionEn)].filter(Boolean) as string[]);
+      const removed = [oldMedia.single, ...extractUploadUrls(oldMedia.descriptionTh), ...extractUploadUrls(oldMedia.descriptionEn)].filter((url): url is string => !!url && !kept.has(url));
+      await deleteOrphanedMedia(removed);
+    }
     return { success: true, message: "บันทึกข้อมูลสำเร็จ" };
   } catch (error) { return { success: false, message: error instanceof Error && error.message.startsWith("กรุณา") ? error.message : "บันทึกไม่สำเร็จ อาจมี Slug หรือรหัสซ้ำ" }; }
 }
@@ -110,7 +122,6 @@ export async function deleteCatalogAction(formData: FormData): Promise<void> {
     switch (resource) {
       case "brands": return (await prisma.brand.findUnique({ where: { id }, select: { logo: true } }))?.logo ?? null;
       case "categories": return (await prisma.category.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
-      case "subcategories": return (await prisma.subCategory.findUnique({ where: { id }, select: { coverImage: true } }))?.coverImage ?? null;
       default: return null;
     }
   })();

@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
+import { richTextToPlainText } from "@/lib/rich-text";
 
 interface CategoryGridProps {
   locale: string;
@@ -29,7 +30,9 @@ export async function CategoryGrid({ locale }: CategoryGridProps) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 lg:justify-center lg:[grid-template-columns:repeat(auto-fit,minmax(180px,220px))]">
         {dbCategories.map((cat) => {
           const title = pick(cat as unknown as Record<string, unknown>, "name", locale);
-          const desc = pick(cat as unknown as Record<string, unknown>, "description", locale);
+          // Descriptions are rich text now; strip the HTML so the card excerpt
+          // shows plain text instead of raw tags.
+          const desc = richTextToPlainText(pick(cat as unknown as Record<string, unknown>, "description", locale));
           return (
             <Link
               key={cat.id}

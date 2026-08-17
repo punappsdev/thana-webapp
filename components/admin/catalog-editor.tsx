@@ -10,7 +10,7 @@ import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { cn } from "@/lib/utils";
 import type { CatalogResource } from "@/lib/admin/catalog-config";
 import type { ActionResult } from "@/lib/admin/validation";
@@ -99,26 +99,28 @@ export function CatalogEditor({ resource, edit, categories, attributes, onSaved 
               {field("websiteUrl", "เว็บไซต์ (ถ้ามี)", false, "url", undefined, "sm:col-span-2")}
             </>
           ) : null}
-          {["categories", "subcategories"].includes(resource) ? (
+          {resource === "categories" ? (
             <div className="sm:col-span-2">
               <MediaField
                 name="coverImage"
                 label="รูปปก (ถ้ามี)"
                 accept="image"
                 defaultValue={value("coverImage")}
-                description={
-                  resource === "categories"
-                    ? "แนะนำสัดส่วนแนวตั้ง 4:5 (เช่น 800 x 1000 px) หรือสี่เหลี่ยมจัตุรัส 1:1"
-                    : "แนะนำสัดส่วนสี่เหลี่ยมจัตุรัส 1:1 (เช่น 800 x 800 px) หรือสัดส่วนแนวตั้ง 4:5"
-                }
+                description="แนะนำสัดส่วนแนวตั้ง 4:5 (เช่น 800 x 1000 px) หรือสี่เหลี่ยมจัตุรัส 1:1"
               />
             </div>
           ) : null}
 
-          {resource === "categories" ? (
+          {["categories", "subcategories"].includes(resource) ? (
             <>
-              <div className="space-y-2 sm:col-span-2"><Label htmlFor="descriptionTh" className="font-label-md">คำอธิบาย (ภาษาไทย)</Label><Textarea id="descriptionTh" name="descriptionTh" defaultValue={value("descriptionTh")} className="font-body-sm" /></div>
-              <div className="space-y-2 sm:col-span-2"><Label htmlFor="descriptionEn" className="font-label-md">คำอธิบาย (ภาษาอังกฤษ)</Label><Textarea id="descriptionEn" name="descriptionEn" defaultValue={value("descriptionEn")} className="font-body-sm" /></div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="font-label-md">คำอธิบาย (ภาษาไทย)</Label>
+                <RichTextEditor name="descriptionTh" initialValue={value("descriptionTh")} minHeight="compact" ariaLabel="คำอธิบาย (ภาษาไทย)" toolbarLabel="เครื่องมือจัดรูปแบบ คำอธิบาย (ภาษาไทย)" placeholder="เริ่มพิมพ์คำอธิบาย..." />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="font-label-md">คำอธิบาย (ภาษาอังกฤษ)</Label>
+                <RichTextEditor name="descriptionEn" initialValue={value("descriptionEn")} minHeight="compact" ariaLabel="คำอธิบาย (ภาษาอังกฤษ)" toolbarLabel="เครื่องมือจัดรูปแบบ คำอธิบาย (ภาษาอังกฤษ)" placeholder="Start writing the description..." />
+              </div>
             </>
           ) : null}
 
