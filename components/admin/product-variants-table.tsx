@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MAX_COMBINATIONS } from "@/lib/admin/validation";
@@ -94,6 +96,7 @@ export function syncVariants(current: VariantRow[], axes: VariantAxis[]): Varian
   if (combinations.length > MAX_COMBINATIONS) return current;
 
   const existing = new Map(current.map((row) => [combinationKey(row.valueTokens), row]));
+
   const rows = combinations.map((tokens, index) => {
     const exact = existing.get(combinationKey(tokens));
     if (exact) return { ...exact, valueTokens: tokens, sortOrder: index };
@@ -120,8 +123,7 @@ export function syncVariants(current: VariantRow[], axes: VariantAxis[]): Varian
     };
   });
 
-  // Exactly one default has to survive or the save is rejected.
-  return rows.some((row) => row.isDefault) ? rows : rows.map((row, index) => ({ ...row, isDefault: index === 0 }));
+  return rows;
 }
 
 export function ProductVariantsTable({
@@ -144,7 +146,16 @@ export function ProductVariantsTable({
   const update = (key: string, patch: Partial<VariantRow>) =>
     onChange(variants.map((row) => (row._key === key ? { ...row, ...patch } : row)));
 
-  const setDefault = (key: string) => onChange(variants.map((row) => ({ ...row, isDefault: row._key === key })));
+  const toggleDefault = (key: string) =>
+    onChange(
+      variants.map((row) => ({
+        ...row,
+        isDefault: row._key === key ? !row.isDefault : false,
+      }))
+    );
+
+  const clearDefault = () =>
+    onChange(variants.map((row) => ({ ...row, isDefault: false })));
 
   const overLimit = isOverCombinationLimit(axes);
 
@@ -163,16 +174,32 @@ export function ProductVariantsTable({
 
   if (!axes.length) return null;
 
+  const hasDefault = variants.some((row) => row.isDefault);
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-label-lg font-semibold">ตัวเลือกสินค้าแต่ละแบบ</h3>
-        <p className="font-label-sm text-muted-foreground">
-          {axes.map((axis) => axis.label).join(" × ")} — {variants.length} รายการ
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div className="space-y-0.5">
+          <h3 className="font-label-lg font-semibold text-foreground">ตัวเลือกสินค้าแต่ละแบบ</h3>
+          <p className="font-label-sm text-muted-foreground">
+            {axes.map((axis) => axis.label).join(" × ")} — {variants.length} รายการ
+          </p>
+        </div>
+        {hasDefault && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearDefault}
+            className="self-start sm:self-auto h-8 px-3 font-label-sm text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+            ล้างค่าเริ่มต้น
+          </Button>
+        )}
       </div>
       <p className="font-body-sm text-muted-foreground">
-        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> คือแบบที่แสดงก่อน เลือกได้เพียงแบบเดียว
+        ตารางนี้สร้างให้อัตโนมัติจากตัวเลือกด้านบน · <span className="font-semibold text-foreground">SKU</span> ไม่บังคับ · <span className="font-semibold text-foreground">ขายอยู่</span> ติ๊กออกเมื่อเลิกขายชั่วคราว · <span className="font-semibold text-foreground">ค่าเริ่มต้น</span> (ไม่บังคับ) คือแบบที่แสดงก่อน เลือกได้ไม่เกิน 1 รายการ หรือคลิกซ้ำเพื่อยกเลิก
       </p>
 
       {overLimit ? (
@@ -225,7 +252,14 @@ export function ProductVariantsTable({
                     <input type="checkbox" aria-label="ขายอยู่" checked={row.isAvailable} onChange={(event) => update(row._key, { isAvailable: event.target.checked })} />
                   </TableCell>
                   <TableCell className="text-center">
-                    <input type="radio" name="variant-default" aria-label="ค่าเริ่มต้น" checked={row.isDefault} onChange={() => setDefault(row._key)} />
+                    <input
+                      type="radio"
+                      name="variant-default"
+                      aria-label="ค่าเริ่มต้น"
+                      checked={row.isDefault}
+                      onClick={() => toggleDefault(row._key)}
+                      onChange={() => toggleDefault(row._key)}
+                    />
                   </TableCell>
                 </TableRow>
               );

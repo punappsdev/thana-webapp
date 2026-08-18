@@ -225,3 +225,206 @@ describe("VariantSelector free text fields", () => {
     expect(screen.queryByText(labels.customFieldsIncomplete)).toBeNull();
   });
 });
+
+describe("VariantSelector uncheck / toggle behavior", () => {
+  it("unchecks an option when clicked again and prompts the user to complete selection", () => {
+    renderSelector();
+    // Initially the default variant "1200 x 2400 มม." is selected
+    const defaultBtn = screen.getByRole("button", { name: "1200 x 2400 มม." });
+    expect(defaultBtn.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText(/STD/)).toBeTruthy();
+
+    // Click it again to uncheck
+    fireEvent.click(defaultBtn);
+    expect(defaultBtn.getAttribute("aria-pressed")).toBe("false");
+    // Sku is hidden and prompt is shown
+    expect(screen.queryByText(/STD/)).toBeNull();
+    expect(screen.getByText(labels.selectAllPrompt)).toBeTruthy();
+
+    // Click it again to re-select
+    fireEvent.click(defaultBtn);
+    expect(defaultBtn.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText(/STD/)).toBeTruthy();
+    expect(screen.queryByText(labels.selectAllPrompt)).toBeNull();
+  });
+
+  it("hides custom fields when the trigger option is unchecked", () => {
+    renderSelector();
+    const cutBtn = screen.getByRole("button", { name: "สั่งตัดตามขนาด" });
+    fireEvent.click(cutBtn);
+    expect(cutBtn.getAttribute("aria-pressed")).toBe("true");
+    expect(widthInput()).not.toBeNull();
+
+    // Click again to uncheck cut-to-size
+    fireEvent.click(cutBtn);
+    expect(cutBtn.getAttribute("aria-pressed")).toBe("false");
+    expect(widthInput()).toBeNull();
+    expect(screen.getByText(labels.selectAllPrompt)).toBeTruthy();
+  });
+
+  it("handles multi-group unchecking and re-selection correctly", () => {
+    const multiGroups: AttributeGroup[] = [
+      {
+        id: 1,
+        name: "ความหนา",
+        nameTh: "ความหนา",
+        nameEn: "Thickness",
+        unit: "มม.",
+        inputType: "SELECT",
+        values: [
+          { id: 101, label: "9 มม.", valueTh: "9 มม.", valueEn: "9 mm", colorHex: null },
+          { id: 102, label: "12 มม.", valueTh: "12 มม.", valueEn: "12 mm", colorHex: null },
+        ],
+      },
+      {
+        id: 2,
+        name: "สี",
+        nameTh: "สี",
+        nameEn: "Color",
+        unit: null,
+        inputType: "SELECT",
+        values: [
+          { id: 201, label: "ขาว", valueTh: "ขาว", valueEn: "White", colorHex: null },
+          { id: 202, label: "ดำ", valueTh: "ดำ", valueEn: "Black", colorHex: null },
+        ],
+      },
+    ];
+    const multiVariants: VariantOption[] = [
+      { id: 1, sku: "THK9-WHT", isAvailable: true, isDefault: true, valueIds: [101, 201] },
+      { id: 2, sku: "THK9-BLK", isAvailable: true, isDefault: false, valueIds: [101, 202] },
+      { id: 3, sku: "THK12-WHT", isAvailable: true, isDefault: false, valueIds: [102, 201] },
+    ];
+
+    render(
+      <VariantSelector
+        groups={multiGroups}
+        variants={multiVariants}
+        baseSku="BASE"
+        labels={labels}
+      />
+    );
+
+    // Initial: THK9-WHT (9 มม. + ขาว)
+    expect(screen.getByText(/THK9-WHT/)).toBeTruthy();
+
+    // Uncheck "ขาว" in color group
+    const whiteBtn = screen.getByRole("button", { name: "ขาว" });
+    fireEvent.click(whiteBtn);
+    expect(whiteBtn.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByText(labels.selectAllPrompt)).toBeTruthy();
+    // 9 มม. should still be selected
+    const thk9Btn = screen.getByRole("button", { name: "9 มม." });
+    expect(thk9Btn.getAttribute("aria-pressed")).toBe("true");
+
+    // Select "ดำ" in color group
+    const blackBtn = screen.getByRole("button", { name: "ดำ" });
+    fireEvent.click(blackBtn);
+    expect(blackBtn.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText(/THK9-BLK/)).toBeTruthy();
+  });
+
+  it("snaps conflicting groups onto an available variant when clicking an option with no available exact combination", () => {
+    const groups3D: AttributeGroup[] = [
+      {
+        id: 1,
+        name: "ความหนา",
+        nameTh: "ความหนา",
+        nameEn: "Thickness",
+        unit: "มม.",
+        inputType: "SELECT",
+        values: [
+          { id: 11, label: "5 มม.", valueTh: "5 มม.", valueEn: "5 mm", colorHex: null },
+          { id: 12, label: "8 มม.", valueTh: "8 มม.", valueEn: "8 mm", colorHex: null },
+        ],
+      },
+      {
+        id: 2,
+        name: "ความกว้าง",
+        nameTh: "ความกว้าง",
+        nameEn: "Width",
+        unit: "นิ้ว",
+        inputType: "SELECT",
+        values: [
+          { id: 21, label: "72", valueTh: "72", valueEn: "72", colorHex: null },
+          { id: 22, label: "84", valueTh: "84", valueEn: "84", colorHex: null },
+        ],
+      },
+      {
+        id: 3,
+        name: "ความยาว",
+        nameTh: "ความยาว",
+        nameEn: "Length",
+        unit: "นิ้ว",
+        inputType: "SELECT",
+        values: [
+          { id: 31, label: "96", valueTh: "96", valueEn: "96", colorHex: null },
+          { id: 32, label: "120", valueTh: "120", valueEn: "120", colorHex: null },
+        ],
+      },
+    ];
+
+    const variants3D: VariantOption[] = [
+      // 5mm is only available in length 96
+      { id: 1, sku: "G-5-72-96", isAvailable: true, isDefault: true, valueIds: [11, 21, 31] },
+      // 5-72-120 exists in matrix but isAvailable: false
+      { id: 2, sku: "G-5-72-120", isAvailable: false, isDefault: false, valueIds: [11, 21, 32] },
+      // 8mm is available in length 120
+      { id: 3, sku: "G-8-72-120", isAvailable: true, isDefault: false, valueIds: [12, 21, 32] },
+    ];
+
+    render(
+      <VariantSelector
+        groups={groups3D}
+        variants={variants3D}
+        baseSku="BASE"
+        labels={labels}
+      />
+    );
+
+    // Initial: 5mm (11) + 72 (21) + 96 (31) -> G-5-72-96
+    expect(screen.getByText(/G-5-72-96/)).toBeTruthy();
+
+    // Click length "120" (32)
+    // 5-72-120 is unavailable, so it should snap thickness to 8mm (12) because 8-72-120 is available and keeps width 72
+    const len120Btn = screen.getByRole("button", { name: "120" });
+    fireEvent.click(len120Btn);
+
+    // It should snap and resolve to G-8-72-120
+    expect(screen.getByText(/G-8-72-120/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "8 มม." }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "72" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "120" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("starts with empty selection when no variant is flagged as default", () => {
+    const noDefaultVariants: VariantOption[] = [
+      { id: 10, sku: "STD", isAvailable: true, isDefault: false, valueIds: [STOCK_VALUE_ID] },
+      { id: 11, sku: "CUT", isAvailable: true, isDefault: false, valueIds: [CUT_VALUE_ID] },
+    ];
+
+    render(
+      <VariantSelector
+        groups={groups}
+        variants={noDefaultVariants}
+        baseSku="BASE"
+        labels={labels}
+      />
+    );
+
+    // No buttons should be pressed initially
+    expect(screen.getByRole("button", { name: "1200 x 2400 มม." }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByRole("button", { name: "สั่งตัดตามขนาด" }).getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByText(labels.selectAllPrompt)).toBeTruthy();
+    expect(screen.queryByText(/STD/)).toBeNull();
+
+    // User selects an option
+    fireEvent.click(screen.getByRole("button", { name: "1200 x 2400 มม." }));
+    expect(screen.getByRole("button", { name: "1200 x 2400 มม." }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText(/STD/)).toBeTruthy();
+    expect(screen.queryByText(labels.selectAllPrompt)).toBeNull();
+  });
+});
+
+
+
+

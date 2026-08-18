@@ -111,9 +111,15 @@ export function VariantSelector({
 }: VariantSelectorProps) {
   /** No variants at all — nothing to pick, so the product is always quotable. */
   const isSimple = variants.length === 0;
-  // Seed the selection from the variant flagged as default, else the first one
+  // Seed the selection only if a variant is flagged as default.
+  // If the admin configured the product without a default, start with an empty selection.
   const initial = useMemo(() => {
-    const seed = variants.find((v) => v.isDefault) ?? variants[0];
+    const hasDefault = variants.some((v) => v.isDefault);
+    if (!hasDefault) return {};
+
+    const seed =
+      variants.find((v) => v.isDefault && v.isAvailable) ??
+      variants.find((v) => v.isDefault);
     const selection: Record<number, number> = {};
     if (!seed) return selection;
     for (const group of groups) {
@@ -166,18 +172,35 @@ export function VariantSelector({
   };
 
   /**
-   * Picking a value always wins. When it clashes with the other groups, snap those
-   * groups onto a real variant carrying the clicked value, keeping as much of the
-   * previous selection as possible, so every variant stays reachable in one click.
+   * Picking a value toggles it off if clicked again, or selects it.
+   * When a selected value clashes with the other groups, snap those
+   * groups onto a real available variant carrying the clicked value,
+   * keeping as much of the previous selection as possible, while leaving unselected groups unselected.
    */
   const pick = (groupId: number, valueId: number) =>
     setSelected((prev) => {
+      // Clicking the currently active option unchecks / deselects it
+      if (prev[groupId] === valueId) {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      }
+
       const next = { ...prev, [groupId]: valueId };
       const ids = Object.values(next);
       const exact = variants.find(
-        (v) => v.valueIds.length === ids.length && ids.every((id) => v.valueIds.includes(id))
+        (v) =>
+          v.isAvailable &&
+          v.valueIds.length === ids.length &&
+          ids.every((id) => v.valueIds.includes(id))
       );
       if (exact) return next;
+
+      // If all currently selected IDs can co-exist in at least one available variant, keep `next`
+      const isPartiallyCompatible = variants.some(
+        (v) => v.isAvailable && ids.every((id) => v.valueIds.includes(id))
+      );
+      if (isPartiallyCompatible) return next;
 
       const candidates = variants.filter((v) => v.isAvailable && v.valueIds.includes(valueId));
       if (candidates.length === 0) return next;
@@ -190,8 +213,12 @@ export function VariantSelector({
 
       const resolved: Record<number, number> = {};
       for (const group of groups) {
-        const match = group.values.find((val) => best.valueIds.includes(val.id));
-        if (match) resolved[group.id] = match.id;
+        if (group.id === groupId) {
+          resolved[group.id] = valueId;
+        } else if (prev[group.id] !== undefined) {
+          const match = group.values.find((val) => best.valueIds.includes(val.id));
+          if (match) resolved[group.id] = match.id;
+        }
       }
       return resolved;
     });

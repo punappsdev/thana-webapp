@@ -112,7 +112,6 @@ export function validateProductVariants(variants: ProductVariantInput[], publish
 
   if (published) {
     if (defaultCount > 1) errors.add("กำหนดตัวเลือกเริ่มต้นได้เพียงหนึ่งรายการ");
-    if (variants.length > 0 && defaultCount === 0) errors.add("กรุณากำหนดตัวเลือกเริ่มต้นหนึ่งรายการ");
   }
   return [...errors];
 }
