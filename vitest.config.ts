@@ -13,6 +13,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts", "**/*.test.tsx"],
+    exclude: [".claude/worktrees/**", "node_modules/**"],
     setupFiles: ["./tests/setup.ts"],
     coverage: {
       reporter: ["text", "html"],

@@ -1,20 +1,19 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import {
   getConsentServerSnapshot,
   getConsentSnapshot,
   subscribeConsent,
-  type AnalyticsConsent,
+  type ConsentSnapshot,
 } from "@/lib/consent-store";
 
-export type UseConsentResult = {
-  analytics: AnalyticsConsent;
+export type UseConsentResult = ConsentSnapshot & {
   hydrated: boolean;
 };
 
 export function useConsent(): UseConsentResult {
-  const analytics = useSyncExternalStore(
+  const consent = useSyncExternalStore(
     subscribeConsent,
     getConsentSnapshot,
     getConsentServerSnapshot,
@@ -25,5 +24,8 @@ export function useConsent(): UseConsentResult {
     () => false,
   );
 
-  return { analytics, hydrated };
+  return useMemo(
+    () => ({ ...consent, hydrated }),
+    [consent, hydrated],
+  );
 }

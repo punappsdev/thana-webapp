@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PromotionPopup } from "@/components/promotion/promotion-popup";
 import {
   CONSENT_STORAGE_KEY,
-  setAnalyticsConsent,
+  setConsentPreferences,
   subscribeConsent,
 } from "@/lib/consent-store";
+import { POPUP_SEEN_KEY } from "@/lib/popup-visibility";
 import type { ActivePopup } from "@/lib/admin/popup-data";
 
 vi.mock("next-intl", () => ({
@@ -29,7 +30,7 @@ const popup: ActivePopup = {
   altTh: "โปรโมชั่น",
   altEn: "Promotion",
   linkUrl: null,
-  frequency: "ALWAYS",
+  frequency: "ONCE_PER_DAY",
   startDate: null,
   endDate: null,
   updatedAt: "2026-08-18T00:00:00.000Z",
@@ -50,7 +51,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  setAnalyticsConsent("denied");
   vi.useRealTimers();
 });
 
@@ -62,12 +62,20 @@ describe("PromotionPopup consent ordering", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens after the visitor has made a cookie choice", () => {
+  it("opens after a decision and does not persist dismissal without Functional consent", () => {
     render(<PromotionPopup popup={popup} locale="th" />);
 
-    act(() => setAnalyticsConsent("denied"));
+    act(() =>
+      setConsentPreferences({
+        functional: false,
+        analytics: false,
+        marketing: false,
+      }),
+    );
     act(() => vi.advanceTimersByTime(800));
 
     expect(screen.getByRole("dialog")).toHaveClass("z-50");
+    act(() => screen.getByRole("button", { name: "close" }).click());
+    expect(window.localStorage.getItem(POPUP_SEEN_KEY)).toBeNull();
   });
 });

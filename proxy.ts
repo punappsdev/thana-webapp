@@ -6,6 +6,10 @@ import {
   ADMIN_SESSION_COOKIE_OPTIONS,
   ADMIN_SESSION_DURATION_MS
 } from './lib/admin/constants';
+import {
+  FUNCTIONAL_LOCALE_COOKIE,
+  isAppLocale
+} from './lib/functional-locale';
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -45,7 +49,14 @@ export default function proxy(request: NextRequest) {
     return response;
   }
 
-  return intlMiddleware(request);
+  const preferredLocale = request.cookies.get(FUNCTIONAL_LOCALE_COOKIE)?.value;
+  if (!isAppLocale(preferredLocale)) return intlMiddleware(request);
+
+  // next-intl still resolves explicit /en URLs first. The header only supplies a
+  // preference for unprefixed routes when Functional consent allowed it to persist.
+  const headers = new Headers(request.headers);
+  headers.set('accept-language', preferredLocale);
+  return intlMiddleware(new NextRequest(request, {headers}));
 }
 
 export const config = {

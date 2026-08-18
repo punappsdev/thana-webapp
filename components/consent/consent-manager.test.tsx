@@ -6,24 +6,36 @@ import { CookieSettingsButton } from "@/components/consent/cookie-settings-butto
 import {
   CONSENT_STORAGE_KEY,
   getConsentSnapshot,
-  setAnalyticsConsent,
+  setConsentPreferences,
   subscribeConsent,
 } from "@/lib/consent-store";
+
+vi.mock("@/lib/consent-effects", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/consent-effects")>();
+  return {
+    ...actual,
+    reloadAfterTrackingWithdrawal: vi.fn(),
+  };
+});
 
 const translations: Record<string, string> = {
   bannerAriaLabel: "Privacy and cookie choices",
   bannerTitle: "Your cookie choices",
-  bannerBody: "Essential cookies keep the website working.",
+  bannerBody: "Necessary cookies keep the website working.",
   privacyPolicy: "Privacy Policy",
-  accept: "Accept analytics cookies",
-  reject: "Use essential cookies only",
+  accept: "Allow cookies",
+  reject: "Use necessary cookies only",
   manage: "Cookie settings",
   dialogTitle: "Cookie settings",
-  dialogBody: "You can change this choice at any time.",
-  necessaryTitle: "Essential cookies",
+  dialogBody: "Choose each category.",
+  necessaryTitle: "Strictly necessary cookies",
   necessaryDescription: "Required for core features.",
-  analyticsTitle: "Analytics cookies",
-  analyticsDescription: "Allow anonymous usage measurement.",
+  functionalTitle: "Functional cookies",
+  functionalDescription: "Remember preferences.",
+  analyticsTitle: "Analytics and performance cookies",
+  analyticsDescription: "Allow aggregate measurement.",
+  marketingTitle: "Marketing and targeting cookies",
+  marketingDescription: "Allow advertising tags.",
   alwaysOn: "Always on",
   on: "On",
   off: "Off",
@@ -32,6 +44,7 @@ const translations: Record<string, string> = {
 };
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en",
   useTranslations: () => (key: string) => translations[key] ?? key,
 }));
 
@@ -53,65 +66,77 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  // Keep the module-level store deterministic between tests without exercising
-  // the real page reload used only for a user's granted → denied transition.
-  setAnalyticsConsent("denied");
   vi.restoreAllMocks();
 });
 
 describe("ConsentManager", () => {
-  it("shows first-visit choices and stores an analytics grant", () => {
+  it("accepts all three optional categories from the banner", () => {
     render(<ConsentManager />);
 
-    expect(screen.getByRole("region", { name: translations.bannerAriaLabel })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: translations.accept }));
 
-    expect(screen.queryByRole("region", { name: translations.bannerAriaLabel })).toBeNull();
-    expect(getConsentSnapshot()).toBe("granted");
-    expect(window.localStorage.getItem(CONSENT_STORAGE_KEY)).toContain('"analytics":"granted"');
+    expect(getConsentSnapshot()).toMatchObject({
+      status: "decided",
+      necessary: true,
+      functional: true,
+      analytics: true,
+      marketing: true,
+    });
   });
 
-  it("stores a denial from detailed settings without loading analytics", () => {
+  it("shows Necessary as fixed and all optional categories off by default", () => {
+    render(<ConsentManager />);
+    fireEvent.click(screen.getByRole("button", { name: translations.manage }));
+
+    expect(screen.getByRole("switch", { name: translations.necessaryTitle })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: translations.functionalTitle })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: translations.analyticsTitle })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: translations.marketingTitle })).not.toBeChecked();
+  });
+
+  it("stores granular settings independently", () => {
+    render(<ConsentManager />);
+    fireEvent.click(screen.getByRole("button", { name: translations.manage }));
+    fireEvent.click(screen.getByRole("switch", { name: translations.functionalTitle }));
+    fireEvent.click(screen.getByRole("switch", { name: translations.marketingTitle }));
+    fireEvent.click(screen.getByRole("button", { name: translations.save }));
+
+    expect(getConsentSnapshot()).toMatchObject({
+      functional: true,
+      analytics: false,
+      marketing: true,
+    });
+  });
+
+  it("rejects all optional categories from detailed settings", () => {
     render(<ConsentManager />);
     fireEvent.click(screen.getByRole("button", { name: translations.manage }));
     fireEvent.click(screen.getByRole("button", { name: translations.reject }));
 
-    expect(getConsentSnapshot()).toBe("denied");
-    expect(screen.queryByRole("region", { name: translations.bannerAriaLabel })).toBeNull();
+    expect(getConsentSnapshot()).toMatchObject({
+      status: "decided",
+      functional: false,
+      analytics: false,
+      marketing: false,
+    });
   });
 
-  it("opens detailed settings from the first-visit banner", () => {
-    render(<ConsentManager />);
-    fireEvent.click(screen.getByRole("button", { name: translations.manage }));
+  it("reopens saved settings from the footer control", () => {
+    setConsentPreferences({
+      functional: true,
+      analytics: false,
+      marketing: true,
+    });
+    render(
+      <>
+        <ConsentManager />
+        <CookieSettingsButton label={translations.manage} />
+      </>,
+    );
 
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: translations.dialogTitle })).toBeTruthy();
-    expect(screen.getByRole("switch", { name: translations.necessaryTitle })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: translations.manage }));
+    expect(screen.getByRole("switch", { name: translations.functionalTitle })).toBeChecked();
     expect(screen.getByRole("switch", { name: translations.analyticsTitle })).not.toBeChecked();
-  });
-
-  it("opens with the saved grant selected", () => {
-    setAnalyticsConsent("granted");
-    render(
-      <>
-        <ConsentManager />
-        <CookieSettingsButton label={translations.manage} />
-      </>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: translations.manage }));
-    expect(screen.getByRole("switch", { name: translations.analyticsTitle })).toBeChecked();
-  });
-
-  it("reopens settings from the persistent footer control", () => {
-    render(
-      <>
-        <ConsentManager />
-        <CookieSettingsButton label={translations.manage} />
-      </>,
-    );
-
-    fireEvent.click(screen.getAllByRole("button", { name: translations.manage }).at(-1)!);
-    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: translations.marketingTitle })).toBeChecked();
   });
 });

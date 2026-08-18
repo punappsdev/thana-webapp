@@ -39,8 +39,13 @@ function writeStore(store: "sessionStorage" | "localStorage", value: string): vo
   }
 }
 
-export function shouldShowPopup(signature: string, frequency: PopupFrequency): boolean {
+export function shouldShowPopup(
+  signature: string,
+  frequency: PopupFrequency,
+  functionalAllowed = true,
+): boolean {
   if (typeof window === "undefined") return false;
+  if (!functionalAllowed) return true;
 
   switch (frequency) {
     case "ALWAYS":
@@ -58,8 +63,12 @@ export function shouldShowPopup(signature: string, frequency: PopupFrequency): b
   }
 }
 
-export function markPopupSeen(signature: string, frequency: PopupFrequency): void {
-  if (typeof window === "undefined") return;
+export function markPopupSeen(
+  signature: string,
+  frequency: PopupFrequency,
+  functionalAllowed = true,
+): void {
+  if (typeof window === "undefined" || !functionalAllowed) return;
 
   if (frequency === "ONCE_PER_SESSION") writeStore("sessionStorage", signature);
   else if (frequency === "ONCE_PER_DAY") writeStore("localStorage", `${signature}|${today()}`);

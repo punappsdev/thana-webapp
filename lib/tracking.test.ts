@@ -21,17 +21,26 @@ beforeEach(() => {
 });
 
 describe("trackQuoteLead", () => {
-  it.each(["unset", "denied"] as const)("does nothing while consent is %s", async (state) => {
+  it("does nothing before a choice or when Analytics is off", async () => {
     const { consent, tracking } = await loadModules();
-    if (state === "denied") consent.setAnalyticsConsent("denied");
-
     tracking.trackQuoteLead("QT-20260818-0001");
+    consent.setConsentPreferences({
+      functional: false,
+      analytics: false,
+      marketing: true,
+    });
+    tracking.trackQuoteLead("QT-20260818-0002");
+
     expect(sendGTMEvent).not.toHaveBeenCalled();
   });
 
   it("sends exactly one privacy-safe event per quotation code", async () => {
     const { consent, tracking } = await loadModules();
-    consent.setAnalyticsConsent("granted");
+    consent.setConsentPreferences({
+      functional: false,
+      analytics: true,
+      marketing: false,
+    });
 
     tracking.trackQuoteLead("QT-20260818-0001");
     tracking.trackQuoteLead("QT-20260818-0001");
@@ -42,12 +51,15 @@ describe("trackQuoteLead", () => {
 
   it("allows a different successful quotation to generate another event", async () => {
     const { consent, tracking } = await loadModules();
-    consent.setAnalyticsConsent("granted");
+    consent.setConsentPreferences({
+      functional: false,
+      analytics: true,
+      marketing: false,
+    });
 
     tracking.trackQuoteLead("QT-20260818-0001");
     tracking.trackQuoteLead("QT-20260818-0002");
 
-    expect(sendGTMEvent).toHaveBeenCalledTimes(2);
     expect(sendGTMEvent.mock.calls).toEqual([
       [{ event: "generate_lead" }],
       [{ event: "generate_lead" }],
@@ -56,7 +68,11 @@ describe("trackQuoteLead", () => {
 
   it("deduplicates across a module remount using sessionStorage", async () => {
     const first = await loadModules();
-    first.consent.setAnalyticsConsent("granted");
+    first.consent.setConsentPreferences({
+      functional: false,
+      analytics: true,
+      marketing: false,
+    });
     first.tracking.trackQuoteLead("QT-20260818-0001");
 
     vi.resetModules();
@@ -68,7 +84,11 @@ describe("trackQuoteLead", () => {
 
   it("still deduplicates when sessionStorage is unavailable", async () => {
     const { consent, tracking } = await loadModules();
-    consent.setAnalyticsConsent("granted");
+    consent.setConsentPreferences({
+      functional: false,
+      analytics: true,
+      marketing: false,
+    });
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new DOMException("blocked");
     });

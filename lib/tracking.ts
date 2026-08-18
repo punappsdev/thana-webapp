@@ -11,7 +11,7 @@ function storageKey(code: string): string {
 }
 
 export function trackQuoteLead(code: string): void {
-  if (typeof window === "undefined" || getConsentSnapshot() !== "granted") return;
+  if (typeof window === "undefined" || !getConsentSnapshot().analytics) return;
 
   const normalizedCode = code.trim();
   if (!normalizedCode) return;

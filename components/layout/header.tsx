@@ -7,6 +7,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter, Link } from "../../i18n/routing";
 import { useCart } from "@/components/cart/use-cart";
 import { ProductSearchBox } from "@/components/search/product-search-box";
+import { useConsent } from "@/components/consent/use-consent";
+import { setFunctionalLocale } from "@/lib/functional-locale";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -15,6 +17,7 @@ export function Header() {
   const t = useTranslations("Header");
   const tCart = useTranslations("Cart");
   const { count, hydrated, openCart } = useCart();
+  const { functional, expiresAt } = useConsent();
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,6 +31,7 @@ export function Header() {
   }, []);
 
   const handleLocaleChange = (nextLocale: "th" | "en") => {
+    if (functional) setFunctionalLocale(nextLocale, expiresAt);
     router.replace(pathname, { locale: nextLocale });
   };
 
@@ -164,8 +168,11 @@ export function Header() {
               key={idx}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`font-body-sm py-1.5 transition-colors ${link.active ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-muted-foreground pl-2"
-                }`}
+              className={`rounded-md px-2 py-1.5 font-body-sm transition-colors ${
+                link.active
+                  ? "bg-[#f3f3fc] font-bold text-primary"
+                  : "text-muted-foreground hover:bg-[#faf8ff] hover:text-primary"
+              }`}
             >
               {link.label}
             </Link>

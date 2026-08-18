@@ -14,6 +14,11 @@ import {
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useConsent } from "@/components/consent/use-consent";
+import {
+  readRecentSearches,
+  writeRecentSearches,
+} from "@/lib/search-history";
 import type { SearchGroupItem, SearchResponse, SearchSuggestion } from "@/app/api/products/search/route";
 
 /**
@@ -38,32 +43,11 @@ interface ProductSearchBoxProps {
 }
 
 const DEBOUNCE_MS = 250;
-const RECENT_KEY = "thana:recent-searches";
 const RECENT_LIMIT = 5;
 /** Bound on the per-session response cache, so a long session cannot grow it forever. */
 const CACHE_LIMIT = 60;
 
 const EMPTY_RESULT: SearchResponse = { products: [], categories: [], brands: [], total: 0 };
-
-function readRecentSearches(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    // A corrupted or blocked localStorage must never break the search box.
-    return [];
-  }
-}
-
-function writeRecentSearches(terms: string[]) {
-  try {
-    window.localStorage.setItem(RECENT_KEY, JSON.stringify(terms));
-  } catch {
-    // Private mode / quota — recent searches are a nicety, not a requirement.
-  }
-}
 
 export function ProductSearchBox({
   variant,
@@ -76,12 +60,15 @@ export function ProductSearchBox({
   const locale = useLocale();
   const t = useTranslations("Products");
   const tHeader = useTranslations("Header");
+  const { functional } = useConsent();
   const rootRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const [recent, setRecent] = React.useState<string[]>([]);
+  const [storedRecent, setStoredRecent] = React.useState<string[]>([]);
+  const recent = functional ? storedRecent : [];
+
   /**
    * Every response this session, keyed by locale + query. Held in state rather
    * than a ref so results can be derived during render — a response can then
@@ -162,10 +149,14 @@ export function ProductSearchBox({
   }, []);
 
   const rememberSearch = React.useCallback((term: string) => {
-    const next = [term, ...readRecentSearches().filter((item) => item !== term)].slice(0, RECENT_LIMIT);
-    setRecent(next);
-    writeRecentSearches(next);
-  }, []);
+    if (!functional) return;
+    const next = [
+      term,
+      ...readRecentSearches(functional).filter((item) => item !== term),
+    ].slice(0, RECENT_LIMIT);
+    setStoredRecent(next);
+    writeRecentSearches(next, functional);
+  }, [functional]);
 
   const closeAndLeave = React.useCallback(() => {
     setOpen(false);
@@ -195,10 +186,10 @@ export function ProductSearchBox({
   );
 
   const clearRecent = React.useCallback(() => {
-    setRecent([]);
-    writeRecentSearches([]);
+    setStoredRecent([]);
+    writeRecentSearches([], functional);
     inputRef.current?.focus();
-  }, []);
+  }, [functional]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -253,7 +244,7 @@ export function ProductSearchBox({
             onFocus={() => {
               // Read on focus rather than on mount: localStorage is unavailable
               // during SSR, and reading it in an effect would flash an empty list.
-              setRecent(readRecentSearches());
+              setStoredRecent(readRecentSearches(functional));
               setOpen(true);
               onFocusChange?.(true);
             }}

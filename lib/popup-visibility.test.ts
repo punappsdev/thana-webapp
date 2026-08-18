@@ -61,6 +61,15 @@ describe("homepage promotion popup visibility", () => {
     expect(() => markPopupSeen(SIGNATURE, "ONCE_PER_DAY")).not.toThrow();
   });
 
+  it("does not read or write popup preferences without Functional consent", () => {
+    window.localStorage.setItem(POPUP_SEEN_KEY, `${SIGNATURE}|2026-08-02`);
+    expect(shouldShowPopup(SIGNATURE, "ONCE_PER_DAY", false)).toBe(true);
+
+    window.localStorage.removeItem(POPUP_SEEN_KEY);
+    markPopupSeen(SIGNATURE, "ONCE_PER_DAY", false);
+    expect(window.localStorage.getItem(POPUP_SEEN_KEY)).toBeNull();
+  });
+
   it("gates on the schedule window, treating null bounds as open ended", () => {
     const now = Date.parse("2026-08-02T12:00:00.000Z");
     expect(isWithinSchedule(null, null, now)).toBe(true);

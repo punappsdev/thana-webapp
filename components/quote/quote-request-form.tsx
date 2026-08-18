@@ -32,16 +32,11 @@ import { DistrictCombobox } from "./district-combobox";
 import { SubdistrictCombobox } from "./subdistrict-combobox";
 import { QUOTE_BRANCH_MAP_URLS, type BranchCode } from "@/lib/branches";
 import {
-  CONTACT_STORAGE_KEY,
-  CONTACT_STORAGE_KEYS,
-  OBSOLETE_CONTACT_STORAGE_KEYS,
   emptyCompanyInvoice,
   emptyContact,
   emptyDelivery,
   emptyRememberedDetails,
   hasSavedDetails,
-  parseSavedDetails,
-  serializeRememberedDetails,
   type CompanyInvoiceDetails,
   type CompanyInvoiceField,
   type ContactDetails,
@@ -51,6 +46,11 @@ import {
   type FulfillmentMethod,
   type RememberedDetails,
 } from "@/lib/quote-remembered-details";
+import {
+  deleteRememberedDetails,
+  readRememberedDetails,
+  saveRememberedDetails,
+} from "@/lib/quote-remembered-storage";
 import { lineKey } from "@/lib/cart";
 import { findDistrict, getDistrictsForProvince } from "@/lib/districts";
 import { pick } from "@/lib/products";
@@ -60,65 +60,14 @@ import { trackQuoteLead } from "@/lib/tracking";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { submitQuoteRequest, type QuoteFormResult } from "@/app/[locale]/quote/actions";
 import { LegalDialog } from "@/components/legal/legal-dialog";
+import { useConsent } from "@/components/consent/use-consent";
+import { openCookieSettings } from "@/lib/consent-store";
 import { CheckField } from "./check-field";
 
 const initialState: QuoteFormResult = { success: false, message: "" };
 const MAX_BOQ_FILE_SIZE = 10 * 1024 * 1024;
 const BOQ_FILE_ACCEPT =
   ".pdf,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-function readStorageValue(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function readSavedDetails(): RememberedDetails {
-  for (const key of CONTACT_STORAGE_KEYS) {
-    const details = parseSavedDetails(readStorageValue(key), key);
-    if (details) return details;
-  }
-
-  return emptyRememberedDetails();
-}
-
-function saveRememberedDetails(details: RememberedDetails): boolean {
-  try {
-    window.localStorage.setItem(
-      CONTACT_STORAGE_KEY,
-      serializeRememberedDetails(details),
-    );
-  } catch {
-    return false;
-  }
-
-  let obsoleteKeysRemoved = true;
-  for (const key of OBSOLETE_CONTACT_STORAGE_KEYS) {
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      obsoleteKeysRemoved = false;
-    }
-  }
-
-  return obsoleteKeysRemoved;
-}
-
-function deleteSavedDetails(): boolean {
-  let deleted = true;
-
-  for (const key of CONTACT_STORAGE_KEYS) {
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      deleted = false;
-    }
-  }
-
-  return deleted;
-}
 
 // Mirrors the magic-byte detection the server does in lib/quotation-boq.ts, so
 // the browser never rejects a file the server would have accepted. XLSX is a
@@ -161,6 +110,7 @@ export function QuoteRequestForm() {
   const tCart = useTranslations("Cart");
   const locale = useLocale();
   const { items, count, hydrated, clear } = useCart();
+  const { functional } = useConsent();
 
   const [state, action, pending] = useActionState(submitQuoteRequest, initialState);
 
@@ -180,6 +130,8 @@ export function QuoteRequestForm() {
   const boqFileInputRef = useRef<HTMLInputElement>(null);
   // Signature reading is async, so a stale check must not overwrite a newer pick.
   const boqCheckIdRef = useRef(0);
+  const rememberedDetailsRestoredRef = useRef(false);
+  const formEditedRef = useRef(false);
   const submittedDetailsRef = useRef<RememberedDetails>(emptyRememberedDetails());
   const submittedRememberContactRef = useRef(false);
 
@@ -210,7 +162,18 @@ export function QuoteRequestForm() {
   // localStorage is browser-only. Keeping the initial state empty makes the
   // server and first client render identical, then fills the controlled fields.
   useEffect(() => {
-    const savedDetails = readSavedDetails();
+    // Restore at most once, and never over a form the visitor has started editing.
+    // This matters when Functional consent is granted while the form is open.
+    if (
+      !functional ||
+      rememberedDetailsRestoredRef.current ||
+      formEditedRef.current
+    ) {
+      return;
+    }
+
+    rememberedDetailsRestoredRef.current = true;
+    const savedDetails = readRememberedDetails(true);
     queueMicrotask(() => {
       setContact({
         firstName: savedDetails.firstName,
@@ -260,7 +223,7 @@ export function QuoteRequestForm() {
       setHasSavedData(hasSavedDetails(savedDetails));
       setRememberContact(hasSavedDetails(savedDetails));
     });
-  }, [locale]);
+  }, [functional, locale]);
 
   useEffect(() => {
     if (!state.success || !state.code) return;
@@ -272,28 +235,36 @@ export function QuoteRequestForm() {
   useEffect(() => {
     if (!state.success) return;
 
-    if (submittedRememberContactRef.current) {
-      saveRememberedDetails(submittedDetailsRef.current);
+    if (submittedRememberContactRef.current && functional) {
+      saveRememberedDetails(submittedDetailsRef.current, true);
     } else {
-      deleteSavedDetails();
+      deleteRememberedDetails();
     }
 
     clear();
-  }, [state.success, clear]);
+  }, [state.success, clear, functional]);
+
+  const markFormEdited = () => {
+    formEditedRef.current = true;
+  };
 
   const updateContact = (field: ContactField, value: string) => {
+    markFormEdited();
     setContact((current) => ({ ...current, [field]: value }));
   };
 
   const updateCompanyInvoice = (field: CompanyInvoiceField, value: string) => {
+    markFormEdited();
     setCompanyInvoice((current) => ({ ...current, [field]: value }));
   };
 
   const updateDelivery = (field: DeliveryField, value: string) => {
+    markFormEdited();
     setDelivery((current) => ({ ...current, [field]: value }));
   };
 
   const handleDeliveryProvinceChange = (value: string) => {
+    markFormEdited();
     setDelivery((current) => ({
       ...current,
       deliveryProvince: value,
@@ -303,6 +274,7 @@ export function QuoteRequestForm() {
   };
 
   const handleDeliveryDistrictChange = (value: string) => {
+    markFormEdited();
     setDelivery((current) => ({
       ...current,
       deliveryDistrict: value,
@@ -311,6 +283,7 @@ export function QuoteRequestForm() {
   };
 
   const handleCompanyProvinceChange = (value: string) => {
+    markFormEdited();
     setCompanyInvoice((current) => ({
       ...current,
       province: value,
@@ -320,6 +293,7 @@ export function QuoteRequestForm() {
   };
 
   const handleCompanyDistrictChange = (value: string) => {
+    markFormEdited();
     setCompanyInvoice((current) => ({
       ...current,
       district: value,
@@ -330,17 +304,20 @@ export function QuoteRequestForm() {
   const handleFulfillmentMethodChange = (value: string) => {
     if (value !== "delivery" && value !== "pickup") return;
 
+    markFormEdited();
     setFulfillmentMethod(value);
     setFulfillmentMethodError(undefined);
     if (value === "pickup") setUseSameDeliveryAddress(false);
   };
 
   const handleTaxInvoiceToggle = (checked: boolean) => {
+    markFormEdited();
     setCompanyInvoice((current) => ({ ...current, needTaxInvoice: checked }));
     if (!checked) setUseSameDeliveryAddress(false);
   };
 
   const handleSameDeliveryAddressToggle = (checked: boolean) => {
+    markFormEdited();
     setUseSameDeliveryAddress(checked);
     if (!checked) return;
 
@@ -355,7 +332,7 @@ export function QuoteRequestForm() {
   };
 
   const handleDeleteSavedDetails = () => {
-    const deleted = deleteSavedDetails();
+    const deleted = deleteRememberedDetails();
     setRememberContact(false);
     setHasSavedData(false);
     setContactStorageStatus(t(deleted ? "savedContactDeleted" : "savedContactDeleteFailed"));
@@ -456,6 +433,7 @@ export function QuoteRequestForm() {
   return (
     <form
       onSubmit={handleSubmit}
+      onChangeCapture={markFormEdited}
       encType="multipart/form-data"
       className="grid grid-cols-1 gap-8 lg:grid-cols-3"
     >
@@ -966,14 +944,29 @@ export function QuoteRequestForm() {
         </Section>
 
         <div className="space-y-3 border-t border-[#ededf7] pt-5">
-          <CheckField name="rememberContact" checked={rememberContact} onChange={setRememberContact}>
+          <CheckField
+            name="rememberContact"
+            checked={functional && rememberContact}
+            disabled={!functional}
+            onChange={setRememberContact}
+          >
             <span className="block">
               <span className="block font-label-md text-[#434653]">{t("rememberContact")}</span>
               <span className="mt-1 block font-label-sm leading-relaxed text-[#747684]">
-                {t("rememberContactHint")}
+                {functional ? t("rememberContactHint") : t("rememberContactRequiresFunctional")}
               </span>
             </span>
           </CheckField>
+
+          {!functional && (
+            <button
+              type="button"
+              onClick={openCookieSettings}
+              className="ml-8 rounded-md font-label-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {t("openCookieSettings")}
+            </button>
+          )}
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-8">
             <button

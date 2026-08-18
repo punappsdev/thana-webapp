@@ -15,7 +15,11 @@ const OPEN_DELAY_MS = 800;
 
 export function PromotionPopup({ popup, locale }: { popup: ActivePopup; locale: string }) {
   const t = useTranslations("Popup");
-  const { analytics, hydrated: consentHydrated } = useConsent();
+  const {
+    status: consentStatus,
+    functional,
+    hydrated: consentHydrated,
+  } = useConsent();
   // Always closed on the server and on the first client render, so the markup
   // matches and the storage check below never causes a hydration mismatch.
   const [open, setOpen] = useState(false);
@@ -25,14 +29,15 @@ export function PromotionPopup({ popup, locale }: { popup: ActivePopup; locale: 
   useEffect(() => {
     // Let the visitor make the first privacy choice without another modal
     // competing for focus. Once a choice exists, the promotion follows normally.
-    if (!consentHydrated || analytics === "unset") return;
+    if (!consentHydrated || consentStatus === "unset") return;
     if (!isWithinSchedule(popup.startDate, popup.endDate)) return;
-    if (!shouldShowPopup(signature, popup.frequency)) return;
+    if (!shouldShowPopup(signature, popup.frequency, functional)) return;
     const timer = window.setTimeout(() => setOpen(true), OPEN_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [
-    analytics,
+    consentStatus,
     consentHydrated,
+    functional,
     signature,
     popup.frequency,
     popup.startDate,
@@ -40,7 +45,7 @@ export function PromotionPopup({ popup, locale }: { popup: ActivePopup; locale: 
   ]);
 
   const dismiss = () => {
-    markPopupSeen(signature, popup.frequency);
+    markPopupSeen(signature, popup.frequency, functional);
     setOpen(false);
   };
 

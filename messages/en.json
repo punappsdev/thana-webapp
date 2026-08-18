@@ -173,17 +173,21 @@
   "Consent": {
     "bannerAriaLabel": "Privacy and cookie choices",
     "bannerTitle": "Your cookie choices",
-    "bannerBody": "Essential cookies keep the website working. We use analytics cookies only with your permission to understand usage and improve our services.",
+    "bannerBody": "We use necessary cookies to keep the website and quotation system working. Functional, analytics, and marketing cookies are used only when you allow them.",
     "privacyPolicy": "Privacy Policy",
     "accept": "Allow cookies",
-    "reject": "Use essential cookies only",
+    "reject": "Use necessary cookies only",
     "manage": "Cookie settings",
     "dialogTitle": "Cookie settings",
-    "dialogBody": "You can change this choice at any time using the Cookie settings link in the website footer.",
-    "necessaryTitle": "Essential cookies",
-    "necessaryDescription": "Required for core features such as your quotation list, language, and privacy preference. These cannot be turned off.",
-    "analyticsTitle": "Analytics cookies",
-    "analyticsDescription": "Allow Google Tag Manager to send usage data without the details you enter in forms, helping us measure and improve the website.",
+    "dialogBody": "Choose each cookie category separately. You can change these choices at any time using the Cookie settings link in the website footer.",
+    "necessaryTitle": "Strictly necessary cookies",
+    "necessaryDescription": "Keep the website working securely, remember in-progress form and quotation-list state, and store your cookie choices. These are always active and cannot be turned off.",
+    "functionalTitle": "Functional cookies",
+    "functionalDescription": "Remember preferences such as your chosen language, form details you ask us to save, recent searches, and dismissed popups for your next visit.",
+    "analyticsTitle": "Analytics and performance cookies",
+    "analyticsDescription": "Collect aggregate website usage statistics without the details you enter in forms, such as through Google Analytics, so we can improve UX/UI and performance.",
+    "marketingTitle": "Marketing and targeting cookies",
+    "marketingDescription": "Track activity to show relevant product advertising and promotions on social platforms and measure campaign performance, such as through Facebook Pixel, TikTok Pixel, Google Ads, and Remarketing.",
     "alwaysOn": "Always on",
     "on": "On",
     "off": "Off",
@@ -194,7 +198,7 @@
     "privacy": {
       "title": "Privacy Policy",
       "intro": "Thana Glass Group and its affiliates, including Thana Glass Aluminum Co., Ltd. (Headquarters and Branches), Thana Glass Thalang Co., Ltd., and other affiliated entities (hereinafter referred to as \"we\", \"us\", or \"our\"), are committed to protecting your personal data. This Privacy Policy outlines how we collect, use, disclose, and safeguard your personal information in compliance with the Thailand Personal Data Protection Act B.E. 2562 (PDPA).",
-      "lastUpdated": "Last updated: August 1, 2026",
+      "lastUpdated": "Last updated: August 18, 2026",
       "sections": [
         {
           "heading": "1. Personal Data We Collect",
@@ -214,7 +218,7 @@
         },
         {
           "heading": "5. Use of Cookies",
-          "body": "Our website uses cookies to optimize functionality and improve your browsing experience. You can manage your preferences or disable non-essential cookies through the \"Cookie Settings\" on our website."
+          "body": "We group cookies and similar technologies into four categories:\n\n• Strictly necessary cookies support security, the quotation system, in-progress form state, and your cookie choices. They are always active and cannot be turned off.\n• Functional cookies remember your language, form details you ask us to save, recent searches, and dismissed popups. They are off by default.\n• Analytics and performance cookies collect aggregate usage statistics without the details you enter in forms, such as through Google Analytics, so we can improve UX/UI and website performance. They are off by default.\n• Marketing and targeting cookies support relevant advertising and campaign measurement, such as through Facebook Pixel, TikTok Pixel, Google Ads, and Remarketing. They are off by default.\n\nYou can allow, refuse, or withdraw consent for non-essential cookies at any time through Cookie settings on our website."
         },
         {
           "heading": "6. Your Data Privacy Rights",
@@ -551,6 +555,8 @@
     "useDeliveryAddress": "Use the same address as delivery",
     "rememberContact": "Remember details on this device",
     "rememberContactHint": "Contact, tax, fulfilment and delivery address details are saved in this browser. Do not use on a shared or public device.",
+    "rememberContactRequiresFunctional": "Allow Functional cookies before saving these details for your next visit.",
+    "openCookieSettings": "Open cookie settings",
     "deleteSavedContact": "Delete saved details",
     "savedContactDeleted": "Saved contact, company invoice, and delivery address details deleted from this device.",
     "savedContactDeleteFailed": "Saved contact, company invoice, and delivery address details could not be deleted right now.",

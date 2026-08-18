@@ -13,20 +13,27 @@ export function CheckField({
   checked,
   onChange,
   children,
+  disabled = false,
 }: {
   name: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 select-none">
+    <label
+      className={`flex items-start gap-3 select-none ${
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      }`}
+    >
       <span className="relative mt-0.5 flex items-center">
         <input
           type="checkbox"
           name={name}
           className="sr-only"
           checked={checked}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.checked)}
         />
         <span
@@ -34,7 +41,9 @@ export function CheckField({
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border transition-all ${
             checked
               ? "border-primary bg-primary text-white"
-              : "border-[#c4e2f5] bg-white hover:border-[#078ee4]"
+              : disabled
+                ? "border-[#c4e2f5] bg-[#ededf7]"
+                : "border-[#c4e2f5] bg-white hover:border-[#078ee4]"
           }`}
         >
           {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}

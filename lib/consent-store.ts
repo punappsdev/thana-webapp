@@ -1,71 +1,178 @@
-export const CONSENT_STORAGE_KEY = "thana-cookie-consent-v1";
+import {
+  applyConsentTransition,
+  clearAnalyticsCookies,
+  clearFunctionalStorage,
+  clearMarketingCookies,
+  reloadAfterTrackingWithdrawal,
+} from "@/lib/consent-effects";
+import { clearLegacyLocaleCookie } from "@/lib/functional-locale";
+
+export const CONSENT_STORAGE_KEY = "thana-cookie-consent-v2";
+export const LEGACY_CONSENT_STORAGE_KEY = "thana-cookie-consent-v1";
 export const COOKIE_SETTINGS_EVENT = "thana:open-cookie-settings";
+export const CONSENT_NOTICE_VERSION = "2026-08-18";
+export const CONSENT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
-const CONSENT_VERSION = 1;
+const CONSENT_SCHEMA_VERSION = 2;
 
-export type AnalyticsConsent = "unset" | "granted" | "denied";
+export type ConsentStatus = "unset" | "decided";
+export type ConsentPreferences = {
+  functional: boolean;
+  analytics: boolean;
+  marketing: boolean;
+};
+export type ConsentSnapshot = Readonly<{
+  status: ConsentStatus;
+  necessary: true;
+  functional: boolean;
+  analytics: boolean;
+  marketing: boolean;
+  decidedAt: number | null;
+  expiresAt: number | null;
+  noticeVersion: typeof CONSENT_NOTICE_VERSION;
+}>;
 
 type StoredConsent = {
-  version: typeof CONSENT_VERSION;
-  analytics: Exclude<AnalyticsConsent, "unset">;
+  version: typeof CONSENT_SCHEMA_VERSION;
+  noticeVersion: typeof CONSENT_NOTICE_VERSION;
+  decidedAt: number;
+  expiresAt: number;
+  necessary: true;
+  functional: boolean;
+  analytics: boolean;
+  marketing: boolean;
 };
 
-declare global {
-  interface Window {
-    dataLayer?: object[];
-  }
+export const UNSET_CONSENT: ConsentSnapshot = Object.freeze({
+  status: "unset",
+  necessary: true,
+  functional: false,
+  analytics: false,
+  marketing: false,
+  decidedAt: null,
+  expiresAt: null,
+  noticeVersion: CONSENT_NOTICE_VERSION,
+});
+
+function decidedSnapshot(stored: StoredConsent): ConsentSnapshot {
+  return Object.freeze({
+    status: "decided",
+    necessary: true,
+    functional: stored.functional,
+    analytics: stored.analytics,
+    marketing: stored.marketing,
+    decidedAt: stored.decidedAt,
+    expiresAt: stored.expiresAt,
+    noticeVersion: CONSENT_NOTICE_VERSION,
+  });
 }
 
-function parseStoredConsent(raw: string | null): AnalyticsConsent {
-  if (!raw) return "unset";
+function parseStoredConsent(raw: string | null, now = Date.now()): ConsentSnapshot {
+  if (!raw) return UNSET_CONSENT;
 
   try {
     const parsed = JSON.parse(raw) as Partial<StoredConsent>;
     if (
-      parsed.version === CONSENT_VERSION &&
-      (parsed.analytics === "granted" || parsed.analytics === "denied")
+      parsed.version === CONSENT_SCHEMA_VERSION &&
+      parsed.noticeVersion === CONSENT_NOTICE_VERSION &&
+      parsed.necessary === true &&
+      typeof parsed.functional === "boolean" &&
+      typeof parsed.analytics === "boolean" &&
+      typeof parsed.marketing === "boolean" &&
+      typeof parsed.decidedAt === "number" &&
+      Number.isFinite(parsed.decidedAt) &&
+      typeof parsed.expiresAt === "number" &&
+      Number.isFinite(parsed.expiresAt) &&
+      parsed.expiresAt === parsed.decidedAt + CONSENT_TTL_MS &&
+      parsed.expiresAt > now
     ) {
-      return parsed.analytics;
+      return decidedSnapshot(parsed as StoredConsent);
     }
   } catch {
-    // A corrupt or obsolete preference must fail closed.
+    // A corrupt preference must fail closed.
   }
 
-  return "unset";
+  return UNSET_CONSENT;
 }
 
-function readStoredConsent(): AnalyticsConsent {
-  if (typeof window === "undefined") return "unset";
-
+function removeStorageKey(key: string): void {
   try {
-    return parseStoredConsent(window.localStorage.getItem(CONSENT_STORAGE_KEY));
+    window.localStorage.removeItem(key);
   } catch {
-    return "unset";
+    // Keep the deny-by-default in-memory state when storage is blocked.
   }
 }
 
-let consent: AnalyticsConsent = readStoredConsent();
+function readStoredConsent(): ConsentSnapshot {
+  if (typeof window === "undefined") return UNSET_CONSENT;
+
+  // next-intl used this cookie before Functional consent was introduced.
+  clearLegacyLocaleCookie();
+
+  let raw: string | null = null;
+  let legacyRaw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    legacyRaw = window.localStorage.getItem(LEGACY_CONSENT_STORAGE_KEY);
+  } catch {
+    return UNSET_CONSENT;
+  }
+
+  const parsed = parseStoredConsent(raw);
+  if (parsed.status === "decided") {
+    removeStorageKey(LEGACY_CONSENT_STORAGE_KEY);
+    return parsed;
+  }
+
+  if (raw !== null) {
+    removeStorageKey(CONSENT_STORAGE_KEY);
+    clearFunctionalStorage();
+    clearAnalyticsCookies();
+    clearMarketingCookies();
+  } else if (legacyRaw !== null) {
+    // The old notice covered Analytics only. Re-prompt rather than extending that
+    // grant to new Functional and Marketing purposes.
+    clearAnalyticsCookies();
+    clearMarketingCookies();
+  }
+
+  removeStorageKey(LEGACY_CONSENT_STORAGE_KEY);
+  return UNSET_CONSENT;
+}
+
+let consent = readStoredConsent();
 const listeners = new Set<() => void>();
 
 function emit(): void {
   for (const listener of listeners) listener();
 }
 
-function onStorage(event: StorageEvent): void {
-  if (event.key !== CONSENT_STORAGE_KEY && event.key !== null) return;
+function snapshotsEqual(left: ConsentSnapshot, right: ConsentSnapshot): boolean {
+  return (
+    left.status === right.status &&
+    left.functional === right.functional &&
+    left.analytics === right.analytics &&
+    left.marketing === right.marketing &&
+    left.decidedAt === right.decidedAt &&
+    left.expiresAt === right.expiresAt
+  );
+}
 
-  const next = parseStoredConsent(event.newValue);
-  if (next === consent) return;
+function transition(next: ConsentSnapshot): void {
+  if (snapshotsEqual(consent, next)) return;
 
-  const withdrawing = consent === "granted" && next !== "granted";
+  const previous = consent;
   consent = next;
   emit();
 
-  if (withdrawing) {
-    pushDeniedGoogleConsent();
-    clearGoogleMeasurementCookies();
-    window.location.reload();
+  if (applyConsentTransition(previous, next)) {
+    reloadAfterTrackingWithdrawal();
   }
+}
+
+function onStorage(event: StorageEvent): void {
+  if (event.key !== CONSENT_STORAGE_KEY && event.key !== null) return;
+  transition(parseStoredConsent(event.newValue));
 }
 
 export function subscribeConsent(listener: () => void): () => void {
@@ -83,93 +190,42 @@ export function subscribeConsent(listener: () => void): () => void {
   };
 }
 
-export function getConsentSnapshot(): AnalyticsConsent {
+export function getConsentSnapshot(): ConsentSnapshot {
   return consent;
 }
 
-/** The server cannot read localStorage, so analytics always starts disabled. */
-export function getConsentServerSnapshot(): AnalyticsConsent {
-  return "unset";
+/** The server cannot read localStorage, so every optional category starts denied. */
+export function getConsentServerSnapshot(): ConsentSnapshot {
+  return UNSET_CONSENT;
 }
 
-export function setAnalyticsConsent(
-  next: Exclude<AnalyticsConsent, "unset">,
-): void {
-  consent = next;
+export function setConsentPreferences(
+  preferences: ConsentPreferences,
+): ConsentSnapshot {
+  const decidedAt = Date.now();
+  const stored: StoredConsent = {
+    version: CONSENT_SCHEMA_VERSION,
+    noticeVersion: CONSENT_NOTICE_VERSION,
+    decidedAt,
+    expiresAt: decidedAt + CONSENT_TTL_MS,
+    necessary: true,
+    functional: preferences.functional,
+    analytics: preferences.analytics,
+    marketing: preferences.marketing,
+  };
+  const next = decidedSnapshot(stored);
 
   if (typeof window !== "undefined") {
-    const stored: StoredConsent = { version: CONSENT_VERSION, analytics: next };
     try {
       window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(stored));
+      window.localStorage.removeItem(LEGACY_CONSENT_STORAGE_KEY);
     } catch {
       // Keep the in-memory choice for this page when browser storage is blocked.
     }
   }
 
-  emit();
-}
-
-/** Inform an already-running Google tag before the page removes it on reload. */
-export function pushDeniedGoogleConsent(): void {
-  if (typeof window === "undefined" || !window.dataLayer) return;
-
-  // gtag commands are `arguments` objects. Build that same array-like shape
-  // without installing a second Google script alongside GTM.
-  function gtag(
-    command: "consent",
-    action: "update",
-    parameters: Record<string, "denied">,
-  ): void;
-  function gtag(): void {
-    // GTM expects the Arguments object produced by Google's standard snippet,
-    // not an event object or a second gtag.js installation.
-    // eslint-disable-next-line prefer-rest-params
-    window.dataLayer?.push(arguments);
-  }
-
-  gtag("consent", "update", {
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    analytics_storage: "denied",
-  });
-}
-
-/** Remove first-party Analytics/Ads cookies that JavaScript is allowed to access. */
-export function clearGoogleMeasurementCookies(): void {
-  if (typeof document === "undefined") return;
-
-  const names = document.cookie
-    .split(";")
-    .map((part) => part.trim().split("=")[0])
-    .filter(
-      (name) =>
-        name === "_ga" ||
-        name.startsWith("_ga_") ||
-        name === "_gid" ||
-        name.startsWith("_gat") ||
-        name.startsWith("_gcl_"),
-    );
-
-  if (names.length === 0) return;
-
-  const hostname = typeof window === "undefined" ? "" : window.location.hostname;
-  const hostnameParts = hostname.split(".").filter(Boolean);
-  const domains = new Set<string | null>([null, hostname, hostname ? `.${hostname}` : ""]);
-
-  for (let index = 1; index < hostnameParts.length - 1; index += 1) {
-    const parent = hostnameParts.slice(index).join(".");
-    domains.add(parent);
-    domains.add(`.${parent}`);
-  }
-
-  for (const name of names) {
-    for (const domain of domains) {
-      if (domain === "") continue;
-      const domainPart = domain ? `; Domain=${domain}` : "";
-      document.cookie = `${name}=; Max-Age=0; Path=/${domainPart}; SameSite=Lax`;
-    }
-  }
+  transition(next);
+  return next;
 }
 
 export function openCookieSettings(): void {
