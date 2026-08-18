@@ -17,6 +17,15 @@ interface Branch {
   mapUrl: string;
 }
 
+function lineHref(lineId: string) {
+  const trimmed = lineId.trim();
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  const clean = trimmed.replace(/^@/, "");
+  return `https://line.me/R/ti/p/@${encodeURIComponent(clean)}`;
+}
+
 /**
  * The branch selector drives the map from local state, so it stays a client
  * component. It is split out from the page shell so the shell — and the Footer
@@ -126,12 +135,13 @@ export function ContactMain() {
                           <div className="flex flex-wrap gap-2 mb-3">
                             {/* LINE */}
                             <a
-                              href="https://lin.ee/P3ZGgWM"
+                              href={lineHref(branch.line || "@496mcfsl")}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center border border-[#c4e2f5] shadow-blue-sm hover:scale-110 hover:shadow-blue-md active:scale-95 transition-all"
-                              title="LINE"
+                              title={`LINE: ${branch.line || "@496mcfsl"}`}
+                              aria-label={`LINE: ${branch.line || "@496mcfsl"}`}
                             >
                               <LineIcon className="h-4.5 w-4.5" />
                             </a>
