@@ -5,6 +5,7 @@ import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
 import { LegalDialog } from "@/components/legal/legal-dialog";
+import { CookieSettingsButton } from "@/components/consent/cookie-settings-button";
 import { LineIcon } from "@/components/icons/line-icon";
 
 /**
@@ -121,7 +122,7 @@ export async function Footer() {
       {/* Copyright Bar */}
       <div className="max-w-[1280px] mx-auto px-4 md:px-10 mt-12 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="font-body-sm text-muted-foreground text-center md:text-left">{t("copyright")}</p>
-        <div className="flex gap-6 font-body-sm text-muted-foreground">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 font-body-sm text-muted-foreground md:justify-end">
           <LegalDialog
             document="privacy"
             label={t("privacy")}
@@ -132,6 +133,7 @@ export async function Footer() {
             label={t("terms")}
             triggerClassName="cursor-pointer font-body-sm font-normal text-muted-foreground no-underline transition-colors hover:text-primary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />
+          <CookieSettingsButton label={t("cookieSettings")} />
         </div>
       </div>
     </footer>

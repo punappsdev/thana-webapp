@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { CartSheet } from "@/components/cart/cart-sheet";
+import { ConsentManager } from "@/components/consent/consent-manager";
 import { notoSansThai, prompt } from "@/lib/fonts";
 import { SITE_NAME, SITE_URL, metaDescription } from "@/lib/seo";
 import "../globals.css";
@@ -52,6 +54,8 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
           {children}
+          <AnalyticsProvider />
+          <ConsentManager />
           {/* Mounted once here so any page can open it via useCart().openCart() */}
           <CartSheet />
         </NextIntlClientProvider>

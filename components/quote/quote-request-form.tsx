@@ -56,6 +56,7 @@ import { findDistrict, getDistrictsForProvince } from "@/lib/districts";
 import { pick } from "@/lib/products";
 import { PHUKET_CODE, SOUTHERN_PROVINCES } from "@/lib/provinces";
 import { getSubdistrictsForDistrict } from "@/lib/subdistricts";
+import { trackQuoteLead } from "@/lib/tracking";
 import { useNoResetSubmit } from "@/lib/use-no-reset-submit";
 import { submitQuoteRequest, type QuoteFormResult } from "@/app/[locale]/quote/actions";
 import { LegalDialog } from "@/components/legal/legal-dialog";
@@ -260,6 +261,11 @@ export function QuoteRequestForm() {
       setRememberContact(hasSavedDetails(savedDetails));
     });
   }, [locale]);
+
+  useEffect(() => {
+    if (!state.success || !state.code) return;
+    trackQuoteLead(state.code);
+  }, [state.success, state.code]);
 
   // The request is recorded server side, so the browser copy has done its job.
   // `clear` is a module-level store function, so its identity never changes.

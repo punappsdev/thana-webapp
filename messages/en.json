@@ -164,10 +164,31 @@
     "copyright": "© 2026 Thana Glass Aluminum. All Rights Reserved.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
+    "cookieSettings": "Cookie settings",
     "companies": [
       "Thana Glass Aluminum Co., Ltd.",
       "Thana Glass Thlang Co., Ltd."
     ]
+  },
+  "Consent": {
+    "bannerAriaLabel": "Privacy and cookie choices",
+    "bannerTitle": "Your cookie choices",
+    "bannerBody": "Essential cookies keep the website working. We use analytics cookies only with your permission to understand usage and improve our services.",
+    "privacyPolicy": "Privacy Policy",
+    "accept": "Allow cookies",
+    "reject": "Use essential cookies only",
+    "manage": "Cookie settings",
+    "dialogTitle": "Cookie settings",
+    "dialogBody": "You can change this choice at any time using the Cookie settings link in the website footer.",
+    "necessaryTitle": "Essential cookies",
+    "necessaryDescription": "Required for core features such as your quotation list, language, and privacy preference. These cannot be turned off.",
+    "analyticsTitle": "Analytics cookies",
+    "analyticsDescription": "Allow Google Tag Manager to send usage data without the details you enter in forms, helping us measure and improve the website.",
+    "alwaysOn": "Always on",
+    "on": "On",
+    "off": "Off",
+    "learnMore": "Read how we use information in our",
+    "save": "Save settings"
   },
   "Legal": {
     "privacy": {
