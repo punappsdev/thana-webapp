@@ -17,13 +17,13 @@ interface Branch {
   mapUrl: string;
 }
 
-function lineHref(lineId: string) {
+function lineHref(lineId?: string) {
+  if (!lineId) return "https://lin.ee/5ncr6Fh";
   const trimmed = lineId.trim();
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return trimmed;
   }
-  const clean = trimmed.replace(/^@/, "");
-  return `https://line.me/R/ti/p/@${encodeURIComponent(clean)}`;
+  return "https://lin.ee/5ncr6Fh";
 }
 
 /**

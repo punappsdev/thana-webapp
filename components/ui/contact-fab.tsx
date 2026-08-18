@@ -43,7 +43,7 @@ export function ContactFab() {
             </span>
             <a
               id="fab-link-line"
-              href="https://lin.ee/P3ZGgWM"
+              href="https://lin.ee/5ncr6Fh"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-[#06C755] text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"

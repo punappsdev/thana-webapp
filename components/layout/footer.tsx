@@ -42,7 +42,7 @@ export async function Footer() {
           </p>
           <div className="flex gap-3 items-center">
             <a
-              href="https://lin.ee/P3ZGgWM"
+              href="https://lin.ee/5ncr6Fh"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LINE"

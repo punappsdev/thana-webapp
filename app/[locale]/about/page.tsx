@@ -60,13 +60,13 @@ function phoneHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
-function lineHref(lineId: string) {
+function lineHref(lineId?: string) {
+  if (!lineId) return "https://lin.ee/5ncr6Fh";
   const trimmed = lineId.trim();
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     return trimmed;
   }
-  const clean = trimmed.replace(/^@/, "");
-  return `https://line.me/R/ti/p/@${encodeURIComponent(clean)}`;
+  return "https://lin.ee/5ncr6Fh";
 }
 
 function ContactRow({
@@ -268,8 +268,8 @@ export default async function AboutPage({ params }: PageProps) {
                   {
                     icon: LineIcon,
                     label: t("contacts.line"),
-                    value: "Thanaglass",
-                    href: lineHref(contacts.line),
+                    value: contacts.line || "@496mcfsl",
+                    href: lineHref(contacts.line || "@496mcfsl"),
                     external: true,
                   },
                   {
