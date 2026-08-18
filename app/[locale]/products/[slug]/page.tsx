@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ContactFab } from "@/components/ui/contact-fab";
@@ -302,16 +303,22 @@ export default async function ProductDetailPage({ params }: PageProps) {
             {/* Summary + variant picker */}
             <div className="space-y-6">
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  {product.category && (
-                    <span className="inline-block bg-[#c4e2f5] text-[#002c7d] px-2.5 py-1 rounded-md font-label-sm font-medium">
-                      {pick(product.category, "name", locale)}
+                {brandName && (
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center gap-2.5 font-label-lg font-medium text-[#434653]">
+                      {product.brand?.logo && (
+                        <Image
+                          src={product.brand.logo}
+                          alt={brandName}
+                          width={160}
+                          height={44}
+                          className="h-10 md:h-11 w-auto max-h-11 max-w-[160px] object-contain"
+                        />
+                      )}
+                      <span>{brandName}</span>
                     </span>
-                  )}
-                  {brandName && (
-                    <span className="font-label-sm text-[#747684]">{brandName}</span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <h1 className="font-headline-lg-mobile md:font-headline-lg font-bold text-on-surface">
                   {name}
