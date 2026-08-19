@@ -327,7 +327,7 @@
   "AboutPage": {
     "metaDescription": "Meet Thana Glass & Aluminum Phuket — explore the group, shared direction, complete company profiles and contact details for all three companies.",
     "title": "About Us",
-    "subtitle": "Precision, transparency, and structural integrity — crafted into every panel of glass and aluminum we install.",
+    "subtitle": "Precision, transparency, and structural integrity — reflected in every gypsum, aluminum, and processed glass solution we select.",
     "eyebrow": "Our Story",
     "heroNote": "An overview of the group, its vision, mission and contact details for each company.",
     "logoAlt": "Thana Glass Group logo",
@@ -343,9 +343,9 @@
     "missionTitle": "Mission",
     "missionDesc": "Quality is remembered long — producing safety glass with quality to be remembered forever.",
     "businessTypeTitle": "Business type",
-    "businessTypeDesc": "Glass processing for building work, interior decoration and furniture.",
+    "businessTypeDesc": "Comprehensive distribution and services for glass, aluminum, ceiling systems, and related hardware in the Southern region.",
     "companiesEyebrow": "Companies in the Group",
-    "companiesTitle": "Three companies, one Thana Glass Group",
+    "companiesTitle": "Thana Glass Group Affiliated Companies",
     "companiesIntro": "Company profiles and contact channels for each company, shown in the group's operating order.",
     "companyNumber": "Company {number}",
     "profileLabel": "Company profile",
@@ -413,7 +413,7 @@
         "contacts": {
           "address": "36 Moo 4, Chalong, Mueang Phuket, Phuket 83130",
           "line": "@496mcfsl",
-          "office": "06-374-812-3",
+          "office": "06-374-812",
           "sales": [
             { "number": "095-038-8438", "label": "Tempered glass sales — Surat Thani–Samui–Chumphon–Ranong" },
             { "number": "098-670-6157", "label": "Hat Yai–Krabi–Trang–Phatthalung line" }
