@@ -52,7 +52,7 @@ export async function ProductList({ locale }: { locale: string }) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((product) => (
             <ProductCard
               key={product.id}
@@ -61,7 +61,7 @@ export async function ProductList({ locale }: { locale: string }) {
               viewDetailLabel={tProducts("viewDetail")}
               skuLabel={tProducts("sku")}
               optionsLabel={tProducts("options")}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ))}
         </div>
