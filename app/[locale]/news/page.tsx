@@ -8,6 +8,7 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { UniversalSlider, SlideItem } from "@/components/ui/universal-slider";
 import { getActivePromotionBanners } from "@/lib/admin/banner-data";
+import { notExpiredPromotionWhere } from "@/lib/promotions";
 import { pick } from "@/lib/products";
 import {
   Pagination,
@@ -77,6 +78,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   const skip = (pageNumber - 1) * limit;
   const t = await getTranslations("News");
   const tNav = await getTranslations("Header");
+  const now = new Date();
 
   // Promotion banners for the top slider — curated in the admin panel, each
   // linking to its connected promotion's detail page when clicked.
@@ -94,9 +96,10 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   }
 
   if (type === "all" || type === "promotions") {
-    // For promotions list in the grid, we show all published promotions (even those starting soon or expired, or only active? Let's show all published promotions)
+    // Expired promotions (end date in the past) are hidden from the listing; a
+    // promotion with no end date never expires and stays visible.
     promotionsList = await prisma.promotion.findMany({
-      where: { published: true },
+      where: { published: true, ...notExpiredPromotionWhere(now) },
       orderBy: { createdAt: "desc" },
     });
   }

@@ -66,6 +66,15 @@ export function productPromotionWhere(
   };
 }
 
+/**
+ * Excludes promotions whose end date has passed, so an expired offer drops out
+ * of the /news listing instead of lingering as an archive. A promotion with no
+ * end date (`endDate: null`) never expires and stays visible.
+ */
+export function notExpiredPromotionWhere(now: Date): Prisma.PromotionWhereInput {
+  return { OR: [{ endDate: null }, { endDate: { gte: now } }] };
+}
+
 export async function getPromotionsForProduct(
   product: PromotionTargetProduct,
   now = new Date()
