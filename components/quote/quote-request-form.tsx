@@ -1000,61 +1000,65 @@ export function QuoteRequestForm() {
         </Section>
       </div>
 
-      <aside className="lg:sticky lg:top-28 lg:self-start">
-        <div className="space-y-4 rounded-lg border border-[#c4e2f5] bg-[#f3f3fc] p-6">
-          <h2 className="font-headline-sm font-semibold text-on-surface">{t("summaryTitle")}</h2>
+      <aside className="lg:h-full">
+        <div className="flex h-full flex-col justify-between rounded-lg border border-[#c4e2f5] bg-[#f3f3fc] p-6">
+          <div className="space-y-4">
+            <h2 className="font-headline-sm font-semibold text-on-surface">{t("summaryTitle")}</h2>
 
-          <div className="border-b border-[#c4e2f5] pb-3">
-            <span className="font-body-sm text-[#434653]">{tCart("itemCount", { count })}</span>
+            <div className="border-b border-[#c4e2f5] pb-3">
+              <span className="font-body-sm text-[#434653]">{tCart("itemCount", { count })}</span>
+            </div>
+
+            <ul className="space-y-3 overflow-y-auto pr-1">
+              {items.map((item) => (
+                <li key={lineKey(item)} className="flex gap-3">
+                  <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-[#c4e2f5] bg-white">
+                    {item.image ? (
+                      <Image src={item.image} alt="" fill className="object-cover" sizes="48px" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center">
+                        <Package className="h-4 w-4 text-[#747684]" aria-hidden="true" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-label-sm font-semibold text-on-surface">
+                      {pick(item, "name", locale)}
+                    </span>
+                    <span className="block font-label-sm text-[#747684]">× {item.qty}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="max-h-72 space-y-3 overflow-y-auto pr-1">
-            {items.map((item) => (
-              <li key={lineKey(item)} className="flex gap-3">
-                <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-[#c4e2f5] bg-white">
-                  {item.image ? (
-                    <Image src={item.image} alt="" fill className="object-cover" sizes="48px" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center">
-                      <Package className="h-4 w-4 text-[#747684]" aria-hidden="true" />
-                    </span>
-                  )}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-label-sm font-semibold text-on-surface">
-                    {pick(item, "name", locale)}
-                  </span>
-                  <span className="block font-label-sm text-[#747684]">× {item.qty}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4 pt-6">
+            {state.message && !state.success && (
+              <p
+                role="alert"
+                className="rounded-md border border-destructive/30 bg-error-container px-3 py-2 font-body-sm text-on-error-container"
+              >
+                {state.message}
+              </p>
+            )}
 
-          {state.message && !state.success && (
-            <p
-              role="alert"
-              className="rounded-md border border-destructive/30 bg-error-container px-3 py-2 font-body-sm text-on-error-container"
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-linear-to-b from-[#078ee4] to-primary-container px-6 py-3 font-label-md font-semibold text-white shadow-blue-sm transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
             >
-              {state.message}
-            </p>
-          )}
+              <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
+              {pending ? t("submitting") : t("submit")}
+            </button>
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-linear-to-b from-[#078ee4] to-primary-container px-6 py-3 font-label-md font-semibold text-white shadow-blue-sm transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
-          >
-            <MessageSquareQuote className="h-4 w-4" aria-hidden="true" />
-            {pending ? t("submitting") : t("submit")}
-          </button>
-
-          <Link
-            href="/cart"
-            className="inline-flex w-full items-center justify-center gap-2 font-label-md font-medium text-primary transition-colors hover:text-secondary"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            {t("editCart")}
-          </Link>
+            <Link
+              href="/cart"
+              className="inline-flex w-full items-center justify-center gap-2 font-label-md font-medium text-primary transition-colors hover:text-secondary"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              {t("editCart")}
+            </Link>
+          </div>
         </div>
       </aside>
     </form>

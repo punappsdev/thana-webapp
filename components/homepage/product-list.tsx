@@ -1,8 +1,7 @@
-import { ChevronRight } from "lucide-react";
-import { Link } from "../../i18n/routing";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/products/product-card";
+import { ProductListCarousel } from "@/components/homepage/product-list-carousel";
 
 export async function ProductList({ locale }: { locale: string }) {
   const t = await getTranslations("ProductList");
@@ -36,36 +35,31 @@ export async function ProductList({ locale }: { locale: string }) {
 
   return (
     <section className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-4 md:px-10">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h2 className="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">
-              {t("title")}
-            </h2>
-            <p className="font-body-md text-muted-foreground">{t("desc")}</p>
-          </div>
-          <Link
-            href="/products"
-            className="text-primary font-bold hover:underline flex items-center gap-1 font-label-sm shrink-0"
-          >
-            {t("viewAll")} <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-14 lg:px-16">
+        <ProductListCarousel
+          title={t("title")}
+          desc={t("desc")}
+          viewAllLabel={t("viewAll")}
+        >
           {products.map((product) => (
-            <ProductCard
+            <div
               key={product.id}
-              product={product}
-              locale={locale}
-              viewDetailLabel={tProducts("viewDetail")}
-              skuLabel={tProducts("sku")}
-              optionsLabel={tProducts("options")}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+              className="w-[78%] sm:w-[calc((100%-16px)/2)] md:w-[calc((100%-2*24px)/3)] lg:w-[calc((100%-3*24px)/4)] shrink-0 snap-start flex flex-col"
+            >
+              <ProductCard
+                product={product}
+                locale={locale}
+                viewDetailLabel={tProducts("viewDetail")}
+                skuLabel={tProducts("sku")}
+                optionsLabel={tProducts("options")}
+                sizes="(max-width: 640px) 80vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              />
+            </div>
           ))}
-        </div>
+        </ProductListCarousel>
       </div>
     </section>
   );
 }
+
+

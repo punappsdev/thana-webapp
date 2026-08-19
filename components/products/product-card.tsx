@@ -87,7 +87,7 @@ export function ProductCard({
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="bg-white rounded-xl group transition-all duration-300 border border-border/50 flex flex-col hover:z-20 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#078ee4] focus-visible:ring-offset-2"
+      className="bg-white rounded-xl group transition-all duration-300 border border-border/50 flex flex-col h-full hover:z-20 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#078ee4] focus-visible:ring-offset-2"
       style={{ boxShadow: "0 10px 30px -10px rgba(0, 64, 173, 0.08)" }}
     >
       <div className="relative overflow-hidden aspect-square bg-[#e2e2eb] rounded-t-xl">
