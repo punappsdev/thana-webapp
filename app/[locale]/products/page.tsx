@@ -289,7 +289,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
         />
 
         {/* Catalog: sidebar + grid */}
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 md:px-10 py-6 md:py-12">
           {/* Page heading sits above the sidebar so the H1 comes first in the
               document outline, ahead of the sidebar's H2 and the card H3s. */}
           <header className="mb-6 md:mb-8">
@@ -372,7 +372,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                   {/* Subtle backlight to lift the empty state */}
                   <div
                     aria-hidden="true"
-                    className="absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-80 rounded-full bg-[radial-gradient(circle,_rgba(7,142,228,0.12),_transparent_70%)] blur-2xl pointer-events-none"
+                    className="absolute -top-20 left-1/2 -translate-x-1/2 h-40 w-80 rounded-full bg-[radial-gradient(circle,rgba(7,142,228,0.12),transparent_70%)] blur-2xl pointer-events-none"
                   />
                   <div className="relative">
                     <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f3fc] border border-[#c4e2f5]">

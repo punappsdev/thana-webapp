@@ -159,9 +159,9 @@ export function ProductCard({
                           +{remainingCount}
                           {/* Tooltip popup on hover */}
                           <span
-                            className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover/tooltip:flex flex-col gap-1 w-max max-w-[240px] p-2.5 rounded-lg bg-[#1a1b22] text-white shadow-xl ring-1 ring-white/10"
+                            className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover/tooltip:flex flex-col gap-1 w-max max-w-60 p-2.5 rounded-lg bg-[#1a1b22] text-white shadow-xl ring-1 ring-white/10"
                           >
-                            <span className="font-semibold text-[#a0b6ff] border-b border-white/10 pb-1 text-left font-label-sm">
+                            <span className="font-semibold text-on-primary-container border-b border-white/10 pb-1 text-left font-label-sm">
                               {group.name} ({values.length})
                             </span>
                             <span className="text-white/90 whitespace-normal leading-relaxed text-left font-label-sm">

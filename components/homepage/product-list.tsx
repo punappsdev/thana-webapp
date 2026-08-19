@@ -36,7 +36,7 @@ export async function ProductList({ locale }: { locale: string }) {
 
   return (
     <section className="py-12 bg-white">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-10">
         <div className="flex justify-between items-end mb-8">
           <div>
             <h2 className="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">
