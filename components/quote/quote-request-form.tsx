@@ -714,7 +714,7 @@ export function QuoteRequestForm() {
                   role="status"
                   className="flex items-center gap-3.5 rounded-xl border border-[#d0e1fd] bg-linear-to-r from-[#eff6ff] via-[#f0f4ff] to-[#f8fafc] p-4.5 sm:p-5 shadow-blue-sm transition-all hover:shadow-blue-md"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-primary to-[#0040ad] text-white shadow-blue-sm">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary-container text-white shadow-blue-sm">
                     <Truck className="size-4.5" aria-hidden="true" />
                   </span>
                   <p className="min-w-0 flex-1 font-body-sm leading-relaxed text-[#434653]">

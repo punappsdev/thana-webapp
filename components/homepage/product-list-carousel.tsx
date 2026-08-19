@@ -115,7 +115,7 @@ export function ProductListCarousel({
         <div
           ref={scrollContainerRef}
           onScroll={updateScrollState}
-          className="flex gap-4 md:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 -my-4 px-1 -mx-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-x-contain"
+          className="flex gap-4 md:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 -my-4 px-1 -mx-1 scrollbar-none [&::-webkit-scrollbar]:hidden overscroll-x-contain"
         >
           {children}
         </div>
