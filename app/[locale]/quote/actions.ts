@@ -14,6 +14,7 @@ import {
 } from "@/lib/quotation-custom-fields";
 import { getPrisma } from "@/lib/prisma";
 import { BRANCH_CODES } from "@/lib/branches";
+import { CUSTOMER_TYPE_CODES } from "@/lib/customer-types";
 import { MAX_QTY } from "@/lib/cart";
 import { notifyQuotationToLine } from "@/lib/line/notify-quotation";
 import { isSouthernProvinceCode } from "@/lib/provinces";
@@ -116,6 +117,9 @@ export async function submitQuoteRequest(
           const digits = digitsOnly(value);
           return digits.length >= 9 && digits.length <= 10;
         }, t("errorPhone")),
+      customerType: z.enum(CUSTOMER_TYPE_CODES, {
+        message: t("errorCustomerType"),
+      }),
       fulfillmentMethod: z.enum(["delivery", "pickup"], {
         message: t("errorFulfillmentMethod"),
       }),
@@ -272,6 +276,7 @@ export async function submitQuoteRequest(
     firstName: formData.get("firstName") ?? "",
     lastName: formData.get("lastName") ?? "",
     phone: formData.get("phone") ?? "",
+    customerType: formData.get("customerType") ?? "",
     fulfillmentMethod: formData.get("fulfillmentMethod") ?? "",
     contactBranch: formData.get("contactBranch") ?? "",
     email: formData.get("email") ?? "",
@@ -388,6 +393,7 @@ export async function submitQuoteRequest(
           firstName: d.firstName,
           lastName: d.lastName,
           phone: d.phone,
+          customerType: d.customerType,
           contactBranch,
           email: d.email,
           lineId: d.lineId,

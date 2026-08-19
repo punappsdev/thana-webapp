@@ -1,4 +1,5 @@
 import { branchLabelTh, saleGroupLabelTh, type SaleGroupCode } from "@/lib/branches";
+import { customerTypeLabelTh } from "@/lib/customer-types";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
 
 /**
@@ -92,6 +93,8 @@ export type QuotationNotification = {
   firstName: string;
   lastName: string;
   phone: string;
+  /** รหัสประเภทลูกค้าจาก lib/customer-types.ts null = คำขอเก่าก่อนมีคอลัมน์นี้ */
+  customerType: string | null;
   email: string | null;
   lineId: string | null;
   locale: string;
@@ -261,6 +264,7 @@ function summaryComponents(input: QuotationNotification): FlexComponent[] {
     detailRow("ส่งเมื่อ", dateFormatter.format(input.createdAt)),
     detailRow("วิธีรับสินค้า", fulfillmentLabel(input)),
     detailRow("ชื่อ-นามสกุล", `${input.firstName} ${input.lastName}`.trim()),
+    detailRow("ประเภทลูกค้า", customerTypeLabelTh(input.customerType)),
     detailRow("โทรศัพท์", input.phone),
     detailRow("อีเมล", input.email),
     detailRow("LINE ID", input.lineId),

@@ -117,6 +117,7 @@ export function QuoteRequestForm() {
   const [consent, setConsent] = useState(false);
   const [contact, setContact] = useState<ContactDetails>(emptyContact);
   const [contactBranch, setContactBranch] = useState("");
+  const [customerType, setCustomerType] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod | "">("");
   const [fulfillmentMethodError, setFulfillmentMethodError] = useState<string>();
   const [companyInvoice, setCompanyInvoice] = useState<CompanyInvoiceDetails>(emptyCompanyInvoice);
@@ -261,6 +262,11 @@ export function QuoteRequestForm() {
   const updateDelivery = (field: DeliveryField, value: string) => {
     markFormEdited();
     setDelivery((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleCustomerTypeChange = (value: string) => {
+    markFormEdited();
+    setCustomerType(value);
   };
 
   const handleDeliveryProvinceChange = (value: string) => {
@@ -498,6 +504,32 @@ export function QuoteRequestForm() {
               }}
               autoComplete="tel"
             />
+          </Field>
+          <Field
+            label={t("customerTypeLabel")}
+            name="customerType"
+            error={fieldError("customerType")}
+            required
+          >
+            <Select name="customerType" value={customerType} onValueChange={handleCustomerTypeChange}>
+              <SelectTrigger id="customerType" className="w-full">
+                <SelectValue placeholder={t("customerTypePlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="project" className="font-body-sm">
+                  {t("customerTypeProject")}
+                </SelectItem>
+                <SelectItem value="contractor" className="font-body-sm">
+                  {t("customerTypeContractor")}
+                </SelectItem>
+                <SelectItem value="homeowner" className="font-body-sm">
+                  {t("customerTypeHomeowner")}
+                </SelectItem>
+                <SelectItem value="corporate" className="font-body-sm">
+                  {t("customerTypeCorporate")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
         </Section>
 

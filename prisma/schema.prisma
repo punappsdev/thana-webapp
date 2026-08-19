@@ -775,6 +775,11 @@ model QuotationRequest {
   lastName  String @db.VarChar(120)
   phone     String @db.VarChar(32)
 
+  /// ประเภทลูกค้าที่ลูกค้าเลือกในฟอร์ม (รหัสจาก lib/customer-types.ts)
+  /// เก็บเป็น VARCHAR ไม่ใช่ enum ด้วยเหตุผลเดียวกับ contactBranch
+  /// null = คำขอเก่าก่อนมีคอลัมน์นี้
+  customerType String? @db.VarChar(32)
+
   /// สาขาที่ลูกค้าเลือกไป**รับสินค้าเอง**
   ///
   /// null เมื่อลูกค้าเลือกให้จัดส่ง เพราะฟอร์มไม่ได้ถามสาขาในกรณีนั้น การใส่ค่า

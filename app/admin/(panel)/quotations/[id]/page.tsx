@@ -25,6 +25,7 @@ import { getQuotationDetail } from "@/lib/admin/quotation-data";
 import { responsibleBranchLabel } from "@/lib/admin/quotation-filters";
 import { quotationDeleteAt, QUOTATION_RETENTION_YEARS } from "@/lib/admin/retention";
 import { branchLabelTh, saleGroupLabelTh } from "@/lib/branches";
+import { customerTypeLabelTh } from "@/lib/customer-types";
 import { resolveSaleGroup } from "@/lib/line/routing";
 import { toRoutingInput } from "@/lib/line/routing-input";
 import { isOutsidePhuket, provinceName } from "@/lib/provinces";
@@ -206,6 +207,7 @@ export default async function QuotationDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <DetailRow label="ชื่อ-นามสกุล" value={`${request.firstName} ${request.lastName}`} />
+              <DetailRow label="ประเภทลูกค้า" value={customerTypeLabelTh(request.customerType)} />
               {/* คำขอแบบจัดส่งเก็บ contactBranch เป็น null เพราะลูกค้าไม่ได้เลือกสาขา */}
               {request.needDelivery ? null : (
                 <DetailRow label="สาขาที่รับสินค้า" value={branchLabelTh(request.contactBranch)} />

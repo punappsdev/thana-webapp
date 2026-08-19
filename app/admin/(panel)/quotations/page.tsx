@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAdminQuotations } from "@/lib/admin/quotation-data";
+import { customerTypeLabelTh } from "@/lib/customer-types";
 import {
   ALL_FILTER_VALUE,
   monthLabelTh,
@@ -119,13 +120,14 @@ export default async function AdminQuotationsPage({
       <Card>
         <CardContent className="overflow-x-auto p-0">
           {result.items.length ? (
-            <Table className="min-w-[1020px]">
+            <Table className="min-w-[1120px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>รหัสอ้างอิง</TableHead>
                   <TableHead>ลูกค้า</TableHead>
                   <TableHead>ช่องทางติดต่อ</TableHead>
                   <TableHead>ประเภท</TableHead>
+                  <TableHead>ประเภทลูกค้า</TableHead>
                   <TableHead>สาขาที่รับผิดชอบ</TableHead>
                   <TableHead>รายการ</TableHead>
                   <TableHead>ส่งเมื่อ</TableHead>
@@ -174,6 +176,9 @@ export default async function AdminQuotationsPage({
                       <Badge variant={request.needTaxInvoice ? "default" : "secondary"}>
                         {request.needTaxInvoice ? "นามบริษัท" : "บุคคลธรรมดา"}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="font-body-sm">
+                      {customerTypeLabelTh(request.customerType)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <p className="font-body-sm">

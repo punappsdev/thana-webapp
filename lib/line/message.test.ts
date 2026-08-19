@@ -28,6 +28,7 @@ function minimalRequest(overrides: Partial<QuotationNotification> = {}): Quotati
     firstName: "สมชาย",
     lastName: "ใจดี",
     phone: "0812345678",
+    customerType: "homeowner",
     email: null,
     lineId: "@somchai",
     locale: "th",
@@ -55,6 +56,7 @@ function minimalRequest(overrides: Partial<QuotationNotification> = {}): Quotati
 function fullRequest(overrides: Partial<QuotationNotification> = {}): QuotationNotification {
   return minimalRequest({
     email: "somchai@example.com",
+    customerType: "corporate",
     needTaxInvoice: true,
     companyName: "บริษัท ตัวอย่าง จำกัด",
     taxId: "0105551234567",
@@ -92,6 +94,7 @@ describe("buildQuotationMessages", () => {
       "QT-20260803-0042",
       "สาขาถลาง",
       "สมชาย ใจดี",
+      "ลูกค้ากลุ่มบริษัท",
       "0812345678",
       "somchai@example.com",
       "@somchai",
