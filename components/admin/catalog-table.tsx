@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit3, Plus } from "lucide-react";
 import { CatalogEditor } from "@/components/admin/catalog-editor";
+import { CatalogReferencesDialog } from "@/components/admin/catalog-references-dialog";
 import { DeleteCatalogButton } from "@/components/admin/delete-catalog-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export function CatalogTable({ resource, rows, categories, attributes }: { resou
                       {secondary ? <p className="font-body-sm text-muted-foreground">{secondary}</p> : null}
                     </TableCell>
                     {showParent ? <TableCell>{parentName(resource, row) ? <Badge variant="outline">{parentName(resource, row)}</Badge> : <span className="font-body-sm text-muted-foreground">—</span>}</TableCell> : null}
-                    <TableCell className="font-body-sm">{count > 0 ? `ใช้ใน ${count} รายการ` : <span className="text-muted-foreground">ยังไม่ถูกใช้งาน</span>}</TableCell>
+                    <TableCell className="font-body-sm"><CatalogReferencesDialog resource={resource} id={Number(row.id)} label={name} count={count} /></TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon-sm" onClick={() => openEdit(row)} aria-label="แก้ไข"><Edit3 className="size-4" /></Button>
