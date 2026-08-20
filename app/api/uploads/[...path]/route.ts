@@ -38,14 +38,17 @@ export async function GET(
     return new NextResponse("File Not Found", { status: 404 });
   }
 
-  // Determine file Content-Type
+  // Determine file Content-Type. SVG is deliberately NOT served as
+  // image/svg+xml: the admin pipeline re-encodes everything to WebP and never
+  // stores SVG, so a .svg here is a legacy/operator file — serving it inline
+  // would let it execute script on direct navigation. It falls through to
+  // octet-stream (downloaded, not executed) instead.
   const ext = path.extname(absolutePath).toLowerCase();
   let contentType = "application/octet-stream";
   if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
   else if (ext === ".png") contentType = "image/png";
   else if (ext === ".webp") contentType = "image/webp";
   else if (ext === ".gif") contentType = "image/gif";
-  else if (ext === ".svg") contentType = "image/svg+xml";
   else if (ext === ".pdf") contentType = "application/pdf";
 
   const isGeneratedName = /^[0-9a-f]{8}-[0-9a-f-]{27,}\.[a-z0-9]+$/i.test(path.basename(absolutePath));
@@ -56,6 +59,7 @@ export async function GET(
     ETag: etag,
     "Last-Modified": file.mtime.toUTCString(),
     "Cache-Control": isGeneratedName ? "public, max-age=31536000, immutable" : "public, max-age=3600",
+    "X-Content-Type-Options": "nosniff",
   });
 
   if (request.nextUrl.searchParams.get("download") === "1") {

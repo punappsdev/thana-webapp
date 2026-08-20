@@ -6,9 +6,18 @@ import { getPrisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { deleteOrphanedMedia } from "@/lib/admin/media";
-import { isStaleVersion, type ActionResult, type FieldErrors } from "@/lib/admin/validation";
+import { isStaleVersion, validateHref, type ActionResult, type FieldErrors } from "@/lib/admin/validation";
 
 const optional = z.string().trim().optional().default("");
+// Popup link URLs are rendered into an href on the homepage, so a javascript:
+// link pasted by an admin would become clickable code in every visitor's
+// browser. Only http/https/mailto/tel and root-relative paths pass.
+const linkUrl = z
+  .string()
+  .trim()
+  .refine((v) => validateHref(v), "ลิงก์ไม่ถูกต้อง อนุญาตเฉพาะ http/https/mailto/tel หรือ path ภายในเว็บ")
+  .optional()
+  .default("");
 
 const formSchema = z.object({
   id: z.coerce.number().int().positive().optional().or(z.literal("")),
@@ -17,7 +26,7 @@ const formSchema = z.object({
   imageUrl: optional,
   altTh: optional,
   altEn: optional,
-  linkUrl: optional,
+  linkUrl,
   startDate: optional,
   endDate: optional,
   frequency: z.enum(["ALWAYS", "ONCE_PER_SESSION", "ONCE_PER_DAY"]),

@@ -10,6 +10,8 @@ import {
   validateProductCustomFields,
   type ProductCustomFieldInput,
   validateVariantAxisCoverage,
+  validateHref,
+  safeCssUrl,
 } from "@/lib/admin/validation";
 
 describe("admin validation", () => {
@@ -218,6 +220,51 @@ describe("admin validation", () => {
           textField({ maxLength: "60" }),
         ]),
       ).toEqual([]);
+    });
+  });
+
+  describe("validateHref", () => {
+    it("accepts root-relative paths and page anchors", () => {
+      expect(validateHref("/products")).toBe(true);
+      expect(validateHref("/api/uploads/file.webp")).toBe(true);
+      expect(validateHref("#promo")).toBe(true);
+    });
+
+    it("accepts http/https/mailto/tel", () => {
+      expect(validateHref("https://example.com/page")).toBe(true);
+      expect(validateHref("http://example.com")).toBe(true);
+      expect(validateHref("mailto:sales@example.com")).toBe(true);
+      expect(validateHref("tel:+6621234567")).toBe(true);
+    });
+
+    it("rejects executable schemes and protocol-relative links", () => {
+      expect(validateHref("javascript:alert(1)")).toBe(false);
+      expect(validateHref("data:text/html,<script>1</script>")).toBe(false);
+      expect(validateHref("vbscript:msgbox(1)")).toBe(false);
+      expect(validateHref("//evil.example.com")).toBe(false);
+    });
+
+    it("treats an empty string as an acceptable optional link", () => {
+      expect(validateHref("")).toBe(true);
+    });
+  });
+
+  describe("safeCssUrl", () => {
+    it("keeps a normal media path unchanged", () => {
+      expect(safeCssUrl("/api/uploads/abc123.webp")).toBe("/api/uploads/abc123.webp");
+      expect(safeCssUrl("https://cdn.example.com/photo.jpg")).toBe("https://cdn.example.com/photo.jpg");
+    });
+
+    it("strips characters that could break out of url(...)", () => {
+      expect(safeCssUrl('/api/uploads/x.png") ;background:url(javascript:alert(1))')).not.toMatch(/[()"'\\]/);
+      expect(safeCssUrl("/api/uploads/x.png")).toBe("/api/uploads/x.png");
+    });
+
+    it("refuses javascript:/data: schemes and empty values", () => {
+      expect(safeCssUrl("javascript:alert(1)")).toBe("");
+      expect(safeCssUrl("data:image/svg+xml,<svg/>")).toBe("");
+      expect(safeCssUrl("")).toBe("");
+      expect(safeCssUrl(null)).toBe("");
     });
   });
 });

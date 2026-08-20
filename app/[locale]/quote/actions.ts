@@ -26,6 +26,7 @@ import {
   storeBoqFile,
   type StoredBoqAttachment,
 } from "@/lib/quotation-boq";
+import { getClientIp } from "@/lib/admin/client-ip";
 
 /**
  * The public quotation request. This is the only server action on the customer
@@ -330,13 +331,14 @@ export async function submitQuoteRequest(
   const prisma = getPrisma();
 
   const headerStore = await headers();
-  const ipAddress = (
-    headerStore.get("x-forwarded-for")?.split(",")[0] ||
-    headerStore.get("x-real-ip") ||
-    "unknown"
-  )
-    .trim()
-    .slice(0, 64);
+  // X-Forwarded-For is client-supplied unless a trusted proxy overwrites it, so
+  // keying the spam guard on it let anyone rotate the header and send unlimited
+  // requests. getClientIp reads X-Real-IP (or CLIENT_IP_HEADER) instead — the
+  // same source the admin login throttle trusts — and returns null when nothing
+  // in front of the app sets it, which stands the per-IP guard down (matching
+  // how the login throttle behaves without a trusted header).
+  const clientIp = await getClientIp();
+  const ipAddress = clientIp ?? "unknown";
   const userAgent = headerStore.get("user-agent")?.slice(0, 255) ?? null;
 
   // Cheap spam guard. No extra table needed — the requests themselves are the log.

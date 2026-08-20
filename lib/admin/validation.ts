@@ -311,6 +311,35 @@ export function validateVariantAxisCoverage(
   return [...errors];
 }
 
+/**
+ * Whether a link an admin pastes into a banner/popup is safe to put in an href
+ * or a <Link>. Only root-relative paths, page anchors and http/https/mailto/tel
+ * are accepted — anything else (javascript:, data:, vbscript:, ...) would turn
+ * the "link" into executable code in the visitor's browser.
+ */
+export function validateHref(value: string): boolean {
+  if (!value) return true; // optional field
+  if (value.startsWith("/")) return !value.startsWith("//"); // //host is protocol-relative
+  if (value.startsWith("#")) return true;
+  return /^(https?|mailto|tel):/i.test(value);
+}
+
+/**
+ * A background-image URL from the database, made safe to interpolate into a CSS
+ * `url(...)` string. Category cover images are admin-entered, so a crafted value
+ * containing quotes, parens or backslashes could otherwise break out of the
+ * url() context and inject arbitrary CSS. Refuses non-http(s)/root-relative
+ * schemes outright and strips the characters that can terminate the token.
+ */
+export function safeCssUrl(value: string | null | undefined): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "";
+  if (!raw.startsWith("/") && !/^https?:\/\//i.test(raw)) return "";
+  // //host is protocol-relative; it would silently fetch from an external host.
+  if (raw.startsWith("//")) return "";
+  return raw.replace(/["'\\()\u0000-\u001f]/g, "");
+}
+
 export type ActionResult = {
   success: boolean;
   message: string;

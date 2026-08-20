@@ -187,7 +187,11 @@ export async function saveContentAction(_state: ActionResult, formData: FormData
         saved = await prisma.$transaction(async (tx) => {
           switch (resource) {
             case "works": {
-              const data = { ...common, descriptionTh: parsed.data.bodyTh || null, descriptionEn: parsed.data.bodyEn || null, categoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
+              // Works are plain text today, but the column accepts any string — a
+              // stray <script> pasted in would be stored and could later be rendered
+              // as HTML. Sanitize on the way in so the stored value is always safe,
+              // matching articles/news/promotions.
+              const data = { ...common, descriptionTh: sanitizeRichHtml(parsed.data.bodyTh || "").trim() || null, descriptionEn: sanitizeRichHtml(parsed.data.bodyEn || "").trim() || null, categoryId: typeof parsed.data.categoryId === "number" ? parsed.data.categoryId : null };
               const row = id ? await tx.work.update({ where: { id }, data }) : await tx.work.create({ data });
               // Replace the whole gallery: the form always submits the full list,
               // so a diff would cost more than it saves (same as products).

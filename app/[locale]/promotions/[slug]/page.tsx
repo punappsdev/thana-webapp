@@ -18,6 +18,7 @@ import {
   breadcrumbLd,
   metaDescription,
 } from "@/lib/seo";
+import { sanitizeRichHtml } from "@/lib/admin/security";
 
 interface DetailProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -73,7 +74,12 @@ export default async function PromotionDetailPage({ params }: DetailProps) {
   }
 
   const title = locale === "en" ? promo.titleEn : promo.titleTh;
-  const content = locale === "en" ? promo.contentEn : promo.contentTh;
+  // Re-sanitize at the rendering boundary for legacy rows written before rich
+  // text persistence existed, and to keep every innerHTML path safe — the same
+  // defence products/[slug] already applies.
+  const content = sanitizeRichHtml(
+    locale === "en" ? promo.contentEn || "" : promo.contentTh || ""
+  );
   const excerpt = locale === "en" ? promo.excerptEn : promo.excerptTh;
 
   const formattedStartDate = promo.startDate

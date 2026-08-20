@@ -3,6 +3,7 @@ import { Link } from "../../i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { pick } from "@/lib/products";
 import { richTextToPlainText } from "@/lib/rich-text";
+import { safeCssUrl } from "@/lib/admin/validation";
 
 interface CategoryGridProps {
   locale: string;
@@ -43,7 +44,7 @@ export async function CategoryGrid({ locale }: CategoryGridProps) {
               {/* Background Image */}
               <div
                 className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-                style={{ backgroundImage: `url(${cat.coverImage || ""})` }}
+                style={{ backgroundImage: `url(${safeCssUrl(cat.coverImage)})` }}
               />
               {/* Gradient Dark Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#002c7d]/80 via-transparent to-transparent" />

@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { getPrisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/admin/validation";
+
+const productIdSchema = z.number().int().positive();
+const orderedIdsSchema = z.array(z.number().int().positive());
 
 /** The homepage "สินค้าแนะนำ" section and this admin page both read this data. */
 function refreshFeatured() {
@@ -14,38 +18,44 @@ function refreshFeatured() {
 }
 
 /** Add a product to the featured list, placing it last in display order. */
-export async function addFeaturedAction(productId: number): Promise<ActionResult> {
+export async function addFeaturedAction(productIdValue: number): Promise<ActionResult> {
+  const productId = productIdSchema.safeParse(productIdValue);
+  if (!productId.success) return { success: false, message: "คำขอไม่ถูกต้อง" };
   const admin = await requireAdmin();
   const prisma = getPrisma();
-  const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true, nameTh: true, published: true } });
+  const product = await prisma.product.findUnique({ where: { id: productId.data }, select: { id: true, nameTh: true, published: true } });
   if (!product) return { success: false, message: "ไม่พบสินค้า" };
   if (!product.published) return { success: false, message: "เผยแพร่สินค้าก่อนจึงจะเพิ่มเป็นสินค้าแนะนำได้" };
 
   const max = await prisma.product.aggregate({ where: { featured: true }, _max: { featuredOrder: true } });
-  await prisma.product.update({ where: { id: productId }, data: { featured: true, featuredOrder: (max._max.featuredOrder ?? 0) + 1 } });
-  await recordActivity({ adminId: admin.id, action: "UPDATE", entityType: "products", entityId: productId, label: product.nameTh, metadata: { featured: true } });
+  await prisma.product.update({ where: { id: productId.data }, data: { featured: true, featuredOrder: (max._max.featuredOrder ?? 0) + 1 } });
+  await recordActivity({ adminId: admin.id, action: "UPDATE", entityType: "products", entityId: productId.data, label: product.nameTh, metadata: { featured: true } });
   refreshFeatured();
   return { success: true, message: "เพิ่มสินค้าแนะนำแล้ว" };
 }
 
 /** Remove a product from the featured list. */
-export async function removeFeaturedAction(productId: number): Promise<ActionResult> {
+export async function removeFeaturedAction(productIdValue: number): Promise<ActionResult> {
+  const productId = productIdSchema.safeParse(productIdValue);
+  if (!productId.success) return { success: false, message: "คำขอไม่ถูกต้อง" };
   const admin = await requireAdmin();
   const prisma = getPrisma();
-  const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true, nameTh: true } });
+  const product = await prisma.product.findUnique({ where: { id: productId.data }, select: { id: true, nameTh: true } });
   if (!product) return { success: false, message: "ไม่พบสินค้า" };
 
-  await prisma.product.update({ where: { id: productId }, data: { featured: false, featuredOrder: 0 } });
-  await recordActivity({ adminId: admin.id, action: "UPDATE", entityType: "products", entityId: productId, label: product.nameTh, metadata: { featured: false } });
+  await prisma.product.update({ where: { id: productId.data }, data: { featured: false, featuredOrder: 0 } });
+  await recordActivity({ adminId: admin.id, action: "UPDATE", entityType: "products", entityId: productId.data, label: product.nameTh, metadata: { featured: false } });
   refreshFeatured();
   return { success: true, message: "นำออกจากสินค้าแนะนำแล้ว" };
 }
 
 /** Persist a new display order. `orderedIds` is the full featured list, top-first. */
-export async function reorderFeaturedAction(orderedIds: number[]): Promise<ActionResult> {
+export async function reorderFeaturedAction(orderedIdsValue: number[]): Promise<ActionResult> {
+  const orderedIds = orderedIdsSchema.safeParse(orderedIdsValue);
+  if (!orderedIds.success) return { success: false, message: "คำขอไม่ถูกต้อง" };
   await requireAdmin();
   const prisma = getPrisma();
-  await prisma.$transaction(orderedIds.map((id, index) => prisma.product.update({ where: { id }, data: { featuredOrder: index + 1 } })));
+  await prisma.$transaction(orderedIds.data.map((id, index) => prisma.product.update({ where: { id }, data: { featuredOrder: index + 1 } })));
   refreshFeatured();
   return { success: true, message: "จัดลำดับแล้ว" };
 }

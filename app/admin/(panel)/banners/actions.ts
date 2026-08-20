@@ -6,9 +6,18 @@ import { getPrisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recordActivity } from "@/lib/admin/audit";
 import { deleteOrphanedMedia } from "@/lib/admin/media";
-import { isStaleVersion, validateBilingualPublish, type ActionResult } from "@/lib/admin/validation";
+import { isStaleVersion, validateBilingualPublish, validateHref, type ActionResult } from "@/lib/admin/validation";
 
 const optional = z.string().trim().optional().default("");
+// Banner link URLs are rendered into <a href> and <Link> on the homepage, so a
+// javascript: link pasted by an admin would become clickable code in every
+// visitor's browser. Only http/https/mailto/tel and root-relative paths pass.
+const linkUrl = z
+  .string()
+  .trim()
+  .refine((v) => validateHref(v), "ลิงก์ไม่ถูกต้อง อนุญาตเฉพาะ http/https/mailto/tel หรือ path ภายในเว็บ")
+  .optional()
+  .default("");
 
 const formSchema = z.object({
   id: z.coerce.number().int().positive().optional().or(z.literal("")),
@@ -21,7 +30,7 @@ const formSchema = z.object({
   descriptionTh: optional,
   descriptionEn: optional,
   imageUrl: z.string().trim(),
-  linkUrl: optional,
+  linkUrl,
   buttonTextTh: optional,
   buttonTextEn: optional,
   sortOrder: z.coerce.number().int().min(0).optional().default(0),
