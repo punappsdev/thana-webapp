@@ -56,16 +56,16 @@ export type MaintenanceText = { title: string; message: string };
 export function getMaintenanceText(settings: SiteSettings, locale: string): MaintenanceText {
   if (locale === "en") {
     return {
-      title: settings.maintenanceTitleEn ?? "We're Under Maintenance",
+      title: settings.maintenanceTitleEn ?? "Website Under Maintenance",
       message:
         settings.maintenanceMessageEn ??
-        "We're making updates behind the scenes. Please check back soon.",
+        "We apologize for the inconvenience. Please check back later.",
     };
   }
   return {
-    title: settings.maintenanceTitleTh ?? "อยู่ระหว่างปรับปรุงเว็บไซต์",
+    title: settings.maintenanceTitleTh ?? "เว็บไซต์อยู่ระหว่างการปรับปรุง",
     message:
       settings.maintenanceMessageTh ??
-      "เรากำลังปรับปรุงระบบและหลังบ้าน ขออภัยในความไม่สะดวก โปรดกลับมาใหม่ในภายหลัง",
+      "ขออภัยในความไม่สะดวก โปรดกลับมาเยี่ยมชมใหม่ในภายหลัง",
   };
 }

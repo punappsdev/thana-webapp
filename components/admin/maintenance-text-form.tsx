@@ -40,7 +40,7 @@ export function MaintenanceTextForm({ settings }: { settings: SiteSettings }) {
             id="maintenanceTitleTh"
             name="maintenanceTitleTh"
             defaultValue={settings.maintenanceTitleTh ?? ""}
-            placeholder="อยู่ระหว่างปรับปรุงเว็บไซต์"
+            placeholder="เว็บไซต์อยู่ระหว่างการปรับปรุง"
           />
           <FieldError message={state.fieldErrors?.maintenanceTitleTh?.[0]} />
         </div>
@@ -50,7 +50,7 @@ export function MaintenanceTextForm({ settings }: { settings: SiteSettings }) {
             id="maintenanceTitleEn"
             name="maintenanceTitleEn"
             defaultValue={settings.maintenanceTitleEn ?? ""}
-            placeholder="We're Under Maintenance"
+            placeholder="Website Under Maintenance"
           />
           <FieldError message={state.fieldErrors?.maintenanceTitleEn?.[0]} />
         </div>
@@ -60,7 +60,7 @@ export function MaintenanceTextForm({ settings }: { settings: SiteSettings }) {
             id="maintenanceMessageTh"
             name="maintenanceMessageTh"
             defaultValue={settings.maintenanceMessageTh ?? ""}
-            placeholder="เรากำลังปรับปรุงระบบและหลังบ้าน ขออภัยในความไม่สะดวก โปรดกลับมาใหม่ในภายหลัง"
+            placeholder="ขออภัยในความไม่สะดวก โปรดกลับมาเยี่ยมชมใหม่ในภายหลัง"
             rows={3}
           />
           <FieldError message={state.fieldErrors?.maintenanceMessageTh?.[0]} />
@@ -71,7 +71,7 @@ export function MaintenanceTextForm({ settings }: { settings: SiteSettings }) {
             id="maintenanceMessageEn"
             name="maintenanceMessageEn"
             defaultValue={settings.maintenanceMessageEn ?? ""}
-            placeholder="We're making updates behind the scenes. Please check back soon."
+            placeholder="We apologize for the inconvenience. Please check back later."
             rows={3}
           />
           <FieldError message={state.fieldErrors?.maintenanceMessageEn?.[0]} />
