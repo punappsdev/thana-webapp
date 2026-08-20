@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { LineQuotaCard } from "@/components/admin/line-quota-card";
 import { LineRoutingCard } from "@/components/admin/line-routing-card";
+import { MaintenanceModeToggle } from "@/components/admin/maintenance-mode-toggle";
+import { MaintenanceTextForm } from "@/components/admin/maintenance-text-form";
 import { MourningModeToggle } from "@/components/admin/mourning-mode-toggle";
 import { StorageCard } from "@/components/admin/storage-card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,20 @@ export default async function SiteSettingsPage() {
               แก้ไขล่าสุด {dateFormatter.format(settings.updatedAt)}
             </p>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>โหมดปิดปรับปรุงเว็บไซต์</CardTitle>
+          <CardDescription>
+            แสดงหน้าปิดปรับปรุงแทนเว็บสาธารณะทั้งหมด เหมาะช่วงตั้งค่าหลังบ้านหรืออัปเดตเว็บ
+            แอดมินที่ล็อกอินอยู่ยังเห็นเว็บจริงเพื่อตรวจงานก่อนเปิดให้ลูกค้า
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <MaintenanceModeToggle enabled={settings.maintenanceMode} />
+          <MaintenanceTextForm settings={settings} />
         </CardContent>
       </Card>
 

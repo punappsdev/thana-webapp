@@ -352,9 +352,15 @@ model PromotionPopup {
 
 /// แถวเดียวเสมอ (id = 1) — ค่าตั้งค่าระดับเว็บที่ไม่ผูกกับเนื้อหาชิ้นใดชิ้นหนึ่ง
 model SiteSetting {
-  id           Int      @id @default(1)
+  id          Int      @id @default(1)
   /// โหมดไว้อาลัย — ปรับหน้าแรกเป็นโทนขาวดำ
-  mourningMode Boolean  @default(false)
+  mourningMode Boolean @default(false)
+  /// โหมดปิดปรับปรุง — แสดงหน้าปิดปรับปรุงแทนเว็บสาธารณะทั้งหมด (แอดมินที่ล็อกอินอยู่ยังเห็นเว็บจริง)
+  maintenanceMode Boolean @default(false)
+  maintenanceTitleTh   String?
+  maintenanceMessageTh String? @db.Text
+  maintenanceTitleEn   String?
+  maintenanceMessageEn String? @db.Text
   updatedAt    DateTime @updatedAt
 }
 

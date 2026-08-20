@@ -10,7 +10,10 @@ import { SITE_SETTING_ID } from "@/lib/admin/site-settings";
 import { isStaleVersion, type ActionResult } from "@/lib/admin/validation";
 import { findDistrictByCode } from "@/lib/districts";
 
-/** Mourning mode only repaints the homepage, so both locale roots are enough. */
+/**
+ * ปัด cache ของหน้าตั้งค่าและรากทั้งสอง locale มอร์นนิ่ง/เมนเทนแนนซ์ gate ผ่าน
+ * `[locale]` layout ที่ render ต่อ request อยู่แล้ว จึงรากสองตัวนี้เพียงพอ
+ */
 function refreshSettings() {
   revalidatePath("/admin/settings");
   revalidatePath("/");
@@ -39,6 +42,80 @@ export async function setMourningModeAction(formData: FormData): Promise<void> {
   });
 
   refreshSettings();
+}
+
+/** สวิตช์เปิด/ปิดโหมดปิดปรับปรุงมีผลทันที เช่นเดียวกับโหมดไว้อาลัย */
+export async function setMaintenanceModeAction(formData: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const raw = formData.get("enabled");
+  if (raw !== "true" && raw !== "false") throw new Error("Invalid maintenance mode value");
+  const maintenanceMode = raw === "true";
+
+  await getPrisma().siteSetting.upsert({
+    where: { id: SITE_SETTING_ID },
+    create: { id: SITE_SETTING_ID, maintenanceMode },
+    update: { maintenanceMode },
+  });
+
+  await recordActivity({
+    adminId: admin.id,
+    action: "UPDATE",
+    entityType: "settings",
+    entityId: SITE_SETTING_ID,
+    label: maintenanceMode ? "เปิดโหมดปิดปรับปรุงเว็บไซต์" : "ปิดโหมดปิดปรับปรุงเว็บไซต์",
+    metadata: { maintenanceMode },
+  });
+
+  refreshSettings();
+}
+
+const maintenanceTextSchema = z.object({
+  maintenanceTitleTh: z.string().trim().max(191).optional().default(""),
+  maintenanceMessageTh: z.string().trim().max(1000).optional().default(""),
+  maintenanceTitleEn: z.string().trim().max(191).optional().default(""),
+  maintenanceMessageEn: z.string().trim().max(1000).optional().default(""),
+});
+
+/** บันทึกข้อความหน้าปิดปรับปรุงเท่านั้น — ไม่แตะสถานะเปิด/ปิด ข้อความที่เว้นว่าง → null */
+export async function saveMaintenanceTextAction(
+  _state: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const admin = await requireAdmin();
+  const parsed = maintenanceTextSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "กรุณาตรวจสอบข้อมูล",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const data = parsed.data;
+  const fields = {
+    maintenanceTitleTh: data.maintenanceTitleTh || null,
+    maintenanceMessageTh: data.maintenanceMessageTh || null,
+    maintenanceTitleEn: data.maintenanceTitleEn || null,
+    maintenanceMessageEn: data.maintenanceMessageEn || null,
+  };
+
+  await getPrisma().siteSetting.upsert({
+    where: { id: SITE_SETTING_ID },
+    create: { id: SITE_SETTING_ID, ...fields },
+    update: fields,
+  });
+
+  await recordActivity({
+    adminId: admin.id,
+    action: "UPDATE",
+    entityType: "settings",
+    entityId: SITE_SETTING_ID,
+    label: "แก้ไขข้อความหน้าปิดปรับปรุงเว็บไซต์",
+    metadata: fields,
+  });
+
+  refreshSettings();
+  return { success: true, message: "บันทึกข้อความแล้ว" };
 }
 
 /** ช่องเลือกหลายค่าส่งมาเป็นสตริงเดียวคั่นด้วยจุลภาค (components/admin/multi-select-field.tsx) */

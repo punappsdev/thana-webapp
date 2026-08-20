@@ -4,6 +4,9 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { CartSheet } from "@/components/cart/cart-sheet";
 import { ConsentManager } from "@/components/consent/consent-manager";
+import { MaintenancePage } from "@/components/layout/maintenance-page";
+import { getAdminSession } from "@/lib/admin/auth";
+import { getSiteSettings } from "@/lib/admin/site-settings";
 import { notoSansThai, prompt } from "@/lib/fonts";
 import { SITE_NAME, SITE_URL, metaDescription } from "@/lib/seo";
 import "../globals.css";
@@ -45,6 +48,10 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params;
   const messages = await getMessages();
+  const settings = await getSiteSettings();
+  // เช็ก session เฉพาะเมื่อเปิดโหมดเท่านั้น ไม่ให้หน้าเว็บสาธารณะปกติเสีย query เพิ่ม
+  const admin = settings.maintenanceMode ? await getAdminSession() : null;
+  const underMaintenance = settings.maintenanceMode && !admin;
 
   return (
     <html
@@ -52,13 +59,17 @@ export default async function RootLayout({
       className={`${prompt.variable} ${notoSansThai.variable} h-full antialiased overflow-x-hidden`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
-        <NextIntlClientProvider messages={messages}>
-          {children}
-          <AnalyticsProvider />
-          <ConsentManager />
-          {/* Mounted once here so any page can open it via useCart().openCart() */}
-          <CartSheet />
-        </NextIntlClientProvider>
+        {underMaintenance ? (
+          <MaintenancePage locale={locale} settings={settings} />
+        ) : (
+          <NextIntlClientProvider messages={messages}>
+            {children}
+            <AnalyticsProvider />
+            <ConsentManager />
+            {/* Mounted once here so any page can open it via useCart().openCart() */}
+            <CartSheet />
+          </NextIntlClientProvider>
+        )}
       </body>
     </html>
   );
